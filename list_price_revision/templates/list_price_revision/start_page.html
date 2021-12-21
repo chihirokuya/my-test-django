@@ -1,0 +1,63 @@
+{% extends 'list_price_revision/base.html' %}
+
+{% block content %}
+<div class="col-lg-3 col-xs-6">
+    <!-- small box -->
+    <div class="small-box bg-aqua">
+        <div class="inner">
+            <h3>150</h3>
+
+            <p>ASIN登録</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-edit"></i>
+        </div>
+        <a href="{% url 'price:asin' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+    </div>
+</div>
+
+<div class="col-lg-3 col-xs-6">
+    <!-- small box -->
+    <div class="small-box bg-yellow">
+        <div class="inner">
+            <h3>{{ asin_list_length }}</h3>
+
+            <p>出品中</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-th-list"></i>
+        </div>
+        <a href="{% url 'price:listing' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+    </div>
+</div>
+
+<div class="col-lg-3 col-xs-6">
+    <!-- small box -->
+    <div class="small-box bg-gray">
+        <div class="inner">
+            <h3>150</h3>
+
+            <p>ブラックリスト</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-thumbs-o-down"></i>
+        </div>
+        <a href="{% url 'price:blacklist' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+    </div>
+</div>
+
+<div class="col-lg-3 col-xs-6">
+    <!-- small box -->
+    <div class="small-box bg-green">
+        <div class="inner">
+            <h3>150</h3>
+
+            <p>設定</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-gears"></i>
+        </div>
+        <a href="{% url 'price:setting' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+    </div>
+</div>
+{% endblock %}

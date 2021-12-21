@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<a href="index2.html" class="logo">
+    <!-- mini logo for sidebar mini 50x50 pixels -->
+    <span class="logo-mini"><b>A</b>LT</span>
+    <!-- logo for regular state and mobile devices -->
+    <span class="logo-lg">Q10ツール</span>
+</a>
+{% endblock %}
+
+
+{% block content %}
+<div class="start-center-buttons">
+    <form method="GET" action="{% url 'price:price-base' %}">
+        <input type="submit" value="出品・価格改定" class="start-page-select-button"/>
+    </form>
+    <form method="GET" action="{% url 'buy:base' %}">
+        <input type="submit" value="自動購入" class="start-page-select-button"/>
+    </form>
+</div>
+{% endblock %}

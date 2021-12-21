@@ -1,0 +1,101 @@
+{% extends 'list_price_revision/base.html' %}
+
+
+{% block dashboard %}
+<section class="content-header">
+    <h1>
+        <small></small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="/"><i class="fa fa-dashboard"></i>アプリ選択</a></li>
+        <li><a href="{% url 'price:price-base' %}">出品・価格改定</a></li>
+        <li class="active">ブラックリスト</li>
+    </ol>
+</section>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible" onclick="delete_fun()">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>
+    <h4><i class="icon fa fa-check"></i> {% if message.tags %}保存完了!{% else %}保存失敗。{% endif %}</h4>
+    {% for message in messages %}
+    <p> {{ message }}</p>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endif %}
+
+<script>
+    function delete_fun() {
+        div = document.getElementsByClassName('alert alert-success alert-dismissible')[0];
+        div.parentNode.removeChild(div);
+    }
+</script>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">商品名・メーカー</h3>
+            </div>
+
+            <div class="box-body">
+            <textarea class="form-control" rows=25 placeholder="" name="maker_name_blacklist" form="BlackForm">{{ obj.maker_name_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">ASIN</h3>
+            </div>
+
+            <div class="box-body">
+                <textarea class="form-control" rows=25 placeholder="" name="asin_blacklist" form="BlackForm">{{ obj.asin_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">除外ワード</h3>
+            </div>
+
+            <div class="box-body">
+                <textarea class="form-control" rows=25 placeholder="" name="words_blacklist" form="BlackForm">{{ obj.words_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">商品グループ</h3>
+            </div>
+
+            <div class="box-body" style="height: 530px; overflow-y: scroll;">
+                {% for group in amazon_group_list %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" {% if group in amazon_group_blacklist  %}checked{% endif %} style="font-size:20px;" name="{{ group }}"
+                            form="BlackForm"/>
+                            {{ group }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<form method="POST" action="" id="BlackForm">{% csrf_token %}
+    <div style="width:20%;margin:auto;">
+        <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height: 45px;">
+    </div>
+</form>
+{% endblock %}

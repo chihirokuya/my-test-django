@@ -1,0 +1,77 @@
+from django.db import models
+import datetime
+
+# Create your models here.
+
+
+class UserModel(models.Model):
+    username = models.CharField(max_length=1000, blank=True)
+
+    # q10アカウント
+    q10_id = models.CharField(max_length=1000, blank=True)
+    q10_password = models.CharField(max_length=1000, blank=True)
+
+    # Q10出品情報
+    description_header = models.TextField(default='', null=True, blank=True)
+    description_footer = models.TextField(default='', blank=True)
+    initial_letter = models.CharField(max_length=1, blank=True)
+    delete_or_not = models.BooleanField(default=False, blank=True)
+    shipping_code = models.CharField(max_length=1000, default='', blank=True)
+    stock_num = models.IntegerField(default=3, blank=True)
+    photo_num = models.IntegerField(default=3, blank=True)
+
+    # ブラックリスト
+    maker_name_blacklist = models.TextField(default='', blank=True)
+    asin_blacklist = models.TextField(default='', blank=True)
+    words_blacklist = models.TextField(default='', blank=True)
+    group_black = models.TextField(default='', blank=True)
+
+    # 価格関連
+    max_1 = models.IntegerField(default=0, blank=True)
+    max_2 = models.IntegerField(default=0, blank=True)
+    max_3 = models.IntegerField(default=0, blank=True)
+    rieki_1 = models.IntegerField(default=0, blank=True)
+    rieki_2 = models.IntegerField(default=0, blank=True)
+    rieki_3 = models.IntegerField(default=0, blank=True)
+    rieki_4 = models.IntegerField(default=0, blank=True)
+    kotei_1 = models.IntegerField(default=0, blank=True)
+    kotei_2 = models.IntegerField(default=0, blank=True)
+    kotei_3 = models.IntegerField(default=0, blank=True)
+    kotei_4 = models.IntegerField(default=0, blank=True)
+
+    kaitei_kankaku = models.TimeField(default=datetime.time(2, 0), blank=True)
+
+
+class ListingModel(models.Model):
+    username = models.CharField(max_length=1000, blank=True)
+
+    # 出品中ASIN
+    asin_list = models.TextField(default='', blank=True)
+
+    # 出品待ち
+    asin_waiting_list = models.TextField(default='', blank=True, null=True)
+
+
+class AsinModel(models.Model):
+    asin = models.CharField(max_length=10)
+
+    product_name = models.TextField(blank=True, default='')
+    brand = models.TextField(blank=True, default='')
+    product_group = models.TextField(blank=True, default='')
+    photo_list = models.TextField(blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    jan = models.TextField(max_length=100, default='', blank=True)
+    category_tree = models.JSONField(blank=True, default={})
+    price = models.IntegerField(default=0, blank=True)
+
+
+class RecordsModel(models.Model):
+    username = models.CharField(max_length=1000, null=True, default='')
+    date = models.DateTimeField(default=datetime.datetime.now(), null=True, blank=True)
+
+    total_length = models.IntegerField(null=True, default=0, blank=True)
+    new_length = models.IntegerField(null=True, default=0, blank=True)
+
+    already_listed = models.BooleanField(null=True, blank=True, default=False)
+
+    asin_list = models.TextField(null=True, default='', blank=True)

@@ -1,0 +1,211 @@
+{% extends 'list_price_revision/base.html' %}
+
+{% block dashboard %}
+<section class="content-header">
+    <h1>
+        <small></small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="/"><i class="fa fa-dashboard"></i>アプリ選択</a></li>
+        <li><a href="{% url 'price:price-base' %}">出品・価格改定</a></li>
+        <li class="active">設定</li>
+    </ol>
+</section>
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible" onclick="delete_fun()">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>
+    <h4><i class="icon fa fa-check"></i> {% if message.tags %}保存完了!{% else %}保存失敗。{% endif %}</h4>
+    {% for message in messages %}
+    <p> {{ message }}</p>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endif %}
+
+<script>
+    function delete_fun() {
+        div = document.getElementsByClassName('alert alert-success alert-dismissible')[0];
+        div.parentNode.removeChild(div);
+    }
+</script>
+
+<!--<ul class="messages_ul">-->
+<!--    {% for message in messages %}-->
+<!--    <li class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</li>-->
+<!--    {% endfor %}-->
+<!--</ul>-->
+
+<div class="row equal">
+    <div class="col-md-6">
+        <!-- MAP & BOX PANE -->
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Q10 アカウント情報</h3>
+
+                <div class="box-body">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">アカウントID</label>
+                        <input type="text" class="form-control" id="exampleInputEmail1" name="q10_id" placeholder="アカウントID"
+                        value="{{ obj.q10_id }}" form="UserForm">
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">パスワード</label>
+                        <input type="password" form='UserForm' class="form-control" id="exampleInputPassword1" name="q10_password" placeholder="Password"
+                        value="{{ obj.q10_password }}">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE: LATEST ORDERS -->
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">価格設定</h3>
+            </div>
+            <!-- /.box-header -->
+
+            <div class="box-body">
+                <div class="col-sm-12">
+                    <table id="example2" class="table table-bordered table-hover dataTable" role="grid" aria-describedby="example2_info">
+
+                        <thead>
+                            <tr role="row">
+                            <th class="sorting_asc" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Rendering engine: activate to sort column descending">
+                                Amazon価格(円）
+                            </th>
+                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" aria-label="Browser: activate to sort column ascending">
+                                利益率(%)</th>
+                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" aria-label="Platform(s): activate to sort column ascending">
+                                固定費(円)</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr role="row">
+                                <td>0 〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm"></td>
+                                <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm"></td>
+                            </tr>
+
+                            <tr role="row">
+                                <td>{{ obj.max_1|add:1 }} 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm"></td>
+                                <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm"></td>
+                            </tr>
+
+                            <tr role="row">
+                                <td>{{ obj.max_2|add:1 }} 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm"></td>
+                                <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm"></td>
+                            </tr>
+
+                            <tr role="row">
+                                <td>{{ obj.max_3|add:1 }} 〜 </td>
+                                <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
+                                <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                    ※出品価格＝Amazon価格×(1＋利益率)＋固定費
+                </div>
+
+                <form class="form-horizontal">
+                    <div class="box-body">
+                        <div class="form-group"></div>
+                        <div class="form-group">
+                            <label for="kaitei" class="col-sm-2 control-label">改定間隔</label>
+                            <div class="col-sm-10">
+                                <input type="number" id="kaitei" value="{{ obj.kaitei_kankaku.hour }}" name="kaitei_hour"
+                                       style="text-align:right; width: 40px;" form="UserForm">時
+                                <input type="number" value="{{ obj.kaitei_kankaku.minute }}" name="kaitei_minute"
+                                       style="text-align:right; width:40px;" form="UserForm">分
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+        <!-- /.box -->
+
+    </div>
+    <div class="col-md-6">
+        <div class="box box-warning">
+            <div class="box-header with-border">
+                <h3 class="box-title">出品情報</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+                <form role="form">
+                    <!-- textarea -->
+                    <div class="form-group">
+                        <label>商品詳細・上段</label>
+                        <textarea class="form-control" rows="3" placeholder="" name="description_header" form="UserForm">{{ obj.description_header }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>商品詳細・下段</label>
+                        <textarea class="form-control" rows="3" placeholder="" name="description_footer" form="UserForm">{{ obj.description_footer }}</textarea>
+                    </div>
+
+                    <!-- select -->
+                    <div class="form-group">
+                        <label>頭文字</label>
+                        <select class="form-control" name="initial_letter" form="UserForm">
+                            {% for i in alphabets %}
+                            {% if i != obj.initial_letter %}
+                                <option>{{ i }}</option>
+                            {% else %}
+                                <option selected>{{ i }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+
+                        <div class="checkbox">
+                            <label>
+                                    <input type="checkbox" name="delete_or_not" form="UserForm" {% if obj.delete_or_not  %}checked{% endif %} />
+                                在庫切れを削除する
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>送料コード</label>
+                        <input type="number" class="form-control" placeholder="" value="{{ obj.shipping_code }}"
+                        name="shipping_code" form="UserForm">
+                    </div>
+
+                    <div class="form-group">
+                        <label>標準在庫数</label>
+                        <input type="number" class="form-control" placeholder="" value="{{ obj.stock_num }}"
+                        name="stock_num" form="UserForm">
+                    </div>
+
+                    <div class="form-group">
+                        <label>写真枚数</label>
+                        <input type="number" class="form-control" placeholder="" value="{{ obj.photo_num }}"
+                        name="photo_num" form="UserForm">
+                    </div>
+
+                </form>
+            </div>
+            <!-- /.box-body -->
+        </div>
+    </div>
+
+</div>
+
+<form method="POST" action="" id="UserForm">{% csrf_token %}
+    <div style="width:20%;margin:auto;">
+        <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
+    </div>
+</form>
+
+{% endblock %}
