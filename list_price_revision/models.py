@@ -10,6 +10,7 @@ class UserModel(models.Model):
     # q10アカウント
     q10_id = models.CharField(max_length=1000, blank=True)
     q10_password = models.CharField(max_length=1000, blank=True)
+    q10_api = models.CharField(max_length=1000, blank=True, default='')
 
     # Q10出品情報
     description_header = models.TextField(default='', null=True, blank=True)
@@ -51,6 +52,9 @@ class ListingModel(models.Model):
     # 出品待ち
     asin_waiting_list = models.TextField(default='', blank=True, null=True)
 
+    # 取得中
+    asin_getting_list = models.TextField(default='', blank=True, null=True)
+
 
 class AsinModel(models.Model):
     asin = models.CharField(max_length=10)
@@ -63,6 +67,8 @@ class AsinModel(models.Model):
     jan = models.TextField(max_length=100, default='', blank=True)
     category_tree = models.JSONField(blank=True, default={})
     price = models.IntegerField(default=0, blank=True)
+
+    q10_category = models.CharField(default='', blank=True, max_length=10000)
 
 
 class RecordsModel(models.Model):

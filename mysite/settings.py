@@ -39,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # 'list_price_revision',
-    # 'accounts',
-    # 'autobuy',
+    'list_price_revision',
+    'accounts',
+    'autobuy',
     'django_celery_results',
 ]
 
@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'mysite.middleware.test_middleware.LoginRequiredMiddleware'
+    'mysite.middleware.test_middleware.LoginRequiredMiddleware'
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -122,7 +122,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 LOGIN_URL = '/login'
 LOGIN_REDIRECT_URL = 'base'

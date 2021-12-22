@@ -27,14 +27,22 @@ def records_saved(username, date):
 
     asin_waiting_list: list = list(obj.asin_waiting_list.split(','))
     asin_list = list(obj.asin_list.split(','))
+    asin_getting_list = list(obj.asin_getting_list.split(','))
+
+    new_getting_list = []
 
     to_search_list = []
     for asin in asin_waiting_list:
-        if not AsinModel.objects.filter(asin=asin).exists():
+        if not AsinModel.objects.filter(asin=asin).exists() and asin not in asin_getting_list:
             to_search_list.append(asin)
         else:
+            asin_getting_list.append(asin)
             asin_waiting_list.remove(asin)
             asin_list.append(asin)
+            new_getting_list.append(asin)
+
+    obj.asin_getting_list = ','.join(asin_getting_list)
+    obj.save()
 
     print('search_list', to_search_list)
     print('asin_list', obj.asin_list)
@@ -104,7 +112,8 @@ def records_saved(username, date):
                         description='\n'.join(temp['description']),
                         jan=temp['jan'],
                         category_tree=temp['category_tree'],
-                        price=int(temp['price'])
+                        price=int(temp['price']),
+                        q10_category=temp['q10_category']
                     ).save()
                     to_transfer_list.append(key)
                 except:
@@ -128,6 +137,7 @@ def records_saved(username, date):
 
     obj.asin_list = ','.join(list(filter(None, asin_list)))
     obj.asin_waiting_list = ','.join(list(filter(None, asin_waiting_list)))
+    obj.asin_getting_list = ','.join([val for val in obj.asin_getting_list.split(',') if val not in new_getting_list])
     obj.save()
 
     corresponding_record_object.already_listed = True

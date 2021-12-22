@@ -101,7 +101,7 @@ def asin_view(request):
                 if not os.path.isdir(folder_dir):
                     os.mkdir(folder_dir)
 
-                with open(file_path, "wb+") as f:
+                with open(file_path, "wb") as f:
                     f.write(csv_file.read())
 
                 with open(file_path, 'r', encoding='shift-jis', errors='ignore') as file:
@@ -211,6 +211,7 @@ def setting_view(request):
         try:
             obj.q10_id = temp['q10_id']
             obj.q10_password = temp['q10_password']
+            obj.q10_api = temp['q10_api']
             obj.description_header = temp['description_header']
             obj.description_footer = temp['description_footer']
             obj.initial_letter = temp['initial_letter']

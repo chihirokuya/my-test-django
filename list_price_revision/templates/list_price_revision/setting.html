@@ -59,6 +59,12 @@
                         value="{{ obj.q10_password }}">
                     </div>
 
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">パスワード</label>
+                        <input type="password" form='UserForm' class="form-control" id="" name="q10_api" placeholder="Password"
+                               value="{{ obj.q10_api }}">
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -198,14 +204,13 @@
             </div>
             <!-- /.box-body -->
         </div>
+        <form method="POST" action="" id="UserForm">{% csrf_token %}
+            <div style="width:20%;margin:auto;">
+                <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
+            </div>
+        </form>
     </div>
 
 </div>
-
-<form method="POST" action="" id="UserForm">{% csrf_token %}
-    <div style="width:20%;margin:auto;">
-        <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
-    </div>
-</form>
 
 {% endblock %}

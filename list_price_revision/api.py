@@ -2,9 +2,16 @@ from sp_api.api import Catalog, Products
 from sp_api.base import Marketplaces
 from sp_api.base.exceptions import SellingApiRequestThrottledException, SellingApiBadRequestException, \
     SellingApiForbiddenException, SellingApiServerException, SellingApiTemporarilyUnavailableException
+from .models import AsinModel
 import keepa
 import time
 import random
+import requests
+from .models import UserModel
+from bs4 import BeautifulSoup
+from urllib.parse import quote
+from mysite.settings import MEDIA_ROOT
+import csv
 
 
 class SpApiFunction:
@@ -199,6 +206,113 @@ def keepa_info(product):
     return [links, description, jan, category_tree]
 
 
+def get_category_qoo10(product_name):
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X'
+                             ' 10_11_5) AppleWebKit/537.36 (KHTML, like '
+                             'Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+
+    soup = BeautifulSoup(
+        requests.get('https://www.qoo10.jp/s/?keyword=' + quote(product_name),
+                     headers=headers).text,
+        'html.parser')
+
+    elm = soup.find(id='category_result_list')
+
+    if elm is None:
+        soup = BeautifulSoup(
+            requests.get('https://www.qoo10.jp/s/?keyword=' + quote(product_name[:50]),
+                         headers=headers).text,
+            'html.parser')
+
+        elm = soup.find(id='category_result_list')
+
+        if elm is None:
+            return ''
+
+    elms = elm.find_all('a')
+
+    if len(elms) > 0:
+        for elm in elms:
+            if elm.has_attr('href'):
+                link = elm['href'].split('gdlc_cd=')
+                if len(link) != 1:
+                    if link[1][0] == '3':
+                        return link[1]
+
+    elms = soup.find_all(class_='sbj')
+
+    if len(elms) > 0:
+        link = ''
+        for elm in elms:
+            a_s = elm.find_all('a')
+
+            for a in a_s:
+                if a.has_attr('data-type') and a['data-type'] == 'goods_url':
+                    link = a['href']
+                    break
+
+            if link != '':
+                break
+
+        if link != '':
+            soup = BeautifulSoup(requests.get(link, headers).text, 'html.parser')
+
+            elm = soup.find(id='img_search_gdsc_cd')
+
+            if elm is not None:
+                return elm['value']
+
+    return ''
+
+
+def get_cat_from_csv(category_tree):
+    with open(MEDIA_ROOT + '/categories.csv', 'r', encoding='utf-8_sig',
+              errors='ignore') as f:
+        categories = [r for r in csv.reader(f) if r and r[0] != '']
+
+    def match_():
+        match_sec = ''
+        for cat in categories:
+            # if matches exactly
+            if cat[5] == keyword:
+                return cat[4]
+
+            if keyword in cat[5]:
+                return cat[4]
+
+            if keyword == cat[3]:
+                match_sec = cat[2]
+
+        if match_sec != '':
+            li = [cat for cat in categories if cat[3] == match_sec]
+            for cat in li:
+                if cat[5] == 'その他':
+                    return cat[4]
+
+        return ''
+
+    for i in reversed(category_tree):
+        try:
+            keyword = i['name']
+        except:
+            pass
+
+        category_num = match_()
+
+        if category_num != '':
+            return category_num
+
+        if '・' in i['name']:
+            keywords = i['name'].split('・')
+            for key in keywords:
+                keyword = key
+                category_num = match_()
+                if category_num != '':
+                    return category_num
+
+    return ''
+
+
 def get_info_from_amazon(to_search_class, asin_list):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
@@ -206,6 +320,10 @@ def get_info_from_amazon(to_search_class, asin_list):
     print('取得ASINリスト', asin_list)
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
     for asin in asin_list:
+        if AsinModel.objects.filter(asin=asin).exists():
+            print('already exists', asin)
+            continue
+
         result = get_from_sp_api(asin)
 
         # 成功したら
@@ -221,7 +339,7 @@ def get_info_from_amazon(to_search_class, asin_list):
             to_search_class.to_delete_asin_list.append(asin)
 
     # 成功したASINリスト
-    succeed_asin_list = list(to_search_class.result_list.keys())
+    succeed_asin_list = [asin for asin in list(to_search_class.result_list.keys()) if not AsinModel.objects.filter(asin=asin).exists()]
     # ASINを10個ずつに分ける
     temp = []
     for i in range(0, len(succeed_asin_list), 10):
@@ -242,11 +360,121 @@ def get_info_from_amazon(to_search_class, asin_list):
             result = keepa_info(product)
 
             if result:
+                category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+
+                print('category1', category)
+
+                if category == '':
+                    category = get_cat_from_csv(result[3])
+                    print('category2', category)
+
                 to_search_class.result_list[product['asin']]['links'] = result[0]
                 to_search_class.result_list[product['asin']]['description'] = result[1]
                 to_search_class.result_list[product['asin']]['jan'] = result[2]
                 to_search_class.result_list[product['asin']]['category_tree'] = result[3]
+                to_search_class.result_list[product['asin']]['q10_category'] = category
             else:
                 to_search_class.to_delete_asin_list.append(product['asin'])
 
     print('ASIN取得完了')
+
+
+
+
+# qoo10系
+def get_api_key(username):
+    return UserModel.objects.get(username=username).q10_api
+
+
+# return Certification_key or None
+def get_certification_key(username):
+    api_key = get_api_key(username)
+
+    user_id = UserModel.objects.get(username=username).q10_id
+    password = UserModel.objects.get(username=username).q10_password
+    res = requests.get(
+        'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?'
+        f'key={api_key}'
+        '&v=1.0'
+        '&returnType=json&method=CertificationAPI.CreateCertificationKey&'
+        f'user_id={user_id}'
+        f'&pwd={password}'
+    ).json()
+
+    return res['ResultObject']
+
+
+# ['SellerCode']
+def get_all_items(certification_key):
+    res = requests.get(
+        f'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi'
+        f'?key={certification_key}'
+        '&v=1.0'
+        '&returnType=json'
+        '&method=ItemsLookup.GetAllGoodsInf'
+        'o&ItemStatus=S2'
+        '&Page=1').json()
+
+    total_page = res['ResultObject']['TotalPages']
+    total_items = res['ResultObject']['TotalItems']
+
+    if total_items == 0:
+        return []
+
+    items = res['ResultObject']['Items']
+
+    for page in range(2, total_page + 1):
+        res = requests.get(
+            f'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi'
+            f'?key={certification_key}'
+            '&v=1.0'
+            '&returnType=json'
+            '&method=ItemsLookup.GetAllGoodsInf'
+            'o&ItemStatus=S2'
+            '&Page=1').json()
+
+        items.extend(res['ResultObject']['Items'])
+
+    items = [val['SellerCode'] for val in items]
+
+    return items
+
+
+def upload_new_item(asin_list, username):
+    certification_key = get_certification_key(username)
+
+    host = 'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi' \
+           f'?1.1&returnType=json&method=ItemsBasic.SetNewGoods&key={certification_key}'
+
+    for asin in asin_list:
+        AsinModel.objects.get(asin=asin)
+        val = "&SecondSubCat=String" \
+              "&OuterSecondSubCat=String" \
+              "&Drugtype=String" \
+              "&BrandNo=String" \
+              "&ItemTitle=String" \
+              "&PromotionName=String" \
+              "&SellerCode=String" \
+              "&IndustrialCodeType=String" \
+              "&IndustrialCode=String" \
+              "&ModelNM=String" \
+              "&ManufactureDate=String" \
+              "&ProductionPlaceType=String" \
+              "&ProductionPlace=String" \
+              "&Weight=Decimal" \
+              "&Material=String" \
+              "&AdultYN=String" \
+              "&ContactInfo=String" \
+              "&StandardImage=String" \
+              "&VideoURL=String" \
+              "&ItemDescription=String" \
+              "&AdditionalOption=String" \
+              "&ItemType=String" \
+              "&RetailPrice=Decimal" \
+              "&ItemPrice=Decimal" \
+              "&ItemQty=Int32" \
+              "&ExpireDate=String" \
+              "&ShippingNo=Int32" \
+              "&AvailableDateType=String" \
+              "&AvailableDateValue=String" \
+              "&Keyword=String"
