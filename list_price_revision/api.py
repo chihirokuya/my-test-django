@@ -317,7 +317,6 @@ def get_info_from_amazon(to_search_class, asin_list):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
     print('####### Amazonから取得 #########')
-    print('取得ASINリスト', asin_list)
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
     for asin in asin_list:
         if AsinModel.objects.filter(asin=asin).exists():

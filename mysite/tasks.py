@@ -29,8 +29,6 @@ def records_saved(username, date):
     asin_list = list(obj.asin_list.split(','))
     asin_getting_list = list(obj.asin_getting_list.split(','))
 
-    print(f'asingetting {asin_getting_list}')
-
     new_getting_list = []
 
     to_search_list = []
@@ -43,17 +41,12 @@ def records_saved(username, date):
             asin_waiting_list.remove(asin)
             asin_list.append(asin)
 
-    print(f'asin get {asin_getting_list}')
     obj.asin_getting_list = ','.join(asin_getting_list)
     obj.save()
-    print('saved')
-
-    print('search_list', to_search_list)
-    print('asin_list', obj.asin_list)
-    print('asin_waiting_list', obj.asin_waiting_list)
 
     to_transfer_list = []
 
+    print('search list', to_search_list)
     if to_search_list:
         # 個数を確認し、5個またはそれ以下のThreadを作成
         class ToSearchThread:
