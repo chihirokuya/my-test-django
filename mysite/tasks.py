@@ -29,20 +29,24 @@ def records_saved(username, date):
     asin_list = list(obj.asin_list.split(','))
     asin_getting_list = list(obj.asin_getting_list.split(','))
 
+    print(f'asingetting {asin_getting_list}')
+
     new_getting_list = []
 
     to_search_list = []
     for asin in asin_waiting_list:
         if not AsinModel.objects.filter(asin=asin).exists() and asin not in asin_getting_list:
+            asin_getting_list.append(asin)
+            new_getting_list.append(asin)
             to_search_list.append(asin)
         else:
-            asin_getting_list.append(asin)
             asin_waiting_list.remove(asin)
             asin_list.append(asin)
-            new_getting_list.append(asin)
 
+    print(f'asin get {asin_getting_list}')
     obj.asin_getting_list = ','.join(asin_getting_list)
     obj.save()
+    print('saved')
 
     print('search_list', to_search_list)
     print('asin_list', obj.asin_list)
@@ -68,8 +72,6 @@ def records_saved(username, date):
         length = len(to_search_list) // thread_num
         divided_list = [to_search_list[i * length: (i + 1) * length] for i in range(thread_num - 1)]
         divided_list.append(to_search_list[(thread_num - 1) * length:])
-
-        print('divided_list', divided_list)
 
         threads = []
         to_search_class = ToSearchThread
