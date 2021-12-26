@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -135,6 +136,12 @@ MEDIA_URL = '/media/'
 # Celery設定
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
 CELERY_RESULT_BACKEND = "django-db"
+CELERY_BEAT_SCHEDULE = {
+    're_price': {
+        'task': 'mysite.tasks.re_price',
+        'schedule': crontab(minute='*/1')  # execute every minute
+    }
+}
 
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 

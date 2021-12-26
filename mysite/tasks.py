@@ -1,9 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 import time
+import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel
 import threading
-from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items
+from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction
 
 
 @shared_task
@@ -171,3 +172,55 @@ def link_q10_account(username):
     certification_key = get_certification_key(username)
 
     link_q10_items(certification_key, username)
+
+
+@shared_task
+def re_price():
+    print(datetime.datetime.today(), '価格改定開始')
+
+    objects = AsinModel.objects.all()
+    total_length = len(objects)
+
+    def update_prices(thread_objects):
+        print('start update')
+
+        sp_api = SpApiFunction()
+
+        for obj in thread_objects:
+            offers = sp_api.get_offers(obj.asin)
+
+            if offers is None:
+                continue
+
+            if offers.errors is not None:
+                continue
+
+            price = sp_api.get_lowest_price(offers)
+
+            print(price)
+
+            if price:
+                obj.asin = int(price)
+                obj.save()
+
+    thread_num = 5
+
+    length = len(objects) // thread_num
+    divided_list = [objects[i * length: (i + 1) * length] for i in range(thread_num - 1)]
+    divided_list.append(objects[(thread_num - 1) * length:])
+
+    print(divided_list)
+
+    threads = []
+    for i in range(thread_num):
+        threads.append(threading.Thread(
+            target=update_prices,
+            kwargs={
+                'thread_objects': divided_list[i],
+            }
+        ))
+
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
