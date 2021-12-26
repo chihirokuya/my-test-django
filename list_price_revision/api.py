@@ -2,7 +2,7 @@ from sp_api.api import Catalog, Products
 from sp_api.base import Marketplaces
 from sp_api.base.exceptions import SellingApiRequestThrottledException, SellingApiBadRequestException, \
     SellingApiForbiddenException, SellingApiServerException, SellingApiTemporarilyUnavailableException
-from .models import AsinModel
+from .models import AsinModel, Q10BrandCode, UserModel, Q10ItemsLink, ListingModel
 import keepa
 import time
 import random
@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 from mysite.settings import MEDIA_ROOT
 import csv
+import re
 
 
 class SpApiFunction:
@@ -21,7 +22,7 @@ class SpApiFunction:
     def __init__(self):
         refresh_token_list = [
             'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
-            ]
+        ]
         lwa_app_id = "amzn1.application-oa2-client.8615bda7d6e346e48332aa5f892c3afe"
         lwa_client_secret = "07f880c663c5b4d46cdca2da0d008daabe45a66eb9278e64dd77e7bbb52ac64b"
         aws_secret_key = "5aFD+AlaAzRAOO+BMb9J7PymhWBCYzsdLn+mIJZC"
@@ -128,7 +129,6 @@ class SpApiFunction:
             brand = catalog['AttributeSets'][0]['Brand']
         except Exception as e:
             brand = ''
-            print(e)
 
         product_name = product_name.replace(brand, '')
 
@@ -136,7 +136,6 @@ class SpApiFunction:
             product_group = catalog['AttributeSets'][0]['ProductGroup']
         except Exception as e:
             product_group = ''
-            print(e)
 
         return True, [product_name, brand, product_group]
 
@@ -169,7 +168,6 @@ def get_from_sp_api(asin):
     return [values[0], int(float(price)), values[1], values[2]]
 
 
-#
 def keepa_info(product):
     result = []
     try:
@@ -313,7 +311,7 @@ def get_cat_from_csv(category_tree):
     return ''
 
 
-def get_info_from_amazon(to_search_class, asin_list):
+def get_info_from_amazon(to_search_class, asin_list, certification_key):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
     print('####### Amazonから取得 #########')
@@ -327,6 +325,18 @@ def get_info_from_amazon(to_search_class, asin_list):
 
         # 成功したら
         if result:
+            # ブランドがあるなら変換する
+            if result[2]:
+                if Q10BrandCode.objects.filter(brand_name=result[2]).exists():
+                    code = Q10BrandCode.objects.get(brand_name=result[2]).code
+                else:
+                    code = search_brand(certification_key, result[2])
+
+                    if code != '':
+                        Q10BrandCode(brand_name=result[2], code=code).save()
+
+                result[2] = code
+
             to_search_class.result_list[asin] = {
                 "name": result[0],
                 "price": result[1],
@@ -338,7 +348,8 @@ def get_info_from_amazon(to_search_class, asin_list):
             to_search_class.to_delete_asin_list.append(asin)
 
     # 成功したASINリスト
-    succeed_asin_list = [asin for asin in list(to_search_class.result_list.keys()) if not AsinModel.objects.filter(asin=asin).exists()]
+    succeed_asin_list = [asin for asin in list(to_search_class.result_list.keys()) if
+                         not AsinModel.objects.filter(asin=asin).exists()]
     # ASINを10個ずつに分ける
     temp = []
     for i in range(0, len(succeed_asin_list), 10):
@@ -376,7 +387,6 @@ def get_info_from_amazon(to_search_class, asin_list):
                 to_search_class.to_delete_asin_list.append(product['asin'])
 
     print('ASIN取得完了')
-
 
 
 
@@ -439,41 +449,258 @@ def get_all_items(certification_key):
     return items
 
 
-def upload_new_item(asin_list, username):
-    certification_key = get_certification_key(username)
+def search_brand(certification_key, keyword):
+    res = requests.get(
+        f'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&method=CommonInfoLookup.SearchBran'
+        f'd&key={certification_key}&keyword={keyword}').json()['ResultObject']
 
-    host = 'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi' \
-           f'?1.1&returnType=json&method=ItemsBasic.SetNewGoods&key={certification_key}'
+    print(res)
+    brand_code = ''
+    if res:
+        brand_code = re.sub('\\D', '', res[0]['M_B_NO'])
 
-    for asin in asin_list:
-        AsinModel.objects.get(asin=asin)
-        val = "&SecondSubCat=String" \
-              "&OuterSecondSubCat=String" \
-              "&Drugtype=String" \
-              "&BrandNo=String" \
-              "&ItemTitle=String" \
-              "&PromotionName=String" \
-              "&SellerCode=String" \
-              "&IndustrialCodeType=String" \
-              "&IndustrialCode=String" \
-              "&ModelNM=String" \
-              "&ManufactureDate=String" \
-              "&ProductionPlaceType=String" \
-              "&ProductionPlace=String" \
-              "&Weight=Decimal" \
-              "&Material=String" \
-              "&AdultYN=String" \
-              "&ContactInfo=String" \
-              "&StandardImage=String" \
-              "&VideoURL=String" \
-              "&ItemDescription=String" \
-              "&AdditionalOption=String" \
-              "&ItemType=String" \
-              "&RetailPrice=Decimal" \
-              "&ItemPrice=Decimal" \
-              "&ItemQty=Int32" \
-              "&ExpireDate=String" \
-              "&ShippingNo=Int32" \
-              "&AvailableDateType=String" \
-              "&AvailableDateValue=String" \
-              "&Keyword=String"
+    return brand_code
+
+
+def upload_new_item(asin, username, certification_key):
+    user_obj = UserModel.objects.get(username=username)
+    initial_letter = user_obj.initial_letter
+    stock_num = user_obj.stock_num
+    shipping_code = user_obj.shipping_code
+
+    obj = AsinModel.objects.get(asin=asin)
+
+    images = obj.photo_list.split('\n')
+
+    header = {
+        "Content-Type": 'application/x-www-form-urlencoded',
+        "QAPIVersion": '1.1',
+        'GiosisCertificationKey': certification_key
+    }
+
+    html = '<div>'
+    for val in obj.description.split('\n'):
+        html += f'<li>{val}</li>'
+    html += '</div>'
+
+    print(type(obj.brand))
+    data = {
+        'SecondSubCat': obj.q10_category,
+        'OuterSecondSubCat': '',
+        'Drugtype': '',
+        'BrandNo': str(obj.brand),
+        'ItemTitle': obj.product_name,
+        'PromotionName': '',
+        'SellerCode': initial_letter + obj.asin[1:],
+        'IndustrialCodeType': 'J' if obj.jan else '',
+        'IndustrialCode': obj.jan,
+        'ModelNM': '',
+        'ManufactureDate': '',
+        'ProductionPlaceType': '',
+        'ProductionPlace': '',
+        'Weight': '',
+        'Material': '',
+        'AdultYN':'N',
+        'ContactInfo': '',
+        'StandardImage': images[0],
+        'VideoURL': '',
+        'ItemDescription': html,
+        'AdditionalOption': '',
+        'ItemType': '',
+        'RetailPrice': 0,
+        'ItemPrice': float(obj.price),
+        'ItemQty': int(stock_num),
+        'ShippingNo': int(shipping_code),
+        'AvailableDateType': '3',
+        'AvailableDateValue': '20:00',
+        'Keyword': obj.product_name[:30]
+    }
+
+    res = requests.post('https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsBasic.SetNewGoods',
+                        headers=header, data=data).json()
+
+    print(res)
+
+    if res['ResultCode'] == 0:
+        if images[1:]:
+            link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsContents.EditGoodsMultiImage'
+
+            data = {"SellerCode": initial_letter + obj.asin[1:]}
+
+            for i, val in enumerate(images[1:]):
+                data[f'EnlargedImage{i + 1}'] = val
+
+            res = requests.post(link, headers=header, data=data)
+
+            print(res.json())
+
+        return True
+    else:
+        try:
+            if 'Can not register the goods' in res['ResultMsg']:
+                return True
+        except:
+            pass
+
+        return False
+
+
+# [product_name, brand, description, jan, q10_category, price]
+def get_item_info(certification_key, seller_code):
+    link = f'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.1&method=ItemsLookup.GetItemDetailInfo&key={certification_key}&SellerCode={seller_code}'
+
+    res = requests.get(link).json()
+
+    if 'ResultObject' in res.keys():
+        res = res['ResultObject'][0]
+    else:
+        return []
+
+    product_name = res['ItemTitle']
+    brand = res['BrandNo']
+
+    description = res['ItemDetail'].replace('<div>', '').replace('<li>', '').replace('</div>', '').replace('</li>', '\n')
+    jan = res['IndustrialCode']
+    q10_category = res['SecondSubCatCd']
+    price = res['ItemPrice']
+
+    return [product_name, brand, description, jan, q10_category, price]
+
+
+def link_q10_items(certification_key, username):
+    item_link_obj: Q10ItemsLink = Q10ItemsLink.objects.get(username=username)
+    if item_link_obj.still_getting:
+        return
+    else:
+        item_link_obj.still_getting = True
+        item_link_obj.save()
+
+    if not ListingModel.objects.filter(username=username).exists():
+        ListingModel(username=username).save()
+    listing_obj: ListingModel = ListingModel.objects.get(username=username)
+
+    listing_obj.asin_list = ''
+    listing_obj.save()
+
+    items = get_all_items(certification_key)
+
+    keepa_key = 'e4s4q8m7evnnrdsn095aj3llhbcmsqa13v0f5igam6vnomlplb970pduatfrdbi9'
+    api = keepa.Keepa(keepa_key)
+
+    item_link_obj.total_asin_list = ','.join(items)
+    item_link_obj.linked_asin_list = ''
+    item_link_obj.save()
+
+    # max length: 10
+    temp_list = []
+
+    def update_to_finished(code):
+        temp: list = item_link_obj.linked_asin_list.split(',')
+        temp.append(code)
+        item_link_obj.linked_asin_list = ','.join(temp)
+        item_link_obj.save()
+
+        return True
+
+    def keepa_fun(asin_list: list):
+        # 3回ためす
+        for j in range(3):
+            try:
+                products = api.query([val[0] for val in asin_list], wait=True, domain='JP')
+            except:
+                if j == 2:
+                    print('LinkQ10: Keepaに３回以内に接続できませんでした。')
+                    break
+                time.sleep(3)
+                continue
+
+            to_delete_list = []
+            for i, product in enumerate(products):
+                try:
+                    product_group = product['productGroup']
+                except:
+                    print('failed on product group')
+                    to_delete_list.append(asin_list[i])
+                    continue
+
+                photo_list = []
+                try:
+                    images = product['imagesCSV'].split(',')
+                except AttributeError:
+                    print('failed image', asin_list[i][0])
+                    to_delete_list.append(asin_list[i])
+                    continue
+
+                if not images:
+                    to_delete_list.append(asin_list[i])
+                    continue
+
+                for image in images:
+                    photo_list.append('https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
+
+                try:
+                    category_tree = product['categoryTree']
+                    if category_tree is None:
+                        to_delete_list.append(asin_list[i])
+                        continue
+                except:
+                    print('failed on cat')
+                    to_delete_list.append(asin_list[i])
+                    continue
+
+                asin_list[i].append([product_group, photo_list, category_tree])
+
+            for li in to_delete_list:
+                asin_list.remove(li)
+
+            break
+
+        return asin_list
+
+    def update_listing(asin_):
+        # AsinListに追加
+        temp = listing_obj.asin_list.split(',')
+        temp.append(asin_)
+        listing_obj.asin_list = ','.join(temp)
+        listing_obj.save()
+
+    for asin in items:
+        if AsinModel.objects.filter(asin='B' + asin[1:]).exists():
+            update_listing('B' + asin[1:])
+        elif len(asin) == 10:
+            result_list = get_item_info(certification_key, asin)
+
+            if result_list:
+                temp_list.append(['B' + asin[1:], result_list])
+
+        update_to_finished(asin)
+
+        # 10個溜まったならKeepaで取得
+        if len(temp_list) == 10:
+            res = keepa_fun(temp_list)
+
+            for result in res:
+                try:
+                    # result: [asin, [product_name, brand, description, jan, q10_category, price], [product_group, photo_list, category_tree]]
+                    obj = AsinModel()
+                    obj.asin = result[0]
+                    obj.product_name = result[1][0]
+                    obj.brand = result[1][1]
+                    obj.description = result[1][2]
+                    obj.jan = result[1][3]
+                    obj.q10_category = result[1][4]
+                    obj.price = int(float(result[1][5]))
+                    obj.product_group = result[2][0]
+                    obj.photo_list = '\n'.join(result[2][1])
+                    obj.category_tree = result[2][2]
+                    obj.save()
+
+                    update_listing(result[0])
+                except Exception as e:
+                    print('LinkQ10Items: リンクに失敗', str(e))
+
+            temp_list = []
+
+    item_link_obj.still_getting = False
+    item_link_obj.save()
+

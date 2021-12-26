@@ -81,3 +81,17 @@ class RecordsModel(models.Model):
     already_listed = models.BooleanField(null=True, blank=True, default=False)
 
     asin_list = models.TextField(null=True, default='', blank=True)
+
+
+class Q10BrandCode(models.Model):
+    brand_name = models.CharField(max_length=10000)
+    code = models.CharField(max_length=10000)
+
+
+class Q10ItemsLink(models.Model):
+    username = models.CharField(max_length=1000)
+
+    total_asin_list = models.TextField(default='', null=True, blank=True)
+    linked_asin_list = models.TextField(default='', null=True, blank=True)
+
+    still_getting = models.BooleanField(default=False, null=True, blank=True)

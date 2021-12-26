@@ -17,6 +17,7 @@
           <option value="list_price_revision.models.ListingModel.objects" />
           <option value="list_price_revision.models.UserModel.objects" />
           <option value="list_price_revision.models.AsinModel.objects" />
+          <option value="list_price_revision.models.Q10ItemsLink.objects" />
         </list>
       </option>
     </inspection_tool>

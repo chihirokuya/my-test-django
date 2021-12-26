@@ -1,25 +1,37 @@
 {% extends 'list_price_revision/base.html' %}
 
 {% block content %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible" onclick="delete_fun()">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>
+    <h4><i class="icon fa fa-check"></i> {% if message.tags %}保存完了!{% else %}保存失敗。{% endif %}</h4>
+    {% for message in messages %}
+    <p> {{ message }}</p>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endif %}
+
 <div class="col-lg-3 col-xs-6">
     <!-- small box -->
     <div class="small-box bg-aqua">
-        <div class="inner">
-            <h3>150</h3>
+        <div class="inner" onclick="document.getElementById('a_asin').click()">
+            <h3>0</h3>
 
             <p>ASIN登録</p>
         </div>
         <div class="icon">
             <i class="fa fa-edit"></i>
         </div>
-        <a href="{% url 'price:asin' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+        <a href="{% url 'price:asin' %}" class="small-box-footer" id="a_asin">More info <i class="fa fa-arrow-circle-right"></i></a>
     </div>
 </div>
 
 <div class="col-lg-3 col-xs-6">
     <!-- small box -->
     <div class="small-box bg-yellow">
-        <div class="inner">
+        <div class="inner" onclick="document.getElementById('a_listing').click()">
             <h3>{{ asin_list_length }}</h3>
 
             <p>出品中</p>
@@ -27,37 +39,69 @@
         <div class="icon">
             <i class="fa fa-th-list"></i>
         </div>
-        <a href="{% url 'price:listing' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+        <a href="{% url 'price:listing' %}" class="small-box-footer" id="a_listing">More info <i class="fa fa-arrow-circle-right"></i></a>
     </div>
 </div>
 
 <div class="col-lg-3 col-xs-6">
     <!-- small box -->
     <div class="small-box bg-gray">
-        <div class="inner">
-            <h3>150</h3>
+        <div class="inner" onclick="document.getElementById('a_black').click()">
+            <h3>0</h3>
 
             <p>ブラックリスト</p>
         </div>
         <div class="icon">
             <i class="fa fa-thumbs-o-down"></i>
         </div>
-        <a href="{% url 'price:blacklist' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+        <a href="{% url 'price:blacklist' %}" class="small-box-footer" id="a_black">More info <i class="fa fa-arrow-circle-right"></i></a>
     </div>
 </div>
 
 <div class="col-lg-3 col-xs-6">
     <!-- small box -->
     <div class="small-box bg-green">
-        <div class="inner">
-            <h3>150</h3>
+        <div class="inner" onclick="document.getElementById('a_setting').click()">
+            <h3>0</h3>
 
             <p>設定</p>
         </div>
         <div class="icon">
             <i class="fa fa-gears"></i>
         </div>
-        <a href="{% url 'price:setting' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+        <a href="{% url 'price:setting' %}" class="small-box-footer" id="a_setting">More info <i class="fa fa-arrow-circle-right"></i></a>
     </div>
 </div>
+
+<div class="col-md-12">
+    <div class="box box-success">
+        <div class="box-header with-border">
+            <h3 class="box-title">Q10商品リンク</h3>
+        </div>
+
+        <div class="box-body">
+            初めてご利用なされる際には設定を行った後、『リンク』ボタンを押し、QSMから商品リストを取得してきます。<br>
+            ※リンクボタンを押すと『出品中』のリストが一旦全てリセットされます。
+
+            <div class="row" style="height:80px;padding:20px">
+                <div class="col-md-2" align="right">
+                    <form method="POST" action="">{% csrf_token %}
+                        <input type="submit" class="btn btn-block btn-info" style="width:100px; vertical-align:middle;" value="リンク" name="link_button">
+                    </form>
+                </div>
+                <div class="col-md-10">
+                <div class="progress-group">
+                    <span class="progress-text">進捗度</span>
+                    <span class="progress-number"><b>{{ linked_length }}</b>/{{ total_length }}</span>
+
+                    <div class="progress sm">
+                        <div class="progress-bar progress-bar-aqua" style="width: {{ percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

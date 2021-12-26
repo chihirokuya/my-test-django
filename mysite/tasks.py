@@ -3,12 +3,20 @@ from celery import shared_task
 import time
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel
 import threading
-from list_price_revision.api import get_info_from_amazon
+from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items
 
 
 @shared_task
 def records_saved(username, date):
     """
+    obj.asin_list: 出品済みリスト
+    obj.asin_waiting_list: ASINを取得中または出品待ち
+    obj.asin_getting_list: すでにASINを取得中（出品は関係ない）。これに入っているASINはto_search_listから外す。
+
+    1: usernameに対応するListingModel、RecordsModelを取得してくる。
+    2: waiting_listにあるASIN情報を取得し、AsinModelに追加する。その際にAsinModelまたはasin_getting_listにあるものは省く。
+    3: asin_getting_listを更新する。
+
     どのASINがまだ価格＆情報取得していないかを確認。その後それらを取得。(to_search_list) OK
     同時に商品が存在しないなどの理由でwaiting_listから消したいASINを別に保存。(to_delete_list) OK
     削除するASINを削除する。 OK
@@ -24,12 +32,15 @@ def records_saved(username, date):
 
     obj = ListingModel.objects.get(username=username)
     corresponding_record_object = RecordsModel.objects.get(username=username, date=date)
+    certification_key = get_certification_key(username)
 
     asin_waiting_list: list = list(obj.asin_waiting_list.split(','))
     asin_list = list(obj.asin_list.split(','))
     asin_getting_list = list(obj.asin_getting_list.split(','))
 
     new_getting_list = []
+    to_transfer_list = []
+    to_list_but_still_in_waiting = []
 
     to_search_list = []
     for asin in asin_waiting_list:
@@ -38,13 +49,12 @@ def records_saved(username, date):
             new_getting_list.append(asin)
             to_search_list.append(asin)
         else:
-            asin_waiting_list.remove(asin)
-            asin_list.append(asin)
+            if asin in asin_list:
+                asin_waiting_list.remove(asin)
+            to_list_but_still_in_waiting.append(asin)
 
     obj.asin_getting_list = ','.join(asin_getting_list)
     obj.save()
-
-    to_transfer_list = []
 
     print('search list', to_search_list)
     if to_search_list:
@@ -73,7 +83,8 @@ def records_saved(username, date):
                 target=get_info_from_amazon,
                 kwargs={
                     "to_search_class": to_search_class,
-                    'asin_list': divided_list[i]
+                    'asin_list': divided_list[i],
+                    "certification_key": certification_key
                 }
             ))
 
@@ -119,16 +130,27 @@ def records_saved(username, date):
     else:
         print('search_listが空なためasin_listに直で追加します。')
 
+    to_transfer_list.extend(to_list_but_still_in_waiting)
 
     # 出品→asin_waitingからasin_listに移す
+    print(to_transfer_list)
     for asin in to_transfer_list:
-        # TODO
-        try:
-            asin_waiting_list.remove(asin)
-        except:
-            pass
+        if upload_new_item(asin, username, certification_key):
+            print('OK')
+            try:
+                asin_waiting_list.remove(asin)
+            except:
+                pass
 
-        asin_list.append(asin)
+            try:
+                asin_getting_list.remove(asin)
+            except:
+                pass
+
+            asin_list.append(asin)
+        else:
+            print('waiting', asin_waiting_list)
+
 
     obj.asin_list = ','.join(list(filter(None, asin_list)))
     obj.asin_waiting_list = ','.join(list(filter(None, asin_waiting_list)))
@@ -139,3 +161,13 @@ def records_saved(username, date):
     corresponding_record_object.save()
 
     print('完了')
+
+
+@shared_task
+def link_q10_account(username):
+    """
+    ListingModel上でusernameに対応するasin_listに追加していく。
+    """
+    certification_key = get_certification_key(username)
+
+    link_q10_items(certification_key, username)
