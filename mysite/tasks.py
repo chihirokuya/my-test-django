@@ -52,6 +52,7 @@ def records_saved(username, date):
         else:
             if asin in asin_list:
                 asin_waiting_list.remove(asin)
+                continue
             to_list_but_still_in_waiting.append(asin)
 
     obj.asin_getting_list = ','.join(asin_getting_list)
@@ -133,6 +134,8 @@ def records_saved(username, date):
 
     to_transfer_list.extend(to_list_but_still_in_waiting)
 
+    to_transfer_list = list(filter(None, to_transfer_list))
+
     # 出品→asin_waitingからasin_listに移す
     print(to_transfer_list)
     for asin in to_transfer_list:
@@ -186,22 +189,28 @@ def re_price():
 
         sp_api = SpApiFunction()
 
+        print(thread_objects)
+
         for obj in thread_objects:
-            offers = sp_api.get_offers(obj.asin)
+            offers = sp_api.get_offers('B' + obj.asin[1:])
 
             if offers is None:
+                print('offers null')
                 continue
 
             if offers.errors is not None:
+                print('offers errors not null')
                 continue
 
-            price = sp_api.get_lowest_price(offers)
+            price = sp_api.get_lowest_price(offers.payload)
 
-            print(price)
+            print(f'price {price}')
 
             if price:
-                obj.asin = int(price)
+                obj.price = int(price)
                 obj.save()
+            else:
+                print('not price')
 
     thread_num = 5
 

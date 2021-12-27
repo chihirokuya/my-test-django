@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'accounts',
     'autobuy',
     'django_celery_results',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -136,12 +137,6 @@ MEDIA_URL = '/media/'
 # Celery設定
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
 CELERY_RESULT_BACKEND = "django-db"
-CELERY_BEAT_SCHEDULE = {
-    're_price': {
-        'task': 'mysite.tasks.re_price',
-        'schedule': crontab(minute='*/1')  # execute every minute
-    }
-}
 
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
