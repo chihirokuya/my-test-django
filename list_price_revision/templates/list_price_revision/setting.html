@@ -94,25 +94,28 @@
 
                         <tbody>
                             <tr role="row">
-                                <td>0 〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"></td>
+                                <td>0 〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"
+                                onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td>{{ obj.max_1|add:1 }} 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"></td>
+                                <td><label id="min_2" style="font-weight:normal !important">{{ obj.max_1|add:1 }}</label> 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"
+                                onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td>{{ obj.max_2|add:1 }} 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"></td>
+                                <td><label id="min_3" style="font-weight:normal !important">{{ obj.max_2|add:1 }}</label> 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"
+                                onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td>{{ obj.max_3|add:1 }} 〜 </td>
+                                <td><label id="min_4" style="font-weight:normal !important">{{ obj.max_3|add:1 }}</label> 〜 </td>
                                 <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
                             </tr>
@@ -122,20 +125,7 @@
                     ※出品価格＝Amazon価格×(1＋利益率)＋固定費
                 </div>
 
-                <form class="form-horizontal">
-                    <div class="box-body">
-                        <div class="form-group"></div>
-                        <div class="form-group">
-                            <label for="kaitei" class="col-sm-2 control-label">改定間隔</label>
-                            <div class="col-sm-10">
-                                <input type="number" id="kaitei" value="{{ obj.kaitei_kankaku.hour }}" name="kaitei_hour"
-                                       style="text-align:right; width: 40px;" form="UserForm">時
-                                <input type="number" value="{{ obj.kaitei_kankaku.minute }}" name="kaitei_minute"
-                                       style="text-align:right; width:40px;" form="UserForm">分
-                            </div>
-                        </div>
-                    </div>
-                </form>
+
             </div>
 
         </div>
@@ -204,13 +194,37 @@
             </div>
             <!-- /.box-body -->
         </div>
-        <form method="POST" action="" id="UserForm">{% csrf_token %}
-            <div style="width:20%;margin:auto;">
-                <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
-            </div>
-        </form>
     </div>
 
 </div>
+
+<form method="POST" action="" id="UserForm">{% csrf_token %}
+    <div style="width:20%;margin:auto;">
+        <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
+    </div>
+</form>
+
+
+<script>
+    function update_val() {
+        max_1 = document.getElementsByName('max_1')[0].value;
+        max_2 = document.getElementsByName('max_2')[0].value;
+        max_3 = document.getElementsByName('max_3')[0].value;
+        document.getElementById('min_2').innerText = parseInt(max_1) + 1;
+        document.getElementById('min_3').innerText = parseInt(max_2) + 1;
+        document.getElementById('min_4').innerText = parseInt(max_3) + 1;
+
+        document.getElementsByName('max_2')[0].min = parseInt(max_1) + 1;
+        document.getElementsByName('max_3')[0].min = parseInt(max_2) + 1;
+
+        if (parseInt(document.getElementsByName('max_2')[0].value) <= parseInt(max_1)) {
+            document.getElementsByName('max_2')[0].value = parseInt(max_1) + 1;
+        }
+
+        if (parseInt(document.getElementsByName('max_3')[0].value) <= parseInt(max_2)) {
+            document.getElementsByName('max_3')[0].value = parseInt(max_2) + 1;
+        }
+    }
+</script>
 
 {% endblock %}

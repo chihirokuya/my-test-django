@@ -16,6 +16,19 @@
 
 
 {% block content %}
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible" onclick="delete_fun()">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>
+    <h4><i class="icon fa fa-check"></i> {% if message.tags %}保存完了!{% else %}保存失敗。{% endif %}</h4>
+    {% for message in messages %}
+    <p> {{ message }}</p>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endif %}
+
 <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/>
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 <script>
@@ -25,34 +38,99 @@
                 scrollY: true,
             });
         });
-    </script>
+
+</script>
 
 <div class="box box-info">
-<div class="box-body">
-<div class="col-sm-12">
-<table id="foo-table" class="table table-bordered">
-    <thead>
-        <tr>
-            <th>画像</th><th>ASIN</th><th>価格</th><th>商品名</th><th>JAN</th><th>ブランド</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for info in info_list %}
-    <tr role="row">
-        <td><img src="{{info.0}}" style="height: 120px;"/></td>
-        <td>{{info.1}}</td>
-        <td>{{info.2}}</td>
-        <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{info.3}}</a></td>
-        <td>{{info.4}}</td>
-        <td>{{info.5}}</td>
-    </tr>
-    {% endfor %}
+    <div class="box-body">
+        <div class="col-sm-12">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="pull-left" style="display:flex;white-space:nowrap;vertical-align: middle;height:40px;">
+                        <span style="vertical-align: middle;">選択したアイテムを削除：</span>
+                        <button class="btn btn-block btn-danger"
+                                onclick="post('{% url 'price:listing' %}', {'hello':1})">
+                            <label class="fa fa-trash-o"></label>
+                        </button>
+                        <br>
+                    </div>
+                </div>
+            </div>
+            <table id="foo-table" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>画像</th>
+                    <th>ASIN</th>
+                    <th>価格</th>
+                    <th>商品名</th>
+                    <th>JAN</th>
+                    <th>ブランド</th>
+                </tr>
+                </thead>
+                <tbody id="list_table">
+                    {% for info in info_list %}
+                    <tr role="row">
+                        <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>
+                        <td><img src="{{info.0}}" style="height: 120px;"/></td>
+                        <td class="asin">{{info.1}}</td>
+                        <td>{{info.2}}</td>
+                        <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{info.3}}</a></td>
+                        <td>{{info.4}}</td>
+                        <td>{{info.5}}</td>
+                    </tr>
+                    {% endfor %}
 
-    </tbody>
-</table>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-</div>
-</div>
+
+<script>
+     $(document).ready(function() {
+       //tr要素をクリックでイベント発火
+           $('table tr').click(function() {
+             //td要素からチェックボックスを探す
+             var $c = $(this).children('td').children('input[type=checkbox]');
+             if($c.prop('checked'))
+                $c.prop('checked', '');
+             else
+                $c.prop('checked', 'checked');
+           });
+     });
+
+     function post(path, params, method='post') {
+
+          // The rest of this code assumes you are not using a library.
+          // It can be made less verbose if you use one.
+          const form = document.createElement('form');
+          form.method = method;
+          form.action = path;
+
+          var inputElem = document.createElement('input');
+          inputElem.type = 'hidden';
+          inputElem.name = 'csrfmiddlewaretoken';
+          inputElem.value = '{{ csrf_token }}';
+          form.appendChild(inputElem);
+
+          asin_list = []
+          trs = $(list_table).find('tr');
+          for (i = 0; i < trs.length; i++)
+            if ($(trs[i]).children('td').children('input[type=checkbox]').prop('checked'))
+               asin_list.push($(trs[i]).children('.asin')[0].innerText)
+
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = 'asin_list';
+          hiddenField.value = asin_list;
+          form.appendChild(hiddenField);
+
+          document.body.appendChild(form);
+          form.submit();
+        }
+
+</script>
 
 <style>
     td {
@@ -63,6 +141,7 @@
 td a {
 vertical-align: middle;
 }
+
 </style>
 
 {% endblock %}

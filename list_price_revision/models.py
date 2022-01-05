@@ -40,8 +40,6 @@ class UserModel(models.Model):
     kotei_3 = models.IntegerField(default=0, blank=True)
     kotei_4 = models.IntegerField(default=0, blank=True)
 
-    kaitei_kankaku = models.TimeField(default=datetime.time(2, 0), blank=True)
-
 
 class ListingModel(models.Model):
     username = models.CharField(max_length=1000, blank=True)
@@ -95,3 +93,15 @@ class Q10ItemsLink(models.Model):
     linked_asin_list = models.TextField(default='', null=True, blank=True)
 
     still_getting = models.BooleanField(default=False, null=True, blank=True)
+
+
+class LogModel(models.Model):
+    username = models.CharField(max_length=1000)
+
+    date = models.DateTimeField()
+    # 価格改定or出品
+    type = models.CharField(max_length=1000)
+    # 動作を行う際に入ってくるasinリスト
+    input_asin_list = models.TextField(default='')
+    # 成功したリスト
+    success_asin_list = models.TextField(default='')

@@ -1,7 +1,7 @@
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
-from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink
-from .api import get_info_from_amazon
+from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode
+from .api import get_info_from_amazon, to_user_price
 from django.contrib import messages
 import datetime
 import os
@@ -9,6 +9,7 @@ import pytz
 import csv
 import threading
 from mysite.tasks import records_saved, link_q10_account
+from mysite import tasks
 
 base_path = 'list_price_revision/'
 
@@ -144,6 +145,7 @@ def listing_view(request):
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=request.user)
     asin_list = list_obj.asin_list.split(',')
+    user_obj = UserModel.objects.get(username=request.user)
 
     info_list = []
     for asin in asin_list:
@@ -152,18 +154,33 @@ def listing_view(request):
 
             img = temp_obj.photo_list.split('\n')[0]
             name = temp_obj.product_name
-            brand = temp_obj.brand
+            try:
+                brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+                brand = brand_obj.brand_name
+            except:
+                brand = ''
             description = temp_obj.description
             jan = temp_obj.jan
-            price = temp_obj.price
+            price = to_user_price(user_obj, temp_obj.price)
 
             info_list.append([img, asin, price, name, jan, brand, description])
         except:
             pass
 
     context = {
-        "info_list": info_list
+        "info_list": info_list,
     }
+
+    if request.method == "POST":
+        if 'asin_list' in request.POST:
+            try:
+                to_delete_asin_list = request.POST['asin_list'].split(',')
+
+                tasks.delete_items.delay(str(request.user), to_delete_asin_list)
+
+                messages.success(request, '削除が開始されました。')
+            except Exception as e:
+                messages.error(request, '内部エラーが発生しました。\n' + f'{e}')
 
     return render(request, base_path + 'listing-items.html', context)
 
@@ -246,7 +263,6 @@ def setting_view(request):
             obj.kotei_2 = int(temp['kotei_2'])
             obj.kotei_3 = int(temp['kotei_3'])
             obj.kotei_4 = int(temp['kotei_4'])
-            obj.kaitei_kankaku = datetime.time(int(temp['kaitei_hour']), int(temp['kaitei_minute']))
             obj.save()
 
             messages.success(request, '情報が更新されました')
@@ -257,3 +273,8 @@ def setting_view(request):
             return redirect(reverse('price:setting'))
 
     return render(request, base_path + 'setting.html', context)
+
+
+def log_view(request):
+    context = {}
+    return render(request, base_path + 'log_page.html', context)

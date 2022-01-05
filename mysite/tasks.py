@@ -2,9 +2,9 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 import time
 import datetime
-from list_price_revision.models import ListingModel, RecordsModel, AsinModel
+from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel
 import threading
-from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction
+from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item
 
 
 @shared_task
@@ -208,9 +208,11 @@ def re_price():
 
             if price:
                 obj.price = int(price)
-                obj.save()
             else:
+                obj.price = 0
                 print('not price')
+
+            obj.save()
 
     thread_num = 5
 
@@ -233,3 +235,21 @@ def re_price():
         thread.start()
     for thread in threads:
         thread.join()
+
+
+@shared_task
+def delete_items(username, to_delete_asin_list):
+    obj: ListingModel = ListingModel.objects.get(username=username)
+    certification_key = get_certification_key(username)
+
+    user_obj = UserModel.objects.get(username=username)
+    initial_letter = user_obj.initial_letter
+
+    for asin in to_delete_asin_list:
+        # If deleted remove also from obj.asin_list
+        res = delete_item(certification_key, initial_letter + asin[1:])
+        if type(res) == bool and res:
+            asin_list = obj.asin_list.split(',')
+            asin_list.remove(asin) if asin in asin_list else asin_list
+            obj.asin_list = ','.join(asin_list)
+            obj.save()

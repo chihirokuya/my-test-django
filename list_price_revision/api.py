@@ -15,6 +15,26 @@ import csv
 import re
 
 
+# 価格設定
+def to_user_price(obj: UserModel, price):
+    price = int(price)
+
+    if price <= obj.max_1:
+        rieki = obj.rieki_1
+        kotei = obj.kotei_1
+    elif price <= obj.max_2:
+        rieki = obj.rieki_2
+        kotei = obj.kotei_2
+    elif price <= obj.max_3:
+        rieki = obj.rieki_3
+        kotei = obj.kotei_3
+    else:
+        rieki = obj.rieki_4
+        kotei = obj.kotei_4
+
+    return int(price * (1 + rieki / 100) + kotei)
+
+
 class SpApiFunction:
     credentials = None
     counter = 0
@@ -389,7 +409,6 @@ def get_info_from_amazon(to_search_class, asin_list, certification_key):
     print('ASIN取得完了')
 
 
-
 # qoo10系
 def get_api_key(username):
     return UserModel.objects.get(username=username).q10_api
@@ -397,20 +416,23 @@ def get_api_key(username):
 
 # return Certification_key or None
 def get_certification_key(username):
-    api_key = get_api_key(username)
+    try:
+        api_key = get_api_key(username)
 
-    user_id = UserModel.objects.get(username=username).q10_id
-    password = UserModel.objects.get(username=username).q10_password
-    res = requests.get(
-        'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?'
-        f'key={api_key}'
-        '&v=1.0'
-        '&returnType=json&method=CertificationAPI.CreateCertificationKey&'
-        f'user_id={user_id}'
-        f'&pwd={password}'
-    ).json()
+        user_id = UserModel.objects.get(username=username).q10_id
+        password = UserModel.objects.get(username=username).q10_password
+        res = requests.get(
+            'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?'
+            f'key={api_key}'
+            '&v=1.0'
+            '&returnType=json&method=CertificationAPI.CreateCertificationKey&'
+            f'user_id={user_id}'
+            f'&pwd={password}'
+        ).json()
 
-    return res['ResultObject']
+        return res['ResultObject']
+    except:
+        return ''
 
 
 # ['SellerCode']
@@ -483,7 +505,6 @@ def upload_new_item(asin, username, certification_key):
         html += f'<li>{val}</li>'
     html += '</div>'
 
-    print(type(obj.brand))
     data = {
         'SecondSubCat': obj.q10_category,
         'OuterSecondSubCat': '',
@@ -500,7 +521,7 @@ def upload_new_item(asin, username, certification_key):
         'ProductionPlace': '',
         'Weight': '',
         'Material': '',
-        'AdultYN':'N',
+        'AdultYN': 'N',
         'ContactInfo': '',
         'StandardImage': images[0],
         'VideoURL': '',
@@ -508,7 +529,7 @@ def upload_new_item(asin, username, certification_key):
         'AdditionalOption': '',
         'ItemType': '',
         'RetailPrice': 0,
-        'ItemPrice': float(obj.price),
+        'ItemPrice': float(to_user_price(user_obj, int(float(obj.price)))),
         'ItemQty': int(stock_num),
         'ShippingNo': int(shipping_code),
         'AvailableDateType': '3',
@@ -559,7 +580,8 @@ def get_item_info(certification_key, seller_code):
     product_name = res['ItemTitle']
     brand = res['BrandNo']
 
-    description = res['ItemDetail'].replace('<div>', '').replace('<li>', '').replace('</div>', '').replace('</li>', '\n')
+    description = res['ItemDetail'].replace('<div>', '').replace('<li>', '').replace('</div>', '').replace('</li>',
+                                                                                                           '\n')
     jan = res['IndustrialCode']
     q10_category = res['SecondSubCatCd']
     price = res['ItemPrice']
@@ -636,7 +658,8 @@ def link_q10_items(certification_key, username):
                     continue
 
                 for image in images:
-                    photo_list.append('https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
+                    photo_list.append(
+                        'https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
 
                 try:
                     category_tree = product['categoryTree']
@@ -704,3 +727,23 @@ def link_q10_items(certification_key, username):
     item_link_obj.still_getting = False
     item_link_obj.save()
 
+
+def delete_item(certification_key, item_code):
+    try:
+        header = {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "QAPIVersion": '1.1',
+            'GiosisCertificationKey': certification_key
+        }
+
+        res = requests.get(
+            'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&returnType=&method=ItemsBasic.EditGoodsStatus'
+            f'&key={certification_key}&SellerCode={item_code}&Status=3', headers=header
+        ).json()
+
+        if res['ResultCode'] == 0:
+            return True
+        else:
+            return [False, res['ResultMsg']]
+    except Exception as e:
+        return [False, str(e)]
