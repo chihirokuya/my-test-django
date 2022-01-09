@@ -511,10 +511,6 @@ def upload_new_item(asin, username, certification_key):
     print('itemname', black_maker_item_name)
 
     black = False
-    print('ブラック')
-    print(black_asins)
-    print('ASIN')
-    print(asin)
     for black_asin in black_asins:
         if asin == black_asin.strip():
             black = True
@@ -534,12 +530,18 @@ def upload_new_item(asin, username, certification_key):
         pass
 
     black = False
+    print('ブラックリスト入ります。')
     for black_word in black_maker_item_name:
         if black_word in obj.description.split('\n') or black_word == obj.product_name:
+            print(black_word in obj.description.split('\n'))
+            print(black_word == obj.product_name)
+            print(obj.product_name)
             black = True
             break
     if black:
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+
+    print('ブラックリスト出ました。')
 
     to_remove_list = []
     product_name = obj.product_name
