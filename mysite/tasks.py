@@ -175,6 +175,12 @@ def records_saved(username, date):
         else:
             log_failed_asin_list.append([asin, reason])
 
+            if reason == '出品失敗':
+                try:
+                    asin_waiting_list.remove(asin)
+                except:
+                    pass
+
     obj.asin_list = ','.join(list(filter(None, asin_list)))
     obj.asin_waiting_list = ','.join(list(filter(None, asin_waiting_list)))
     obj.asin_getting_list = ','.join([val for val in obj.asin_getting_list.split(',') if val not in new_getting_list])
