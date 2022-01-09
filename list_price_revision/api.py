@@ -533,6 +533,7 @@ def upload_new_item(asin, username, certification_key):
     except:
         pass
 
+    black = False
     for black_word in black_maker_item_name:
         if black_word in obj.description.split('\n') or black_word == obj.product_name:
             black = True
