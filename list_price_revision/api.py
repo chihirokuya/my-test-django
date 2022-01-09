@@ -508,8 +508,6 @@ def upload_new_item(asin, username, certification_key):
         remove_words = []
         black_amazon_group = []
 
-    print('itemname', black_maker_item_name)
-
     black = False
     for black_asin in black_asins:
         if asin == black_asin.strip():
@@ -530,18 +528,12 @@ def upload_new_item(asin, username, certification_key):
         pass
 
     black = False
-    print('ブラックリスト入ります。')
     for black_word in black_maker_item_name:
         if black_word in obj.description.split('\n') or black_word == obj.product_name:
-            print(black_word in obj.description.split('\n'))
-            print(black_word == obj.product_name)
-            print(obj.product_name)
             black = True
             break
     if black:
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
-
-    print('ブラックリスト出ました。')
 
     to_remove_list = []
     product_name = obj.product_name
@@ -604,8 +596,6 @@ def upload_new_item(asin, username, certification_key):
     res = requests.post('https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsBasic.SetNewGoods',
                         headers=header, data=data).json()
 
-    print(res)
-
     if res['ResultCode'] == 0:
         if images[1:]:
             link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsContents.EditGoodsMultiImage'
@@ -619,8 +609,6 @@ def upload_new_item(asin, username, certification_key):
                 data[f'EnlargedImage{i + 1}'] = val
 
             res = requests.post(link, headers=header, data=data)
-
-            print(res.json())
 
         return True, ''
     else:
