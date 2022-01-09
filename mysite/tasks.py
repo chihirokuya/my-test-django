@@ -174,7 +174,7 @@ def records_saved(username, date):
         else:
             log_failed_asin_list.append([asin, reason])
 
-            if reason == '出品失敗':
+            if reason != '出品失敗':
                 try:
                     asin_waiting_list.remove(asin)
                 except:
