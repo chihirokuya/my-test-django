@@ -605,7 +605,10 @@ def upload_new_item(asin, username, certification_key):
 
             data = {"SellerCode": initial_letter + obj.asin[1:]}
 
+            photo_num = user_obj.photo_num
             for i, val in enumerate(images[1:]):
+                if i == photo_num:
+                    break
                 data[f'EnlargedImage{i + 1}'] = val
 
             res = requests.post(link, headers=header, data=data)
