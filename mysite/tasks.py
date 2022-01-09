@@ -159,7 +159,6 @@ def records_saved(username, date):
     for asin in to_transfer_list:
         ok, reason = upload_new_item(asin, username, certification_key)
         if ok:
-            print('OK')
             try:
                 asin_waiting_list.remove(asin)
             except:
