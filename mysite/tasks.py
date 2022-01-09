@@ -61,8 +61,6 @@ def records_saved(username, date):
                 continue
             to_list_but_still_in_waiting.append(asin)
 
-            log_success_asin_list.append(asin)
-
     obj.asin_getting_list = ','.join(asin_getting_list)
     obj.save()
 
@@ -142,7 +140,6 @@ def records_saved(username, date):
                         q10_category=temp['q10_category']
                     ).save()
                     to_transfer_list.append(key)
-                    log_success_asin_list.append(key)
                 except Exception as e:
                     log_failed_asin_list.append([key, str(e)])
                     print('追加失敗ASIN：', key)
@@ -174,6 +171,7 @@ def records_saved(username, date):
                 pass
 
             asin_list.append(asin)
+            log_success_asin_list.append(asin)
         else:
             log_failed_asin_list.append([asin, reason])
 
