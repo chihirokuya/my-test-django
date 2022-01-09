@@ -498,8 +498,8 @@ def upload_new_item(asin, username, certification_key):
 
     # ブラックリスト系
     try:
-        black_maker_item_name = user_obj.maker_name_blacklist.split('\n')
-        black_asins = user_obj.asin_blacklist.split('\n')
+        black_maker_item_name = list(filter(None, user_obj.maker_name_blacklist.split('\n')))
+        black_asins = list(filter(None, user_obj.asin_blacklist.split('\n')))
         remove_words = user_obj.words_blacklist.split('\n')
         black_amazon_group = user_obj.group_black.split(',')
     except:
@@ -516,7 +516,7 @@ def upload_new_item(asin, username, certification_key):
     print('ASIN')
     print(asin)
     for black_asin in black_asins:
-        if asin == black_asin:
+        if asin == black_asin.strip():
             black = True
             break
     if black:
