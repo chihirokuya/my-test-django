@@ -1,7 +1,7 @@
 from django.db import models
 import datetime
 
-# Create your models here.
+delimiter = "delimiter"
 
 
 class UserModel(models.Model):
@@ -99,9 +99,11 @@ class LogModel(models.Model):
     username = models.CharField(max_length=1000)
 
     date = models.DateTimeField()
-    # 価格改定or出品
+    # 価格改定or出品or削除
     type = models.CharField(max_length=1000)
     # 動作を行う際に入ってくるasinリスト
-    input_asin_list = models.TextField(default='')
+    input_asin_list = models.TextField(default='', null=True, blank=True)
     # 成功したリスト
-    success_asin_list = models.TextField(default='')
+    success_asin_list = models.TextField(default='', null=True, blank=True)
+    # 失敗理由リスト　区切り単語："delimiter"
+    cause_list = models.TextField(default='', null=True, blank=True)

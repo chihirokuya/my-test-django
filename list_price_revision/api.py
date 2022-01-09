@@ -2,17 +2,18 @@ from sp_api.api import Catalog, Products
 from sp_api.base import Marketplaces
 from sp_api.base.exceptions import SellingApiRequestThrottledException, SellingApiBadRequestException, \
     SellingApiForbiddenException, SellingApiServerException, SellingApiTemporarilyUnavailableException
-from .models import AsinModel, Q10BrandCode, UserModel, Q10ItemsLink, ListingModel
+from .models import AsinModel, Q10BrandCode, UserModel, Q10ItemsLink, ListingModel, LogModel
 import keepa
 import time
 import random
 import requests
-from .models import UserModel
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 from mysite.settings import MEDIA_ROOT
 import csv
 import re
+import datetime
+from .views import delimiter
 
 
 # 価格設定
@@ -170,22 +171,22 @@ def get_from_sp_api(asin):
     catalog = sp_api.get_catalog(asin)
 
     if offers is None or catalog is None:
-        return result
+        return result, '存在しないASIN'
 
     if offers.errors is not None or catalog.errors is not None:
-        return result
+        return result, '存在しないASIN'
 
     price = sp_api.get_lowest_price(offers.payload)
 
     if price == '':
-        return result
+        return result, '価格取得失敗'
 
     ok, values = sp_api.get_from_catalog(catalog.payload)
 
     if not ok or values[0] == '':
-        return result
+        return result, 'Keepaから情報取得失敗'
 
-    return [values[0], int(float(price)), values[1], values[2]]
+    return [values[0], int(float(price)), values[1], values[2]], ''
 
 
 def keepa_info(product):
@@ -200,7 +201,7 @@ def keepa_info(product):
             links.append(
                 'https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
     except:
-        return result
+        return result, '画像取得失敗'
 
     try:
         description = product['features']
@@ -221,7 +222,7 @@ def keepa_info(product):
     except:
         category_tree = []
 
-    return [links, description, jan, category_tree]
+    return [links, description, jan, category_tree], ''
 
 
 def get_category_qoo10(product_name):
@@ -331,17 +332,16 @@ def get_cat_from_csv(category_tree):
     return ''
 
 
-def get_info_from_amazon(to_search_class, asin_list, certification_key):
+def get_info_from_amazon(username, to_search_class, asin_list, certification_key):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
     print('####### Amazonから取得 #########')
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
     for asin in asin_list:
         if AsinModel.objects.filter(asin=asin).exists():
-            print('already exists', asin)
             continue
 
-        result = get_from_sp_api(asin)
+        result, message = get_from_sp_api(asin)
 
         # 成功したら
         if result:
@@ -366,6 +366,7 @@ def get_info_from_amazon(to_search_class, asin_list, certification_key):
         # 何らかの理由でエラーが出た場合
         else:
             to_search_class.to_delete_asin_list.append(asin)
+            to_search_class.log_error_reason.append([asin, message])
 
     # 成功したASINリスト
     succeed_asin_list = [asin for asin in list(to_search_class.result_list.keys()) if
@@ -381,13 +382,14 @@ def get_info_from_amazon(to_search_class, asin_list, certification_key):
     for asins in temp:
         try:
             products = api.query(asins, wait=True, domain='JP')
-        except:
+        except Exception as e:
             for asin in asins:
                 to_search_class.to_delete_asin_list.append(asin)
+                to_search_class.log_error_list.append([asin, str(e)])
             continue
 
         for product in products:
-            result = keepa_info(product)
+            result, message = keepa_info(product)
 
             if result:
                 category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
@@ -405,8 +407,12 @@ def get_info_from_amazon(to_search_class, asin_list, certification_key):
                 to_search_class.result_list[product['asin']]['q10_category'] = category
             else:
                 to_search_class.to_delete_asin_list.append(product['asin'])
+                to_search_class.log_error_list.append([product['asin'], message])
 
     print('ASIN取得完了')
+
+
+
 
 
 # qoo10系
@@ -490,7 +496,58 @@ def upload_new_item(asin, username, certification_key):
     stock_num = user_obj.stock_num
     shipping_code = user_obj.shipping_code
 
-    obj = AsinModel.objects.get(asin=asin)
+    # ブラックリスト系
+    try:
+        black_maker_item_name = user_obj.maker_name_blacklist.split('\n')
+        black_asins = user_obj.asin_blacklist.split('\n')
+        remove_words = user_obj.words_blacklist.split('\n')
+        black_amazon_group = user_obj.group_black.split(',')
+    except:
+        black_maker_item_name = []
+        black_asins = []
+        remove_words = []
+        black_amazon_group = []
+
+    print('itemname', black_maker_item_name)
+
+    black = False
+    for black_asin in black_asins:
+        if asin == black_asin:
+            break
+    if black:
+        return False, 'ASINブラックリストに含まれています。'
+
+    try:
+        obj = AsinModel.objects.get(asin=asin)
+    except:
+        return False, '登録されていないASINです。'
+
+    try:
+        if obj.product_group and obj.product_group in black_amazon_group:
+            return False, '商品グループがブラックリストに含まれています。'
+    except:
+        pass
+
+    print(obj.product_name)
+    for black_word in black_maker_item_name:
+        if black_word in obj.description.split('\n') or black_word == obj.product_name:
+            black = True
+            break
+    if black:
+        return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+
+    to_remove_list = []
+    product_name = obj.product_name
+    description = obj.description.split('\n')
+    for remove_word in remove_words:
+        product_name = product_name.replace(remove_word, '')
+        for desc in description:
+            if remove_word in desc:
+                to_remove_list.append(desc)
+
+    for desc in to_remove_list:
+        if desc in description:
+            description.remove(desc)
 
     images = obj.photo_list.split('\n')
 
@@ -501,7 +558,7 @@ def upload_new_item(asin, username, certification_key):
     }
 
     html = '<div>'
-    for val in obj.description.split('\n'):
+    for val in description:
         html += f'<li>{val}</li>'
     html += '</div>'
 
@@ -510,7 +567,7 @@ def upload_new_item(asin, username, certification_key):
         'OuterSecondSubCat': '',
         'Drugtype': '',
         'BrandNo': str(obj.brand),
-        'ItemTitle': obj.product_name,
+        'ItemTitle': product_name,
         'PromotionName': '',
         'SellerCode': initial_letter + obj.asin[1:],
         'IndustrialCodeType': 'J' if obj.jan else '',
@@ -555,15 +612,15 @@ def upload_new_item(asin, username, certification_key):
 
             print(res.json())
 
-        return True
+        return True, ''
     else:
         try:
             if 'Can not register the goods' in res['ResultMsg']:
-                return True
+                return True, res['ResultMsg']
         except:
             pass
 
-        return False
+        return False, '出品失敗'
 
 
 # [product_name, brand, description, jan, q10_category, price]
@@ -747,3 +804,78 @@ def delete_item(certification_key, item_code):
             return [False, res['ResultMsg']]
     except Exception as e:
         return [False, str(e)]
+
+
+def update_price(username):
+    certification_key = get_certification_key(username)
+
+    log_success = []
+    log_failed = []
+    log_total = []
+
+    def add_log(ok, key, reason=''):
+        log_total.append(key)
+        if ok:
+            log_success.append(key)
+        else:
+            log_failed.append([key, reason])
+
+            delete_item(certification_key, initial_letter + asin[1:])
+
+    try:
+        user_obj: UserModel = UserModel.objects.get(username=username)
+        initial_letter = user_obj.initial_letter
+    except:
+        return
+
+    listing_obj: ListingModel = ListingModel.objects.get(username=username)
+    asin_list = listing_obj.asin_list.split(',')
+
+    for asin in asin_list:
+        try:
+            try:
+                asin_obj: AsinModel = AsinModel.objects.get(asin=asin)
+            except:
+                add_log(False, asin, '存在しないASIN')
+                continue
+
+            link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
+                   f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
+                   f'&Price={to_user_price(user_obj, asin_obj.price)}&Qty={user_obj.stock_num}'
+
+            res = requests.get(link).json()
+
+            if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
+                add_log(True, asin)
+            else:
+                error_message = '不明'
+                if 'ResultMsg' in res.keys():
+                    error_message = res['ResultMsg']
+                elif 'ResultCode' in res.keys():
+                    code = res['ResultCode']
+                    error_message = ''
+                    if code == -10000:
+                        error_message = '販売者認証キーを確認してください。'
+                    elif code == -10001:
+                        error_message = "'ItemCode', 'SellerCode' の商品情報が見つかりません。"
+                    elif code == -10101:
+                        error_message = '処理エラー - [エラーメッセージ]'
+                    elif code == -90001:
+                        error_message = 'APIが存在しません'
+                    elif code in [-90004, -90005]:
+                        error_message = '販売者認証キーが期限切れです。新しいキーを使用してください。'
+
+                add_log(False, asin, error_message)
+        except Exception as e:
+            add_log(False, asin, str(e))
+
+    temp = [val[0] for val in log_failed]
+    log_total_list = temp
+    log_total_list.extend(log_success)
+    cause_list = ''
+    for val in log_failed:
+        cause_list += f'{val[0]}:{val[1]}{delimiter}'
+    LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
+             success_asin_list=','.join(log_success), cause_list=cause_list,
+             date=datetime.datetime.now()).save()
+

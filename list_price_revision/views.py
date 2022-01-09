@@ -1,6 +1,6 @@
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
-from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode
+from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
 from .api import get_info_from_amazon, to_user_price
 from django.contrib import messages
 import datetime
@@ -276,5 +276,32 @@ def setting_view(request):
 
 
 def log_view(request):
-    context = {}
+    log_obj_list = LogModel.objects.filter(username=request.user)
+
+    # id, 日付、動作内容、成功ASIN数、失敗ASIN数
+    res_list = []
+    # id, 成功ASINリスト、[[失敗ASIN、理由]]
+    res_list_no_date = []
+    id_ = 1
+    for obj in reversed(log_obj_list):
+        obj: LogModel
+        print(obj.input_asin_list)
+        total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
+        success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
+        failed_list = []
+        for val in obj.cause_list.split(delimiter):
+            temp = val.split(':')
+            try:
+                failed_list.append([temp[0], temp[1]])
+            except:
+                pass
+
+        res_list.append([id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+        res_list_no_date.append([id_, success_asin_list, failed_list])
+        id_ += 1
+
+    context = {
+        "res_list": res_list,
+        "no_date": res_list_no_date
+    }
     return render(request, base_path + 'log_page.html', context)

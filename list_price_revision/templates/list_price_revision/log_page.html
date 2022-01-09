@@ -1,4 +1,5 @@
 {% extends 'list_price_revision/base.html' %}
+{% load static %}
 
 {% block dashboard %}
 <section class="content-header">
@@ -15,16 +16,36 @@
 
 {% block content %}
 
+<script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+<script src="{% static 'js_files/log_page.js' %}"></script>
+
 <div class="col-md-12">
     <div class="box box-solid box-primary" style="height:300px;">
 
         <div class="box-header">
-            <h3 class="box-title">新規ASIN登録</h3>
+            <h3 class="box-title">ログ</h3>
         </div>
-        <div class="box-body">
+        <div class="box-body" style="display:block; height:250px;overflow:scroll;">
+            <table id="foo-table" class="table table-bordered" style="table-layout: fixed;">
+                <thead>
+                <tr>
+                    <th>日付</th><th>動作内容</th><th>成功ASIN数</th><th>失敗ASIN数</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!--[id, 日付、動作内容、成功ASIN数、失敗ASIN数]-->
+                {% for info in res_list %}
+                <tr role="row" onclick="test(this, {{ no_date }})">
+                    <td>{{info.1}}</td>
+                    <td>{{info.2}}</td>
+                    <td>{{info.3}}</td>
+                    <td>{{info.4}}</td>
+                    <td class="id_" style="display:none">{{ info.0 }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
-
-
     </div>
 </div>
 
@@ -32,13 +53,25 @@
     <div class="box box-solid box-warning" style="height:300px;">
 
         <div class="box-header">
-            <h3 class="box-title">新規ASIN登録</h3>
+            <h3 class="box-title">詳細</h3>
         </div>
-        <div class="box-body">
+        <div class="box-body" style="display:block; height:250px;overflow:scroll;">
+            <table id="error_table" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th style="width:25px;"></th><th>ASIN</th><th>エラー内容</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                </tbody>
+            </table>
         </div>
 
 
     </div>
 </div>
+
+
 
 {% endblock %}
