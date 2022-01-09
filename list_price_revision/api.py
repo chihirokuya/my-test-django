@@ -808,6 +808,8 @@ def delete_item(certification_key, item_code):
         if res['ResultCode'] == 0:
             return True
         else:
+            if 'Fail to find Item' in res['ResultMsg']:
+                return True
             return [False, res['ResultMsg']]
     except Exception as e:
         return [False, str(e)]
