@@ -34,44 +34,46 @@
     }
 </script>
 
+<script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+
 <!--<ul class="messages_ul">-->
 <!--    {% for message in messages %}-->
 <!--    <li class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</li>-->
 <!--    {% endfor %}-->
 <!--</ul>-->
-
-<div class="row equal">
+<div class="row row-eq-height" style="display:flex;align-items: stretch;">
     <div class="col-md-6">
         <!-- MAP & BOX PANE -->
-        <div class="box box-success">
-            <div class="box-header with-border">
+        <div class="box box-solid box-success">
+            <div class="box-header">
                 <h3 class="box-title">Q10 アカウント情報</h3>
+            </div>
+            <div class="box-body">
+                <div class="form-group">
+                    <label for="exampleInputEmail1">アカウントID</label>
+                    <input type="text" class="form-control" id="exampleInputEmail1" name="q10_id" placeholder="アカウントID"
+                           value="{{ obj.q10_id }}" form="UserForm">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">パスワード</label>
+                    <input type="password" form='UserForm' class="form-control" id="exampleInputPassword1" name="q10_password" placeholder="Password"
+                           value="{{ obj.q10_password }}">
+                </div>
 
-                <div class="box-body">
-                    <div class="form-group">
-                        <label for="exampleInputEmail1">アカウントID</label>
-                        <input type="text" class="form-control" id="exampleInputEmail1" name="q10_id" placeholder="アカウントID"
-                        value="{{ obj.q10_id }}" form="UserForm">
-                    </div>
-                    <div class="form-group">
-                        <label for="exampleInputPassword1">パスワード</label>
-                        <input type="password" form='UserForm' class="form-control" id="exampleInputPassword1" name="q10_password" placeholder="Password"
-                        value="{{ obj.q10_password }}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="exampleInputPassword1">API KEY</label>
-                        <input type="" form='UserForm' class="form-control" id="" name="q10_api" placeholder=""
-                               value="{{ obj.q10_api }}">
-                    </div>
-
+                <div class="form-group">
+                    <label for="exampleInputPassword1">API KEY</label>
+                    <input type="" form='UserForm' class="form-control" id="" name="q10_api" placeholder=""
+                           value="{{ obj.q10_api }}">
+                </div>
+                <div style="width:20%;">
+                    <input type="submit" class="btn btn-block btn-success" value="API確認" onclick="post('{% url 'price:setting' %}')" style="height:40px;">
                 </div>
             </div>
         </div>
 
         <!-- TABLE: LATEST ORDERS -->
-        <div class="box box-info">
-            <div class="box-header with-border">
+        <div class="box box-solid box-info">
+            <div class="box-header">
                 <h3 class="box-title">価格設定</h3>
             </div>
             <!-- /.box-header -->
@@ -130,11 +132,11 @@
 
         </div>
         <!-- /.box -->
-
     </div>
-    <div class="col-md-6">
-        <div class="box box-warning">
-            <div class="box-header with-border">
+
+    <div class="col-md-6" style="display:flex">
+        <div class="box box-solid box-warning">
+            <div class="box-header">
                 <h3 class="box-title">出品情報</h3>
             </div>
             <!-- /.box-header -->
@@ -199,11 +201,10 @@
 </div>
 
 <form method="POST" action="" id="UserForm">{% csrf_token %}
-    <div style="width:20%;margin:auto;">
+    <div style="width:20%;margin:auto;display:flex;">
         <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height:45px;">
     </div>
 </form>
-
 
 <script>
     function update_val() {
@@ -225,6 +226,46 @@
             document.getElementsByName('max_3')[0].value = parseInt(max_2) + 1;
         }
     }
-</script>
 
+    function post(path, method='post') {
+
+          // The rest of this code assumes you are not using a library.
+          // It can be made less verbose if you use one.
+          const form = document.createElement('form');
+          form.method = method;
+          form.action = path;
+
+          var inputElem = document.createElement('input');
+          inputElem.type = 'hidden';
+          inputElem.name = 'csrfmiddlewaretoken';
+          inputElem.value = '{{ csrf_token }}';
+          form.appendChild(inputElem);
+
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = 'check_api';
+          form.appendChild(hiddenField);
+
+          const h2 = document.createElement('input');
+          h2.type = 'hidden';
+          h2.name = 'acc_id';
+          h2.value = $("[name='q10_id']")[0].value;
+          form.appendChild(h2);
+
+          const h3 = document.createElement('input');
+          h3.type = 'hidden';
+          h3.name = 'acc_pass';
+          h3.value = $("[name='q10_password']")[0].value;
+          form.appendChild(h3);
+
+          const h4 = document.createElement('input');
+          h4.type = 'hidden';
+          h4.name = 'acc_api';
+          h4.value = $("[name='q10_api']")[0].value;
+          form.appendChild(h4);
+
+          document.body.appendChild(form);
+          form.submit();
+        }
+</script>
 {% endblock %}

@@ -13,6 +13,19 @@
 {% endfor %}
 {% endif %}
 
+{% if api_ok is False %}
+<div class="col-md-12">
+    <div class="box box-solid box-danger">
+        <div class="box-header">
+            APIキーの確認が行われていません!
+        </div>
+        <div class="box-body">
+            設定からアカウント設定を行い、”API確認”ボタンを押して下さい。APIキーが設定されていないと正常に動作しません。
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="col-lg-3 col-xs-6">
     <!-- small box -->
     <div class="small-box bg-aqua">
@@ -82,11 +95,11 @@
         <div class="box-body">
             初めてご利用なされる際には設定を行った後、『リンク』ボタンを押し、QSMから商品リストを取得してきます。<br>
             ※リンクボタンを押すと『出品中』のリストが一旦全てリセットされます。
-
             <div class="row" style="height:80px;padding:20px">
                 <div class="col-md-2" align="right">
                     <form method="POST" action="">{% csrf_token %}
-                        <input type="submit" class="btn btn-block btn-info" style="width:100px; vertical-align:middle;" value="リンク" name="link_button">
+                        <input type="submit" class="btn btn-block btn-{% if still_getting is False %}info{%else%}warning{%endif%}" style="width:100px; vertical-align:middle;"
+                               value="{% if still_getting is False %}リンク{%else%}中止{%endif%}" name="link_button">
                     </form>
                 </div>
                 <div class="col-md-10">

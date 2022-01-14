@@ -1,7 +1,7 @@
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price
+from .api import get_info_from_amazon, to_user_price, get_certification_key
 from django.contrib import messages
 import datetime
 import os
@@ -26,21 +26,42 @@ def base_view(request):
 
     if not Q10ItemsLink.objects.filter(username=request.user).exists():
         Q10ItemsLink(username=request.user).save()
-    q10_obj = Q10ItemsLink.objects.get(username=request.user)
+    q10_obj: Q10ItemsLink = Q10ItemsLink.objects.get(username=request.user)
     total_asin_list = list(filter(None, q10_obj.total_asin_list.split(',')))
     linked_asin_list = list(filter(None, q10_obj.linked_asin_list.split(',')))
 
+    user_obj: UserModel = UserModel.objects.get(username=request.user)
+
     if request.method == 'POST':
         if 'link_button' in request.POST:
-            link_q10_account.delay(str(request.user))
+            if not q10_obj.still_getting:
+                link_q10_account.delay(str(request.user))
 
-            messages.success(request, 'リンクが開始しました。ページを再読み込みする事により進捗状況を更新できます。')
+                messages.success(request, 'リンクが開始しました。ページを再読み込みする事により進捗状況を更新できます。')
+            else:
+                try:
+                    q10_obj.still_getting = False
+                    q10_obj.total_asin_list = ''
+                    q10_obj.linked_asin_list = ''
+                    q10_obj.save()
+
+                    messages.success(request, 'リンクを中止しました。')
+                except Exception as e:
+                    messages.error(request, 'リンク中止に失敗しました。\n' + str(e))
+
+        list_obj = ListingModel.objects.get(username=request.user)
+        asin_list = list_obj.asin_list.split(',')
+        q10_obj: Q10ItemsLink = Q10ItemsLink.objects.get(username=request.user)
+        total_asin_list = list(filter(None, q10_obj.total_asin_list.split(',')))
+        linked_asin_list = list(filter(None, q10_obj.linked_asin_list.split(',')))
 
     context = {
         "asin_list_length": len(asin_list),
         "total_length": len(total_asin_list),
         "linked_length": len(linked_asin_list),
-        "percentage": int(len(linked_asin_list) / len(total_asin_list)) * 100 if len(total_asin_list) != 0 else 100
+        "percentage": int(len(linked_asin_list) / len(total_asin_list)) * 100 if len(total_asin_list) != 0 else 100,
+        "api_ok": user_obj.api_ok,
+        "still_getting": q10_obj.still_getting
     }
 
     return render(request, base_path + 'start_page.html', context)
@@ -232,7 +253,7 @@ def blacklist_view(request):
 
 
 def setting_view(request):
-    obj = UserModel.objects.get(username=request.user)
+    obj: UserModel = UserModel.objects.get(username=request.user)
     context = {
         'obj': obj,
         'alphabets': [chr(i) for i in list(range(65, 91))],
@@ -241,36 +262,55 @@ def setting_view(request):
 
     if request.method == 'POST':
         temp = request.POST
-        try:
-            obj.q10_id = temp['q10_id']
-            obj.q10_password = temp['q10_password']
-            obj.q10_api = temp['q10_api']
-            obj.description_header = temp['description_header']
-            obj.description_footer = temp['description_footer']
-            obj.initial_letter = temp['initial_letter']
-            obj.delete_or_not = True if 'delete_or_not' in temp.keys() else False
-            obj.shipping_code = temp['shipping_code']
-            obj.stock_num = int(temp['stock_num'])
-            obj.photo_num = int(temp['photo_num'])
-            obj.max_1 = int(temp['max_1'])
-            obj.max_2 = int(temp['max_2'])
-            obj.max_3 = int(temp['max_3'])
-            obj.rieki_1 = int(temp['rieki_1'])
-            obj.rieki_2 = int(temp['rieki_2'])
-            obj.rieki_3 = int(temp['rieki_3'])
-            obj.rieki_4 = int(temp['rieki_4'])
-            obj.kotei_1 = int(temp['kotei_1'])
-            obj.kotei_2 = int(temp['kotei_2'])
-            obj.kotei_3 = int(temp['kotei_3'])
-            obj.kotei_4 = int(temp['kotei_4'])
-            obj.save()
+        if 'q10_id' in temp:
+            try:
+                obj.q10_id = temp['q10_id']
+                obj.q10_password = temp['q10_password']
+                obj.q10_api = temp['q10_api']
+                obj.description_header = temp['description_header']
+                obj.description_footer = temp['description_footer']
+                obj.initial_letter = temp['initial_letter']
+                obj.delete_or_not = True if 'delete_or_not' in temp.keys() else False
+                obj.shipping_code = temp['shipping_code']
+                obj.stock_num = int(temp['stock_num'])
+                obj.photo_num = int(temp['photo_num'])
+                obj.max_1 = int(temp['max_1'])
+                obj.max_2 = int(temp['max_2'])
+                obj.max_3 = int(temp['max_3'])
+                obj.rieki_1 = int(temp['rieki_1'])
+                obj.rieki_2 = int(temp['rieki_2'])
+                obj.rieki_3 = int(temp['rieki_3'])
+                obj.rieki_4 = int(temp['rieki_4'])
+                obj.kotei_1 = int(temp['kotei_1'])
+                obj.kotei_2 = int(temp['kotei_2'])
+                obj.kotei_3 = int(temp['kotei_3'])
+                obj.kotei_4 = int(temp['kotei_4'])
+                obj.save()
 
-            messages.success(request, '情報が更新されました')
+                messages.success(request, '情報が更新されました')
+            except:
+                messages.error(request, '保存内容に誤りがあります。')
+        elif 'check_api' in temp:
+            try:
+                obj.q10_id = temp['acc_id']
+                obj.q10_password = temp['acc_pass']
+                obj.q10_api = temp['acc_api']
+                obj.save()
 
-            return redirect(reverse('price:setting'))
-        except:
-            messages.error(request, '保存内容に誤りがあります。')
-            return redirect(reverse('price:setting'))
+                cert_key = get_certification_key(str(request.user))
+
+                if cert_key == '':
+                    obj.api_ok = False
+                    messages.error(request, '接続に失敗しました。')
+                else:
+                    obj.api_ok = True
+                    messages.success(request, '接続に成功しました')
+
+                obj.save()
+            except:
+                messages.error(request, 'エラーが発生しました。')
+
+        return redirect(reverse('price:setting'))
 
     return render(request, base_path + 'setting.html', context)
 

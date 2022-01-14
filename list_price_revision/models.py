@@ -40,6 +40,9 @@ class UserModel(models.Model):
     kotei_3 = models.IntegerField(default=0, blank=True)
     kotei_4 = models.IntegerField(default=0, blank=True)
 
+    # API確認終わっているか。
+    api_ok = models.BooleanField(default=False, null=True, blank=True)
+
 
 class ListingModel(models.Model):
     username = models.CharField(max_length=1000, blank=True)
