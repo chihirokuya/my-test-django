@@ -1,3 +1,5 @@
+import time
+
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
@@ -168,6 +170,7 @@ def listing_view(request):
     asin_list = list_obj.asin_list.split(',')
     user_obj = UserModel.objects.get(username=request.user)
 
+    start = time.perf_counter()
     info_list = []
     for asin in asin_list:
         try:
@@ -187,6 +190,8 @@ def listing_view(request):
             info_list.append([img, asin, price, name, jan, brand, description])
         except:
             pass
+
+    print(f'{time.perf_counter() - start}秒で完了しました。')
 
     context = {
         "info_list": info_list,

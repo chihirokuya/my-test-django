@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+import os
 from celery import shared_task
 import time
 import datetime
@@ -7,8 +8,12 @@ import threading
 from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price
 from list_price_revision.views import delimiter
 from django.contrib.auth import get_user_model
+from mysite.settings import BASE_DIR
+from shutil import copyfile
+import pytz
 
 
+# 出品
 @shared_task
 def records_saved(username, date):
     """
@@ -202,6 +207,7 @@ def records_saved(username, date):
     print('完了')
 
 
+# アカウントリンク
 @shared_task
 def link_q10_account(username):
     """
@@ -212,6 +218,7 @@ def link_q10_account(username):
     link_q10_items(certification_key, username)
 
 
+# データベース価格改定
 @shared_task
 def re_price():
     print(datetime.datetime.today(), '価格改定開始')
@@ -292,6 +299,7 @@ def re_price():
              date=datetime.datetime.now()).save()
 
 
+# 商品削除
 @shared_task
 def delete_items(username, to_delete_asin_list):
     obj: ListingModel = ListingModel.objects.get(username=username)
@@ -323,6 +331,7 @@ def delete_items(username, to_delete_asin_list):
              success_asin_list=','.join(log_success_list), cause_list=cause_list).save()
 
 
+# ユーザー価格改定
 @shared_task
 def re_price_users():
     users = list(dict.fromkeys([str(val) for val in get_user_model().objects.all()]))
@@ -334,3 +343,32 @@ def re_price_users():
                 "username": user
             }
         ).start()
+
+
+# データベースバックアップ＆要らないデータを削除
+@shared_task
+def backup_clean_up():
+    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+    backup_dir = os.path.join(BASE_DIR, 'BACKUP')
+    if not os.path.isdir(backup_dir):
+        os.mkdir(backup_dir)
+
+    copyfile(os.path.join(BASE_DIR, 'db.sqlite3'), backup_dir + f'/{now}.sqlite3')
+
+    # Remove records data
+    objects = RecordsModel.objects.all()
+
+    for obj in objects:
+        try:
+            if (now - obj.date).days >= 15:
+                obj.delete()
+        except:
+            pass
+
+    objects = LogModel.objects.all()
+    for obj in objects:
+        try:
+            if (now - obj.date).days >= 15:
+                obj.delete()
+        except:
+            pass
