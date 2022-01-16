@@ -173,9 +173,8 @@ def listing_view(request):
     start = time.perf_counter()
     info_list = []
     for asin in asin_list:
-        temp_obj = AsinModel.objects.select_related('photo_list__product_name__brand_name__jan__description__price').get(asin=asin)
         try:
-            temp_obj = AsinModel.objects.select_related('photo_list__product_name__brand_name__jan__description__price').get(asin=asin)
+            temp_obj = AsinModel.objects.get(asin=asin)
 
             img = temp_obj.photo_list.split('\n')[0]
             name = temp_obj.product_name
