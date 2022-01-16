@@ -174,7 +174,7 @@ def listing_view(request):
     info_list = []
     for asin in asin_list:
         try:
-            temp_obj = AsinModel.objects.get(asin=asin)
+            temp_obj = AsinModel.objects.filter(asin=asin).first()
 
             img = temp_obj.photo_list.split('\n')[0]
             name = temp_obj.product_name
