@@ -71,6 +71,16 @@ class AsinModel(models.Model):
 
     q10_category = models.CharField(default='', blank=True, max_length=10000)
 
+    def ph(self):
+        return self.photo_list.split('\n')[0]
+
+    def brand_name(self):
+        try:
+            brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=self.brand)
+            return brand_obj.brand_name
+        except:
+            return ''
+
 
 class RecordsModel(models.Model):
     username = models.CharField(max_length=1000, null=True, default='')

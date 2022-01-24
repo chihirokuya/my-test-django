@@ -1,4 +1,5 @@
 {% extends 'list_price_revision/base.html' %}
+{% load static %}
 
 
 {% block dashboard %}
@@ -41,7 +42,17 @@
 
 </script>
 
-<div class="box box-info">
+<!--&lt;!&ndash;ローディング画面&ndash;&gt;-->
+<!--<div id="loader-bg" class="is-hide">-->
+<!--    <div id="loader" class="is-hide">-->
+<!--        <p>-->
+<!--            <img src="{% static 'loading.gif' %}"><br>-->
+<!--            NOW LOADING-->
+<!--        </p>-->
+<!--    </div>-->
+<!--</div>-->
+<div id="wrap">
+    <div class="box box-info">
     <div class="box-body">
         <div class="col-sm-12">
             <div class="row">
@@ -69,6 +80,21 @@
                 </tr>
                 </thead>
                 <tbody id="list_table">
+<!--                {% for i in nums %}-->
+<!--                    {% for elm in all_elms %}-->
+<!--                        {% if elm.asin in all_asins %}-->
+<!--                            <tr role="row">-->
+<!--                                <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>-->
+<!--                                <td><img src="{{elm.ph}}" style="height: 120px;"/></td>-->
+<!--                                <td class="asin">{{elm.asin}}</td>-->
+<!--                                <td>{{elm.price}}</td>-->
+<!--                                <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{elm.product_name}}</a></td>-->
+<!--                                <td>{{elm.jan}}</td>-->
+<!--                                <td>{{elm.brand_name}}</td>-->
+<!--                            </tr>-->
+<!--                        {% endif %}-->
+<!--                    {% endfor %}-->
+<!--                {% endfor %}-->
                     {% for info in info_list %}
                     <tr role="row">
                         <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>
@@ -79,14 +105,64 @@
                         <td>{{info.4}}</td>
                         <td>{{info.5}}</td>
                     </tr>
-                    {% endfor %}
+                    {% endfor %}}
 
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
+</div>
+<style>
+    /* 非表示 */
+    .is-hide {
+        display: none;
+    }
+    /* ローディング画面をフェードアウト */
+    .fadeout-bg {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .8s;
+        opacity: 0;
+        pointer-events: none;
+    }
+    /* ローダーをフェードアウト */
+    .fadeout-loader {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .3s;
+        opacity: 0;
+        pointer-events: none;
+    }
+    /* ローディング画面 */
+    #loader-bg {
+        background: #ffffff;
+        height: 100%;
+        left: 0;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+    }
+    #loader {
+        height: 120px;
+        left: 50%;
+        margin-left: -60px;
+        margin-top: -60px;
+        position: fixed;
+        top: 50%;
+        width: 120px;
+    }
+    #loader p {
+        color: #454545;
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+    }
+    #loader p img {
+        display: inline-block;
+    }
+</style>
 <script>
      $(document).ready(function() {
        //tr要素をクリックでイベント発火
@@ -98,6 +174,24 @@
              else
                 $c.prop('checked', 'checked');
            });
+
+         var bg = document.getElementById('loader-bg'),
+             loader = document.getElementById('loader');
+         /* ロード画面の非表示を解除 */
+         bg.classList.remove('is-hide');
+         loader.classList.remove('is-hide');
+
+         /* 読み込み完了 */
+         window.addEventListener('load', stopload);
+
+         /* 10秒経ったら強制的にロード画面を非表示にする */
+         setTimeout('stopload()',10000);
+
+         /* ロード画面を非表示にする処理 */
+         function stopload(){
+             bg.classList.add('fadeout-bg');
+             loader.classList.add('fadeout-loader');
+         }
      });
 
      function post(path, params, method='post') {

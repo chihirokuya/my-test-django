@@ -1,5 +1,4 @@
 import time
-
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
@@ -172,30 +171,51 @@ def listing_view(request):
 
     start = time.perf_counter()
     info_list = []
-    for asin in asin_list:
-        try:
-            temp_obj = AsinModel.objects.get(asin=asin)
+    all_objects = AsinModel.objects.all()
+    try:
+        for temp_obj in chunked(all_objects):
+            temp_obj: AsinModel
+            if temp_obj.asin in asin_list:
+                print('here')
+                img = temp_obj.photo_list.split('\n')[0]
+                name = temp_obj.product_name
+                try:
+                    brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+                    brand = brand_obj.brand_name
+                except:
+                    brand = ''
+                description = temp_obj.description
+                jan = temp_obj.jan
+                price = to_user_price(user_obj, temp_obj.price)
 
-            img = temp_obj.photo_list.split('\n')[0]
-            name = temp_obj.product_name
-            try:
-                brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
-                brand = brand_obj.brand_name
-            except:
-                brand = ''
-            description = temp_obj.description
-            jan = temp_obj.jan
-            price = to_user_price(user_obj, temp_obj.price)
+                info_list.append([img, temp_obj.asin, price, name, jan, brand, description])
+    except RuntimeError:
+        pass
 
-            info_list.append([img, asin, price, name, jan, brand, description])
-        except:
-            pass
-
-    print(f'{time.perf_counter() - start}秒で完了しました。')
+    # for asin in asin_list:
+    #     try:
+    #         temp_obj = AsinModel.objects.get(asin=asin)
+    #
+    #         img = temp_obj.photo_list.split('\n')[0]
+    #         name = temp_obj.product_name
+    #         try:
+    #             brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+    #             brand = brand_obj.brand_name
+    #         except:
+    #             brand = ''
+    #         description = temp_obj.description
+    #         jan = temp_obj.jan
+    #         price = to_user_price(user_obj, temp_obj.price)
+    #
+    #         info_list.append([img, asin, price, name, jan, brand, description])
+    #     except:
+    #         pass
 
     context = {
         "info_list": info_list,
     }
+
+    print(f'{time.perf_counter() - start}秒で完了しました。')
 
     if request.method == "POST":
         if 'asin_list' in request.POST:
@@ -350,3 +370,18 @@ def log_view(request):
         "no_date": res_list_no_date
     }
     return render(request, base_path + 'log_page.html', context)
+
+
+
+
+
+
+def chunked(queryset, chunk_size=1000):
+    start = 0
+    while True:
+        chunk = queryset[start:start + chunk_size]
+        for obj in chunk:
+            yield obj
+        if len(chunk) < chunk_size:
+            raise StopIteration
+        start += chunk_size
