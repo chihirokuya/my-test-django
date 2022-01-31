@@ -11,4 +11,5 @@ urlpatterns = [
     path('price/blacklist/', views.blacklist_view, name='blacklist'),
     path('price/setting/', views.setting_view, name='setting'),
     path('price/log/', views.log_view, name='log'),
+    path('price/listing/new/', views.get_table, name='get_listing'),
 ]

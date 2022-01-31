@@ -1,6 +1,7 @@
 import time
 from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
+from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
 from .api import get_info_from_amazon, to_user_price, get_certification_key
 from django.contrib import messages
@@ -157,19 +158,91 @@ def asin_view(request):
     context = {
         "pre_asin_list": pre_asin_list,
         "records": records,
-        'waiting_list': '\n'.join(list_obj.asin_waiting_list.split(','))
+        'waiting_list': '\n'.join(list_obj.asin_waiting_list.split(',')),
     }
     return render(request, base_path + 'asin_page.html', context)
 
 
 def listing_view(request):
-    if not ListingModel.objects.filter(username=request.user).exists():
-        ListingModel(username=request.user).save()
-    list_obj = ListingModel.objects.get(username=request.user)
-    asin_list = list_obj.asin_list.split(',')
-    user_obj = UserModel.objects.get(username=request.user)
+    # if not ListingModel.objects.filter(username=request.user).exists():
+    #     ListingModel(username=request.user).save()
+    # list_obj = ListingModel.objects.get(username=request.user)
+    # asin_list = list_obj.asin_list.split(',')
+    # user_obj = UserModel.objects.get(username=request.user)
+    #
+    # start = time.perf_counter()
+    # info_list = []
+    # all_objects = AsinModel.objects.all()
+    # try:
+    #     for temp_obj in chunked(all_objects):
+    #         temp_obj: AsinModel
+    #         if temp_obj.asin in asin_list:
+    #             print('here')
+    #             img = temp_obj.photo_list.split('\n')[0]
+    #             name = temp_obj.product_name
+    #             try:
+    #                 brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+    #                 brand = brand_obj.brand_name
+    #             except:
+    #                 brand = ''
+    #             description = temp_obj.description
+    #             jan = temp_obj.jan
+    #             price = to_user_price(user_obj, temp_obj.price)
+    #
+    #             info_list.append([img, temp_obj.asin, price, name, jan, brand, description])
+    # except RuntimeError:
+    #     pass
 
-    start = time.perf_counter()
+    # for asin in asin_list:
+        # try:
+        #     temp_obj = AsinModel.objects.select_related('photo_list').get(asin=asin)
+        #
+        #     img = temp_obj.photo_list.split('\n')[0]
+        #     name = temp_obj.product_name
+        #     try:
+        #         brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+        #         brand = brand_obj.brand_name
+        #     except:
+        #         brand = ''
+        #     description = temp_obj.description
+        #     jan = temp_obj.jan
+        #     price = to_user_price(user_obj, temp_obj.price)
+        #
+        #     info_list.append([img, asin, price, name, jan, brand, description])
+        # except:
+        #     pass
+
+    context = {
+        # "info_list": info_list,
+        "info_list": [],
+        'username': str(request.user)
+    }
+
+    # print(f'{time.perf_counter() - start}秒で完了しました。')
+
+    if request.method == "POST":
+        if 'asin_list' in request.POST:
+            try:
+                to_delete_asin_list = request.POST['asin_list'].split(',')
+
+                tasks.delete_items.delay(str(request.user), to_delete_asin_list)
+
+                messages.success(request, '削除が開始されました。')
+            except Exception as e:
+                messages.error(request, '内部エラーが発生しました。\n' + f'{e}')
+
+    return render(request, base_path + 'listing-items.html', context)
+
+
+def get_table(request):
+    username = request.user
+
+    if not ListingModel.objects.filter(username=username).exists():
+        ListingModel(username=request.user).save()
+    list_obj = ListingModel.objects.get(username=username)
+    asin_list = list_obj.asin_list.split(',')
+    user_obj = UserModel.objects.get(username=username)
+
     info_list = []
     all_objects = AsinModel.objects.all()
     try:
@@ -192,43 +265,7 @@ def listing_view(request):
     except RuntimeError:
         pass
 
-    # for asin in asin_list:
-    #     try:
-    #         temp_obj = AsinModel.objects.get(asin=asin)
-    #
-    #         img = temp_obj.photo_list.split('\n')[0]
-    #         name = temp_obj.product_name
-    #         try:
-    #             brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
-    #             brand = brand_obj.brand_name
-    #         except:
-    #             brand = ''
-    #         description = temp_obj.description
-    #         jan = temp_obj.jan
-    #         price = to_user_price(user_obj, temp_obj.price)
-    #
-    #         info_list.append([img, asin, price, name, jan, brand, description])
-    #     except:
-    #         pass
-
-    context = {
-        "info_list": info_list,
-    }
-
-    print(f'{time.perf_counter() - start}秒で完了しました。')
-
-    if request.method == "POST":
-        if 'asin_list' in request.POST:
-            try:
-                to_delete_asin_list = request.POST['asin_list'].split(',')
-
-                tasks.delete_items.delay(str(request.user), to_delete_asin_list)
-
-                messages.success(request, '削除が開始されました。')
-            except Exception as e:
-                messages.error(request, '内部エラーが発生しました。\n' + f'{e}')
-
-    return render(request, base_path + 'listing-items.html', context)
+    return JsonResponse({'data': info_list})
 
 
 def blacklist_view(request):

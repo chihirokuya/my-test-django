@@ -33,91 +33,80 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/>
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 <script>
-        jQuery(function($){
-            $("#foo-table").DataTable({
-                scrollX: true,
-                scrollY: true,
-            });
+    jQuery(function ($) {
+        $("#foo-table").DataTable({
+            scrollX: true,
+            scrollY: true,
         });
+    });
 
 </script>
 
+<div id="content">
 <!--&lt;!&ndash;ローディング画面&ndash;&gt;-->
-<!--<div id="loader-bg" class="is-hide">-->
-<!--    <div id="loader" class="is-hide">-->
-<!--        <p>-->
-<!--            <img src="{% static 'loading.gif' %}"><br>-->
-<!--            NOW LOADING-->
-<!--        </p>-->
-<!--    </div>-->
-<!--</div>-->
+<div id="loader-bg" class="is-hide">
+    <div id="loader" class="is-hide">
+        <p>
+            <img src="{% static 'loading.gif' %}"><br>
+        </p>
+    </div>
+</div>
 <div id="wrap">
     <div class="box box-info">
-    <div class="box-body">
-        <div class="col-sm-12">
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="pull-left" style="display:flex;white-space:nowrap;vertical-align: middle;height:40px;">
-                        <span style="vertical-align: middle;">選択したアイテムを削除：</span>
-                        <button class="btn btn-block btn-danger"
-                                onclick="post('{% url 'price:listing' %}', {'hello':1})">
-                            <label class="fa fa-trash-o"></label>
-                        </button>
-                        <br>
+        <div class="box-body">
+            <div class="col-sm-12">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="pull-left"
+                             style="display:flex;white-space:nowrap;vertical-align: middle;height:40px;">
+                            <span style="vertical-align: middle;">選択したアイテムを削除：</span>
+                            <button class="btn btn-block btn-danger"
+                                    onclick="post('{% url 'price:listing' %}', {'hello':1})">
+                                <label class="fa fa-trash-o"></label>
+                            </button>
+                            <br>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <table id="foo-table" class="table table-bordered" style="width:100%;">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>画像</th>
-                    <th>ASIN</th>
-                    <th>価格</th>
-                    <th>商品名</th>
-                    <th>JAN</th>
-                    <th>ブランド</th>
-                </tr>
-                </thead>
-                <tbody id="list_table">
-<!--                {% for i in nums %}-->
-<!--                    {% for elm in all_elms %}-->
-<!--                        {% if elm.asin in all_asins %}-->
-<!--                            <tr role="row">-->
-<!--                                <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>-->
-<!--                                <td><img src="{{elm.ph}}" style="height: 120px;"/></td>-->
-<!--                                <td class="asin">{{elm.asin}}</td>-->
-<!--                                <td>{{elm.price}}</td>-->
-<!--                                <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{elm.product_name}}</a></td>-->
-<!--                                <td>{{elm.jan}}</td>-->
-<!--                                <td>{{elm.brand_name}}</td>-->
-<!--                            </tr>-->
-<!--                        {% endif %}-->
-<!--                    {% endfor %}-->
-<!--                {% endfor %}-->
-                    {% for info in info_list %}
-                    <tr role="row">
-                        <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>
-                        <td><img src="{{info.0}}" style="height: 120px;"/></td>
-                        <td class="asin">{{info.1}}</td>
-                        <td>{{info.2}}</td>
-                        <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{info.3}}</a></td>
-                        <td>{{info.4}}</td>
-                        <td>{{info.5}}</td>
-                    </tr>
-                    {% endfor %}}
 
-                </tbody>
-            </table>
+                <table id="foo-table" class="table table-bordered" style="width:100%;">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>画像</th>
+                        <th>ASIN</th>
+                        <th>価格</th>
+                        <th>商品名</th>
+                        <th>JAN</th>
+                        <th>ブランド</th>
+                    </tr>
+                    </thead>
+                    <tbody id="list_table">
+<!--                    {% for info in info_list %}-->
+<!--                    <tr role="row">-->
+<!--                        <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>-->
+<!--                        <td><img src="{{info.0}}" style="height: 120px;"/></td>-->
+<!--                        <td class="asin">{{info.1}}</td>-->
+<!--                        <td>{{info.2}}</td>-->
+<!--                        <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{info.3}}</a></td>-->
+<!--                        <td>{{info.4}}</td>-->
+<!--                        <td>{{info.5}}</td>-->
+<!--                    </tr>-->
+<!--                    {% endfor %}}-->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 </div>
 <style>
+
     /* 非表示 */
     .is-hide {
         display: none;
     }
+
     /* ローディング画面をフェードアウト */
     .fadeout-bg {
         transition-property: opacity;
@@ -126,6 +115,7 @@
         opacity: 0;
         pointer-events: none;
     }
+
     /* ローダーをフェードアウト */
     .fadeout-loader {
         transition-property: opacity;
@@ -134,6 +124,7 @@
         opacity: 0;
         pointer-events: none;
     }
+
     /* ローディング画面 */
     #loader-bg {
         background: #ffffff;
@@ -143,7 +134,9 @@
         top: 0;
         width: 100%;
         z-index: 100;
+        opacity: 0.5;
     }
+
     #loader {
         height: 120px;
         left: 50%;
@@ -153,88 +146,130 @@
         top: 50%;
         width: 120px;
     }
+
     #loader p {
         color: #454545;
         font-size: 10px;
         line-height: 1.4;
         text-align: center;
     }
+
     #loader p img {
         display: inline-block;
     }
 </style>
 <script>
-     $(document).ready(function() {
-       //tr要素をクリックでイベント発火
-           $('table tr').click(function() {
-             //td要素からチェックボックスを探す
-             var $c = $(this).children('td').children('input[type=checkbox]');
-             if($c.prop('checked'))
+    $(document).ready(function () {
+        //tr要素をクリックでイベント発火
+        $('table tr').click(function () {
+            //td要素からチェックボックスを探す
+            var $c = $(this).children('td').children('input[type=checkbox]');
+            if ($c.prop('checked'))
                 $c.prop('checked', '');
-             else
+            else
                 $c.prop('checked', 'checked');
-           });
+        });
 
-         var bg = document.getElementById('loader-bg'),
-             loader = document.getElementById('loader');
-         /* ロード画面の非表示を解除 */
-         bg.classList.remove('is-hide');
-         loader.classList.remove('is-hide');
+        var bg = document.getElementById('loader-bg'),
+        loader = document.getElementById('loader');
+        /* ロード画面の非表示を解除 */
+        bg.classList.remove('is-hide');
+        loader.classList.remove('is-hide');
 
-         /* 読み込み完了 */
-         window.addEventListener('load', stopload);
+        /* 読み込み完了 */
+        // window.addEventListener('load', stopload);
 
-         /* 10秒経ったら強制的にロード画面を非表示にする */
-         setTimeout('stopload()',10000);
+        // /* 10秒経ったら強制的にロード画面を非表示にする */
+        // setTimeout('stopload()',10000);
+        //
+        // /* ロード画面を非表示にする処理 */
+        // function stopload(){
+        //     bg.classList.add('fadeout-bg');
+        //     loader.classList.add('fadeout-loader');
+        // }
 
-         /* ロード画面を非表示にする処理 */
-         function stopload(){
-             bg.classList.add('fadeout-bg');
-             loader.classList.add('fadeout-loader');
-         }
-     });
+        set_table();
+    });
 
-     function post(path, params, method='post') {
+    async function set_table() {
+        let link = '{% url 'price:get_listing' %}';
 
-          // The rest of this code assumes you are not using a library.
-          // It can be made less verbose if you use one.
-          const form = document.createElement('form');
-          form.method = method;
-          form.action = path;
+        console.log(link);
 
-          var inputElem = document.createElement('input');
-          inputElem.type = 'hidden';
-          inputElem.name = 'csrfmiddlewaretoken';
-          inputElem.value = '{{ csrf_token }}';
-          form.appendChild(inputElem);
+        let res = await fetch(link)
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
 
-          asin_list = []
-          trs = $(list_table).find('tr');
-          for (i = 0; i < trs.length; i++)
+            for (let li of data.data) {
+                $("#foo-table").DataTable().row.add([
+                    '<td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>',
+                    '<td><img src="' + li[0] + '" style="height: 120px;"/></td>',
+                    '<td class="asin">' + li[1] + '</td>',
+                    '<td>' + li[2] + '</td>',
+                    '<td><a href="https://www.amazon.co.jp/dp/' + li[1] + '" target="_blank">' + li[3] + '</a></td>',
+                    '<td>' + li[4] + '</td>',
+                    '<td>' + li[5] + '</td>'
+                ])
+            }
+
+            // テーブル描画
+            $('#foo-table').DataTable().draw();
+
+            // ロード停止
+            bg = document.getElementById('loader-bg');
+            loader = document.getElementById('loader');
+
+            bg.classList.add('fadeout-bg');
+            loader.classList.add('fadeout-loader');
+            bg.setAttribute('class', 'is-hide');
+        })
+        .catch(error => {
+
+        });
+    }
+    function post(path, params, method = 'post') {
+
+        // The rest of this code assumes you are not using a library.
+        // It can be made less verbose if you use one.
+        const form = document.createElement('form');
+        form.method = method;
+        form.action = path;
+
+        var inputElem = document.createElement('input');
+        inputElem.type = 'hidden';
+        inputElem.name = 'csrfmiddlewaretoken';
+        inputElem.value = '{{ csrf_token }}';
+        form.appendChild(inputElem);
+
+        asin_list = []
+        trs = $(list_table).find('tr');
+        for (i = 0; i < trs.length; i++)
             if ($(trs[i]).children('td').children('input[type=checkbox]').prop('checked'))
-               asin_list.push($(trs[i]).children('.asin')[0].innerText)
+                asin_list.push($(trs[i]).children('.asin')[0].innerText)
 
-          const hiddenField = document.createElement('input');
-          hiddenField.type = 'hidden';
-          hiddenField.name = 'asin_list';
-          hiddenField.value = asin_list;
-          form.appendChild(hiddenField);
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'asin_list';
+        hiddenField.value = asin_list;
+        form.appendChild(hiddenField);
 
-          document.body.appendChild(form);
-          form.submit();
-        }
+        document.body.appendChild(form);
+        form.submit();
+    }
 
 </script>
 
 <style>
     td {
-  border: 1px black solid;
-  text-align: center;
-}
+        border: 1px black solid;
+        text-align: center;
+    }
 
-td a {
-vertical-align: middle;
-}
+    td a {
+        vertical-align: middle;
+    }
 
 </style>
 

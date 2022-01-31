@@ -1,0 +1,19 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="list_price_revision.models.ListingModel.objects" />
+          <option value="list_price_revision.models.UserModel.*" />
+          <option value="list_price_revision.models.AsinModel.objects" />
+          <option value="list_price_revision.models.Q10BrandCode.objects" />
+          <option value="list_price_revision.models.Q10ItemsLink.objects" />
+          <option value="list_price_revision.models.RecordsModel.objects" />
+          <option value="list_price_revision.models.LogModel.objects" />
+          <option value="django.db.models.fields.TextField.split" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
