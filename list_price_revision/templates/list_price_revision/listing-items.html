@@ -42,7 +42,6 @@
 
 </script>
 
-<div id="content">
 <!--&lt;!&ndash;ローディング画面&ndash;&gt;-->
 <div id="loader-bg" class="is-hide">
     <div id="loader" class="is-hide">
@@ -99,7 +98,8 @@
         </div>
     </div>
 </div>
-</div>
+
+
 <style>
 
     /* 非表示 */
@@ -217,18 +217,23 @@
             // テーブル描画
             $('#foo-table').DataTable().draw();
 
-            // ロード停止
-            bg = document.getElementById('loader-bg');
-            loader = document.getElementById('loader');
-
-            bg.classList.add('fadeout-bg');
-            loader.classList.add('fadeout-loader');
-            bg.setAttribute('class', 'is-hide');
+            stop_load();
         })
         .catch(error => {
 
         });
     }
+
+    function stop_load() {
+        // ロード停止
+        bg = document.getElementById('loader-bg');
+        loader = document.getElementById('loader');
+
+        bg.classList.add('fadeout-bg');
+        loader.classList.add('fadeout-loader');
+        bg.setAttribute('class', 'is-hide');
+    }
+
     function post(path, params, method = 'post') {
 
         // The rest of this code assumes you are not using a library.

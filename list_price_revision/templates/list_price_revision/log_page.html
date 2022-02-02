@@ -19,6 +19,15 @@
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 <script src="{% static 'js_files/log_page.js' %}"></script>
 
+
+<div id="loader-bg" class="is-hide">
+    <div id="loader" class="is-hide">
+        <p>
+            <img src="{% static 'loading.gif' %}"><br>
+        </p>
+    </div>
+</div>
+
 <div class="col-md-12">
     <div class="box box-solid box-primary" style="height:300px;">
 
@@ -26,23 +35,13 @@
             <h3 class="box-title">ログ</h3>
         </div>
         <div class="box-body" style="display:block; height:250px;overflow:scroll;">
-            <table id="foo-table" class="table table-bordered" style="table-layout: fixed;">
+            <table id="foo-table" class="table table-bordered">
                 <thead>
                 <tr>
                     <th>日付</th><th>動作内容</th><th>成功ASIN数</th><th>失敗ASIN数</th>
                 </tr>
                 </thead>
                 <tbody>
-                <!--[id, 日付、動作内容、成功ASIN数、失敗ASIN数]-->
-                {% for info in res_list %}
-                <tr role="row" onclick="test(this, {{ no_date }})">
-                    <td>{{info.1}}</td>
-                    <td>{{info.2}}</td>
-                    <td>{{info.3}}</td>
-                    <td>{{info.4}}</td>
-                    <td class="id_" style="display:none">{{ info.0 }}</td>
-                </tr>
-                {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -71,6 +70,182 @@
 
     </div>
 </div>
+
+
+<style>
+
+    /* 非表示 */
+    .is-hide {
+        display: none;
+    }
+
+    /* ローディング画面をフェードアウト */
+    .fadeout-bg {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .8s;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ローダーをフェードアウト */
+    .fadeout-loader {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .3s;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ローディング画面 */
+    #loader-bg {
+        background: #ffffff;
+        height: 100%;
+        left: 0;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+        opacity: 0.5;
+    }
+
+    #loader {
+        height: 120px;
+        left: 50%;
+        margin-left: -60px;
+        margin-top: -60px;
+        position: fixed;
+        top: 50%;
+        width: 120px;
+    }
+
+    #loader p {
+        color: #454545;
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+    }
+
+    #loader p img {
+        display: inline-block;
+    }
+</style>
+
+<!--{% for info in res_list %}&ndash;&gt;-->
+<!--                <tr role="row" onclick="test(this, {{ no_date }})">-->
+<!--                    <td>{{info.1}}</td>-->
+<!--                    <td>{{info.2}}</td>-->
+<!--                    <td>{{info.3}}</td>-->
+<!--                    <td>{{info.4}}</td>-->
+<!--                    <td class="id_" style="display:none">{{ info.0 }}</td>-->
+<!--                </tr>-->
+<!--                {% endfor %}-->
+<script>
+    var no_date = [];
+
+    $(document).ready(function () {
+        var bg = document.getElementById('loader-bg'),
+        loader = document.getElementById('loader');
+        /* ロード画面の非表示を解除 */
+        bg.classList.remove('is-hide');
+        loader.classList.remove('is-hide');
+
+        add_log();
+    });
+
+    function row_clicked(tr) {
+        let td = ''
+        let id = $($(tr)[0]).children('.id_')[0].innerText;
+        let list = []
+        for (val of no_date)
+            if (val[0] == id)
+                list = val;
+
+        let t_body = document.getElementById('error_table').getElementsByTagName('tbody')[0];
+
+        t_body.innerHTML = '';
+
+        let success_asin_list = list[1];
+        let failed_asin_list = list[2];
+
+        for (v of failed_asin_list) {
+            tr = document.createElement('tr');
+            tr.setAttribute('role', 'row');
+
+            td = document.createElement('td');
+            td.innerHTML = '<i class="fa fa-remove" style="color: red;">';
+            tr.appendChild(td);
+
+            td = document.createElement('td');
+            td.innerText = v[0];
+            tr.appendChild(td);
+
+            td = document.createElement('td');
+            td.innerText = v[1];
+            tr.appendChild(td);
+
+            t_body.appendChild(tr);
+        }
+
+        for (let v of success_asin_list) {
+            tr = document.createElement('tr');
+            tr.setAttribute('role', 'row');
+
+            td = document.createElement('td');
+            td.innerHTML = '<i class="fa fa-check-circle" style="color: green;">';
+            tr.appendChild(td);
+
+            td = document.createElement('td');
+            td.innerText = v;
+            tr.appendChild(td);
+            tr.appendChild(document.createElement('td'));
+            t_body.appendChild(tr);
+        }
+    }
+
+    async function add_log() {
+        let link = '{% url 'price:get_log' %}';
+
+        let tbody = document.getElementById('foo-table').getElementsByTagName('tbody')[0];
+
+        let res = await fetch(link)
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                no_date = data['no_date'];
+
+                for (info of data['res_list']) {
+                    let tr = document.createElement('tr')
+                    tr.setAttribute("role", 'row');
+                    tr.setAttribute("onclick", "row_clicked(this)")
+
+                    tr.innerHTML = "<td>" + info[1] + "</td>\n" +
+                        "<td>" + info[2] + "</td>\n" +
+                        "<td>" + info[3] + "</td>\n" +
+                        "<td>" + info[4] + "</td>\n" +
+                        "<td class=\"id_\" style=\"display:none\">" + info[0] + "</td>"
+
+                    tbody.appendChild(tr);
+                }
+            })
+            .catch(error => {
+
+            });
+
+        stop_load();
+    }
+
+    function stop_load() {
+        // ロード停止
+        bg = document.getElementById('loader-bg');
+        loader = document.getElementById('loader');
+
+        bg.classList.add('fadeout-bg');
+        loader.classList.add('fadeout-loader');
+        bg.setAttribute('class', 'is-hide');
+    }
+</script>
 
 
 

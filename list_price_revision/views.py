@@ -249,7 +249,6 @@ def get_table(request):
         for temp_obj in chunked(all_objects):
             temp_obj: AsinModel
             if temp_obj.asin in asin_list:
-                print('here')
                 img = temp_obj.photo_list.split('\n')[0]
                 name = temp_obj.product_name
                 try:
@@ -378,6 +377,11 @@ def setting_view(request):
 
 
 def log_view(request):
+
+    return render(request, base_path + 'log_page.html')
+
+
+def get_log(request):
     log_obj_list = LogModel.objects.filter(username=request.user)
 
     # id, 日付、動作内容、成功ASIN数、失敗ASIN数
@@ -406,10 +410,8 @@ def log_view(request):
         "res_list": res_list,
         "no_date": res_list_no_date
     }
-    return render(request, base_path + 'log_page.html', context)
 
-
-
+    return JsonResponse(context)
 
 
 
