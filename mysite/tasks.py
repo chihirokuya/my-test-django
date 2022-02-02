@@ -6,7 +6,7 @@ import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
 from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price
-from list_price_revision.views import delimiter, chunked
+from list_price_revision.views import delimiter
 from django.contrib.auth import get_user_model
 from mysite.settings import BASE_DIR
 from shutil import copyfile
@@ -380,3 +380,14 @@ def backup_clean_up():
                 pass
     except RuntimeError:
         pass
+
+
+def chunked(queryset, chunk_size=1000):
+    start = 0
+    while True:
+        chunk = queryset[start:start + chunk_size]
+        for obj in chunk:
+            yield obj
+        if len(chunk) < chunk_size:
+            raise StopIteration
+        start += chunk_size
