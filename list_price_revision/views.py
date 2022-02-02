@@ -377,12 +377,11 @@ def setting_view(request):
 
 
 def log_view(request):
-
     return render(request, base_path + 'log_page.html')
 
 
 def get_log(request):
-    log_obj_list = LogModel.objects.filter(username=request.user)
+    log_obj_list = LogModel.objects.filter(username=request.user)[:100]
 
     # id, 日付、動作内容、成功ASIN数、失敗ASIN数
     res_list = []
