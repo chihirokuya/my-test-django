@@ -388,21 +388,24 @@ def get_log(request):
     # id, 成功ASINリスト、[[失敗ASIN、理由]]
     res_list_no_date = []
     id_ = 1
-    for obj in chunked(log_obj_list):
-        obj: LogModel
-        total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
-        success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
-        failed_list = []
-        for val in obj.cause_list.split(delimiter):
-            temp = val.split(':')
-            try:
-                failed_list.append([temp[0], temp[1]])
-            except:
-                pass
+    try:
+        for obj in chunked(log_obj_list):
+            obj: LogModel
+            total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
+            success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
+            failed_list = []
+            for val in obj.cause_list.split(delimiter):
+                temp = val.split(':')
+                try:
+                    failed_list.append([temp[0], temp[1]])
+                except:
+                    pass
 
-        res_list.append([id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
-        res_list_no_date.append([id_, success_asin_list, failed_list])
-        id_ += 1
+            res_list.append([id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+            res_list_no_date.append([id_, success_asin_list, failed_list])
+            id_ += 1
+    except RuntimeError:
+        pass
 
     res_list.sort(key=lambda x: x[1], reverse=True)
 
