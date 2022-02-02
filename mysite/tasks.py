@@ -6,7 +6,7 @@ import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
 from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price
-from list_price_revision.views import delimiter
+from list_price_revision.views import delimiter, chunked
 from django.contrib.auth import get_user_model
 from mysite.settings import BASE_DIR
 from shutil import copyfile
@@ -349,26 +349,34 @@ def re_price_users():
 @shared_task
 def backup_clean_up():
     now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
-    backup_dir = os.path.join(BASE_DIR, 'BACKUP')
-    if not os.path.isdir(backup_dir):
-        os.mkdir(backup_dir)
+    try:
+        backup_dir = os.path.join(BASE_DIR, 'BACKUP')
+        if not os.path.isdir(backup_dir):
+            os.mkdir(backup_dir)
 
-    copyfile(os.path.join(BASE_DIR, 'db.sqlite3'), backup_dir + f'/{now}.sqlite3')
+        copyfile(os.path.join(BASE_DIR, 'db.sqlite3'), backup_dir + f'/{now}.sqlite3')
+    except:
+        pass
 
     # Remove records data
     objects = RecordsModel.objects.all()
+    try:
+        for obj in chunked(objects):
+            try:
+                if (now - obj.date).days >= 15:
+                    obj.delete()
+            except:
+                pass
+    except RuntimeError:
+        pass
 
-    for obj in objects:
-        try:
-            if (now - obj.date).days >= 15:
-                obj.delete()
-        except:
-            pass
-
-    objects = LogModel.objects.all()
-    for obj in objects:
-        try:
-            if (now - obj.date).days >= 15:
-                obj.delete()
-        except:
-            pass
+    try:
+        objects = LogModel.objects.all()
+        for obj in chunked(objects):
+            try:
+                if (now - obj.date).days >= 15:
+                    obj.delete()
+            except:
+                pass
+    except RuntimeError:
+        pass
