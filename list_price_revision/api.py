@@ -1,8 +1,10 @@
+import threading
+
 from sp_api.api import Catalog, Products
 from sp_api.base import Marketplaces
 from sp_api.base.exceptions import SellingApiRequestThrottledException, SellingApiBadRequestException, \
     SellingApiForbiddenException, SellingApiServerException, SellingApiTemporarilyUnavailableException
-from .models import AsinModel, Q10BrandCode, UserModel, Q10ItemsLink, ListingModel, LogModel
+from .models import AsinModel, Q10BrandCode, UserModel, Q10ItemsLink, ListingModel, LogModel, RecordsModel
 import keepa
 import time
 import random
@@ -14,6 +16,31 @@ import csv
 import re
 import datetime
 from .views import delimiter
+
+refresh_token_list = [
+    'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
+    'Atzr|IwEBIBMy28_I_H04XEQhGuwRv-ChgFeybLouZ-oVZ7S9d1wIMtz2pfc_prOF8pU60ZkitfsysDl3KfSG-TZ9OfAmdThA5LDA6Ns4gv2t621ZO5QQiROevC42uteGKRmso5f-1M7MvG1GGeHpYI4IYFbIE6_zERSHlypNueiDDurV5h-ech1cWOBpfDVA6GPzSqPNHenIHHWFPf6W56wXOLPDYqsTA15SOsm0B0Mz1MCylFWuUtVCuLqWm21wt5oM88XYXdicvJLxqOdcc8K76YXzwY3uNWLMSiaQWACKtDEKeM9SnZIkWS2DVlAAgljipQavZgY',
+    'Atzr|IwEBIKcYx0VORNNPP7uck84iHvbgVqXaqRBXaLBWSIOX6l-OsXJ3ZluTfYnMyCpfdQF2ZII7262hZUt745IwXAsoLdqmz4lXlrV5QcKlocA-qQKA9I8mXtDEwaGt3P6_yVRkYNPaPe6f4DP9dUsGxnc4SmGhgA76tdNbGG7W3j3eRRuHIRe2h-onqOHK666jGT7DJ33kG6GXXJLaUzoDFV6lEqdhna7o4Fr8N9P0nGoio540NNtoyRhCoGIdwL2Gs2cOmkX4egzPlwOpkWwP-rpIIGyuMEdBQ5xy1RmdTQrDiSuCUsCpQxo6UvOreYn6LwEj078',
+    'Atzr|IwEBIEt_BdYf_R9sXGlcXMVGlD-HIFfh3IMRrAYYBjHBEfZxRmHVGJUp1XCT_8As4Is1YmjTxmiEO28CWRO_7WHv-tQafOxiSmmssL99juM1HZsNeNi4zhmc88cWLvDMGClSUd6n9qxQ2siwQNS9vPZU2FZnwkhAVv7qwKcScB0MAG9Wy1T9KGftz2aH5J754Dsk0pNTPZfoAsUS_YQh2fzrZ-t-QRIKObtGNpJtWvkkb_Lb2VwSVrCtrT5oe9pkVAk3B_TKaTtxxccfmtoPrbE7EtFF_oBwUQJLCfkaiyrdhIE2ljaB4Vme08GgXbgISaTWqwA',
+    'Atzr|IwEBICzy6j0IcrIR9a1KkR9cSLQcvUWU_0ESstbuMt8qeJseIDSIIEDTZriQS0SgMY2CLuCjFQ3zQ-aNE6YCeIU1hhhzJ3hL6_GBWt7NObv9kOw501PKrifoSS6WjevLW4rtK80NJHz6VAXCCuZVt5wxu2UYgZPcLjpeTkGGhBZieswDpPIWZrlw6N6nNmEblVcI4A1baBUDTHKaAAzt-znMjH7ExYoYGzXncTpTnGAtAycum1HPuAc41NAC8Skjdz3kd8V_e6Kd9SySAtYeOslcTogawTyDEQiiEZP13so0LogB0XcNJ1Ivfj2ZZf47rlRLwG4',
+    'Atzr|IwEBIMziRMZxrmJYRbIyQXL6Xllg-Ll5KvbxBdzrhHYkiNGVTl5_7VqdkesCPHDnw2OS-uht91l9eocU0dBsRT-fuuzUPEYocUjiWHnmH5GNvhhoWOfcsvHHnJINkAZKMnvhrBiVQZgKdveuBs3_fgBAN_Ylydw_x01YUdR8p4Ne0YVvi2n7hJcD6gcI36i4zMCkBjeguXhoQh6NiiTaZII1x8C03QFbLA7I0E9qXoM8oW16AKvAlSHT4hCTMCFuPu-lqL2zz91tnmj_ZlIq94zbPpkuXT1B9q9FvN59JUBktVJP3bhu4WdeTFkZDCEkQ2UXrHs',
+    'Atzr|IwEBIJTQehP1tL82nyy8dUSPvky4TRwhv8yKmS7potoR8Y1jpvCmURCIO-p5_A82X9vkq1yHpFUkJqD8hmPGSLzPTkt_DN27KQMcpKgiWbHCyQmOkcrBiQGvvEHPBl3vUErTpjsj_5YpfPdCPZ72tTjTomW1OUM_-UIxKtjkZad2S69siKpotwl4unJr4skCMoDeYjzYKAl2w8aSf_W7Kwh9nebTfonkY27gSCYiq0KiOdM6HMok6KdTkmxA9LGTwj_AorKciOUfkByUsOzNsHMkpRM3JOwh2Qzmfk3cd5nDcJMouDH9d7L8KRlvRqxgqAzO0vU',
+    'Atzr|IwEBILuchc0ANXlGzI70AEWeXYoyBu3cclkQ_faRUTT_5q0RMyko1Eh8qplWUZ2obloh54BR3xsg7cuH6SzhqYOS78yraBH6d6H_UJspVmxkcM_iyu4HHu-jTrFHFj8uImwGYi2XMC8M_jnnGL9IZTrtUP3mPkqKkxbyX3yW8yk-DJYm0GjwXH-4kkHVhMSAKN1QP7qE7Js6vHbu0ZWVGhLmWFsNyjGzNclIAeiK37ZCXefd7CiVQwMqAM-PNjp39M4Ce_G2Rx83B9upawXIk6tunxDBrRX0TQtMbrZTYwmOpL-yszCfv3U4bAfe0RkQDpxjWWg',
+    'Atzr|IwEBILp_NZHMGfdhVJ2Ox1pYZnoZ556GZJpGsCKR3YZyFuYRkAF-1xIj4wDxLdn8rMtT6SC056ICcDTcp-8yPOxhwA71KQ936cDoD64SYoiSVk-ABShD5pydGZ0xIDV86fm2g21XACnLYFAOoU5A7NQCvjP6Gs_mZczHhuvxRS7VWovFszuaeuRB6_--aWJBcwEBxoX7pP9I03qmUd6Y7guOvMlyc-zpNUPiluCD8uh3yZOuqQgdiiI3mRonRY4zTGuJx9OHyUKSENk0wu_equGwPFNildKhNDcpkpKLi9mUQONNYGqOYNppPuUYM8HgweFZqgA'
+]
+
+keepa_key_list = [
+    'e4s4q8m7evnnrdsn095aj3llhbcmsqa13v0f5igam6vnomlplb970pduatfrdbi9',
+    'gjvt2fh7m6t2f8hqoon1nm9sr9ud3sii96cjk93634ad52ko51ca8h6sdq5jp2c9',
+    '34kqglknrdln8f7r3san1p32ll6qck0digu02fave85sm44p6nq89a832fm3g12n',
+    'dmq15gijl45cpeo5taotisi8hg43e1cp9c52tuptauhp9o0re9e53de6icthd11e',
+    'f4vopjo0njooe25tmei9v4ac0ie6rs43mknviamghc0konbpra5270892849hg3f',
+    '9egm5oei3onau2k5ti1mpo85fovgiv3m9d5im3qrlpnkr3mh81s40tfgg5l5ioh8',
+    '49hj7bckak5b66juiu9elpmm99858mdr8vef4a9sm3vf8hd83hhdjprc30mnjd1u',
+    '5kpuo6212bfln4juqt83o4ilgdubo6fc06ta5u8qaolg7vrmf387g9vcb2b9lk7s',
+    '4cpa03v0l1l2fau0slg9lvoqp9lcpcl09chevdn5ot3oj372pjr3hlj58e9ki1ca',
+    'b26q7thu7vchm5fo2spe3f6anp7et270bs45nd4nii5dp37jqm7iuo4df0snd21i'
+]
 
 
 # 価格設定
@@ -41,9 +68,6 @@ class SpApiFunction:
     counter = 0
 
     def __init__(self):
-        refresh_token_list = [
-            'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
-        ]
         lwa_app_id = "amzn1.application-oa2-client.8615bda7d6e346e48332aa5f892c3afe"
         lwa_client_secret = "07f880c663c5b4d46cdca2da0d008daabe45a66eb9278e64dd77e7bbb52ac64b"
         aws_secret_key = "5aFD+AlaAzRAOO+BMb9J7PymhWBCYzsdLn+mIJZC"
@@ -101,12 +125,13 @@ class SpApiFunction:
         try:
             offers = offers['Offers']
         except:
-            return ''
+            return '', ''
 
         if not offers:
-            return ''
+            return '', ''
 
         now_price = 10000000
+        point = 0
         updated = False
 
         for offer in offers:
@@ -131,13 +156,14 @@ class SpApiFunction:
                 total_price = price - points
 
                 if total_price < now_price:
+                    point = points
                     now_price = total_price
                     updated = True
 
         if not updated:
-            return ''
+            return '', ''
         else:
-            return f'{int(now_price)}'
+            return f'{int(now_price)}', point
 
     # return product_name, brand, product_group, image_link
     def get_from_catalog(self, catalog):
@@ -171,22 +197,22 @@ def get_from_sp_api(asin):
     catalog = sp_api.get_catalog(asin)
 
     if offers is None or catalog is None:
-        return result, '存在しないASIN'
+        return result, '存在しないASIN', ''
 
     if offers.errors is not None or catalog.errors is not None:
-        return result, '存在しないASIN'
+        return result, '存在しないASIN', ''
 
-    price = sp_api.get_lowest_price(offers.payload)
+    price, point = sp_api.get_lowest_price(offers.payload)
 
     if price == '':
-        return result, '価格取得失敗'
+        return result, '価格取得失敗', ''
 
     ok, values = sp_api.get_from_catalog(catalog.payload)
 
     if not ok or values[0] == '':
-        return result, 'Keepaから情報取得失敗'
+        return result, 'Keepaから情報取得失敗', ''
 
-    return [values[0], int(float(price)), values[1], values[2]], ''
+    return [values[0], int(float(price)), values[1], values[2]], '', point
 
 
 def keepa_info(product):
@@ -332,87 +358,146 @@ def get_cat_from_csv(category_tree):
     return ''
 
 
-def get_info_from_amazon(username, to_search_class, asin_list, certification_key):
+def get_info_from_amazon(username, to_search_class, asin_list, certification_key, records_model:RecordsModel):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
     print('####### Amazonから取得 #########')
+    temp = len(asin_list) // 10
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
-    for asin in asin_list:
+    for i, asin in enumerate(asin_list):
+        skip = False
         if AsinModel.objects.filter(asin=asin).exists():
-            continue
+            skip = True
 
-        result, message = get_from_sp_api(asin)
+        if not skip:
+            result, message, point = get_from_sp_api(asin)
 
-        # 成功したら
-        if result:
-            # ブランドがあるなら変換する
-            if result[2]:
-                if Q10BrandCode.objects.filter(brand_name=result[2]).exists():
-                    code = Q10BrandCode.objects.get(brand_name=result[2]).code
-                else:
-                    code = search_brand(certification_key, result[2])
+            # 成功したら
+            if result:
+                # ブランドがあるなら変換する
+                if result[2]:
+                    if Q10BrandCode.objects.filter(brand_name=result[2]).exists():
+                        code = Q10BrandCode.objects.get(brand_name=result[2]).code
+                    else:
+                        code = search_brand(certification_key, result[2])
 
-                    if code != '':
-                        Q10BrandCode(brand_name=result[2], code=code).save()
+                        if code != '':
+                            Q10BrandCode(brand_name=result[2], code=code).save()
 
-                result[2] = code
+                    result[2] = code
 
-            to_search_class.result_list[asin] = {
-                "name": result[0],
-                "price": result[1],
-                "brand": result[2],
-                "group": result[3]
-            }
-        # 何らかの理由でエラーが出た場合
-        else:
-            to_search_class.to_delete_asin_list.append(asin)
-            to_search_class.log_error_reason.append([asin, message])
+                to_search_class.result_list[asin] = {
+                    "name": result[0],
+                    "price": result[1],
+                    "brand": result[2],
+                    "group": result[3],
+                    "point": point
+                }
+            # 何らかの理由でエラーが出た場合
+            else:
+                to_search_class.to_delete_asin_list.append(asin)
+                to_search_class.log_error_reason.append([asin, message])
+
+        to_search_class.counter += 1
+        if not i % temp:
+            records_model.status_text = f'ステップ１　{to_search_class.counter}/{to_search_class.total_length}'
+            records_model.save()
 
     # 成功したASINリスト
     succeed_asin_list = [asin for asin in list(to_search_class.result_list.keys()) if
                          not AsinModel.objects.filter(asin=asin).exists()]
-    # ASINを10個ずつに分ける
-    temp = []
-    for i in range(0, len(succeed_asin_list), 10):
-        temp.append(succeed_asin_list[i:i + 10])
 
-    keepa_key = 'e4s4q8m7evnnrdsn095aj3llhbcmsqa13v0f5igam6vnomlplb970pduatfrdbi9'
-    api = keepa.Keepa(keepa_key)
+    weight_list = []
+    for key in keepa_key_list:
+        temp_ = keepa.Keepa(accesskey=key)
+        weight_list.append(temp_.tokens_left)
 
-    for asins in temp:
-        try:
-            products = api.query(asins, wait=True, domain='JP')
-        except Exception as e:
-            for asin in asins:
-                to_search_class.to_delete_asin_list.append(asin)
-                to_search_class.log_error_list.append([asin, str(e)])
-            continue
+    total = sum(weight_list)
+    length_list = [int(val / total * len(succeed_asin_list)) for val in weight_list]
 
-        for product in products:
-            result, message = keepa_info(product)
+    divided_asin_list = []  # 分けた後のasinリスト
+    current_pos = 0
+    for i, val in enumerate(length_list):
+        if i == len(weight_list) - 1:
+            divided_asin_list.append(succeed_asin_list[current_pos:])
+        else:
+            divided_asin_list.append(succeed_asin_list[current_pos: current_pos + val])
+            current_pos += val
 
-            if result:
-                category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+    class CounterClass:
+        counter = 0
 
-                print('category1', category)
+        def __init__(self):
+            self.counter = 0
 
-                if category == '':
-                    category = get_cat_from_csv(result[3])
-                    print('category2', category)
+        def update_records(self):
+            records_model.status_text = f'ステップ２ {to_search_class.step_2_counter}/{to_search_class.total_length}'
+            records_model.save()
 
-                to_search_class.result_list[product['asin']]['links'] = result[0]
-                to_search_class.result_list[product['asin']]['description'] = result[1]
-                to_search_class.result_list[product['asin']]['jan'] = result[2]
-                to_search_class.result_list[product['asin']]['category_tree'] = result[3]
-                to_search_class.result_list[product['asin']]['q10_category'] = category
-            else:
-                to_search_class.to_delete_asin_list.append(product['asin'])
-                to_search_class.log_error_list.append([product['asin'], message])
+    def search_func(to_do_list, keepa_key, counter_class: CounterClass, update):
+        # ASINを10個ずつに分ける
+        temp = []
+        for i in range(0, len(to_do_list), 10):
+            temp.append(to_do_list[i:i + 10])
+
+        api = keepa.Keepa(keepa_key)
+
+        for asins in temp:
+            try:
+                products = api.query(asins, wait=True, domain='JP')
+            except Exception as e:
+                products = []
+                for asin_ in asins:
+                    try:
+                        products.append(api.query(asin_, wait=True, domain='JP')[0])
+                    except:
+                        to_search_class.to_delete_asin_list.append(asin_)
+                        to_search_class.log_error_list.append([asin_, str(e)])
+
+            for product in products:
+                resul_, message_ = keepa_info(product)
+
+                if resul_:
+                    category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+
+                    if category == '':
+                        category = get_cat_from_csv(resul_[3])
+
+                    to_search_class.result_list[product['asin']]['links'] = resul_[0]
+                    to_search_class.result_list[product['asin']]['description'] = resul_[1]
+                    to_search_class.result_list[product['asin']]['jan'] = resul_[2]
+                    to_search_class.result_list[product['asin']]['category_tree'] = resul_[3]
+                    to_search_class.result_list[product['asin']]['q10_category'] = category
+                else:
+                    to_search_class.to_delete_asin_list.append(product['asin'])
+                    to_search_class.log_error_list.append([product['asin'], message_])
+
+            to_search_class.step_2_counter += len(asins)
+            if update:
+                counter_class.update_records()
+
+    thread_list = []
+    max_index = weight_list.index(max(weight_list))
+    c_c = CounterClass()
+    for i, val in enumerate(divided_asin_list):
+        if val:
+            thread_list.append(
+                threading.Thread(
+                    target=search_func,
+                    kwargs={
+                        "to_do_list": val,
+                        "keepa_key": keepa_key_list[i],
+                        'counter_class': c_c,
+                        'update': i == max_index
+                    }
+                )
+            )
+    for thread in thread_list:
+        thread.start()
+    for thread in thread_list:
+        thread.join()
 
     print('ASIN取得完了')
-
-
-
 
 
 # qoo10系
@@ -482,7 +567,6 @@ def search_brand(certification_key, keyword):
         f'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&method=CommonInfoLookup.SearchBran'
         f'd&key={certification_key}&keyword={keyword}').json()['ResultObject']
 
-    print(res)
     brand_code = ''
     if res:
         brand_code = re.sub('\\D', '', res[0]['M_B_NO'])
@@ -878,4 +962,3 @@ def update_price(username):
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
              success_asin_list=','.join(log_success), cause_list=cause_list,
              date=datetime.datetime.now()).save()
-

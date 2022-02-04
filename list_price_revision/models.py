@@ -68,6 +68,7 @@ class AsinModel(models.Model):
     jan = models.TextField(max_length=100, default='', blank=True)
     category_tree = models.JSONField(blank=True, default={})
     price = models.IntegerField(default=0, blank=True)
+    point = models.IntegerField(default=0, blank=True, null=True)
 
     q10_category = models.CharField(default='', blank=True, max_length=10000)
 
@@ -92,6 +93,8 @@ class RecordsModel(models.Model):
     already_listed = models.BooleanField(null=True, blank=True, default=False)
 
     asin_list = models.TextField(null=True, default='', blank=True)
+
+    status_text = models.TextField(null=True, default='', blank=True)
 
 
 class Q10BrandCode(models.Model):

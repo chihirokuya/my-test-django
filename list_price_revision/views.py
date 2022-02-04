@@ -3,7 +3,7 @@ from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price, get_certification_key
+from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv
 from django.contrib import messages
 import datetime
 import os
@@ -117,7 +117,8 @@ def asin_view(request):
                         total_length=old_length,
                         new_length=len(temp),
                         already_listed=len(temp) == 0,
-                        asin_list=','.join(temp)
+                        asin_list=','.join(temp),
+                        status_text='取得を開始します。'
                     )
 
                     list_obj.save()
@@ -153,8 +154,12 @@ def asin_view(request):
                 messages.error(request, 'CSVファイルでない、またはエンコードがSHIFT-JISでない可能性があります。')
 
     records_obj = RecordsModel.objects.all().filter(username=request.user).order_by('-date')
-    for obj_ in records_obj:
-        records.append([obj_.date, obj_.total_length, obj_.new_length, obj_.already_listed])
+    try:
+        for obj_ in chunked(records_obj):
+            records.append([obj_.date, obj_.total_length, obj_.new_length, obj_.already_listed, obj_.status_text])
+    except RuntimeError:
+        pass
+
     context = {
         "pre_asin_list": pre_asin_list,
         "records": records,
@@ -164,54 +169,6 @@ def asin_view(request):
 
 
 def listing_view(request):
-    # if not ListingModel.objects.filter(username=request.user).exists():
-    #     ListingModel(username=request.user).save()
-    # list_obj = ListingModel.objects.get(username=request.user)
-    # asin_list = list_obj.asin_list.split(',')
-    # user_obj = UserModel.objects.get(username=request.user)
-    #
-    # start = time.perf_counter()
-    # info_list = []
-    # all_objects = AsinModel.objects.all()
-    # try:
-    #     for temp_obj in chunked(all_objects):
-    #         temp_obj: AsinModel
-    #         if temp_obj.asin in asin_list:
-    #             print('here')
-    #             img = temp_obj.photo_list.split('\n')[0]
-    #             name = temp_obj.product_name
-    #             try:
-    #                 brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
-    #                 brand = brand_obj.brand_name
-    #             except:
-    #                 brand = ''
-    #             description = temp_obj.description
-    #             jan = temp_obj.jan
-    #             price = to_user_price(user_obj, temp_obj.price)
-    #
-    #             info_list.append([img, temp_obj.asin, price, name, jan, brand, description])
-    # except RuntimeError:
-    #     pass
-
-    # for asin in asin_list:
-        # try:
-        #     temp_obj = AsinModel.objects.select_related('photo_list').get(asin=asin)
-        #
-        #     img = temp_obj.photo_list.split('\n')[0]
-        #     name = temp_obj.product_name
-        #     try:
-        #         brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
-        #         brand = brand_obj.brand_name
-        #     except:
-        #         brand = ''
-        #     description = temp_obj.description
-        #     jan = temp_obj.jan
-        #     price = to_user_price(user_obj, temp_obj.price)
-        #
-        #     info_list.append([img, asin, price, name, jan, brand, description])
-        # except:
-        #     pass
-
     context = {
         # "info_list": info_list,
         "info_list": [],
@@ -243,7 +200,8 @@ def get_table(request):
     asin_list = list_obj.asin_list.split(',')
     user_obj = UserModel.objects.get(username=username)
 
-    info_list = []
+    info_json_list = []
+    category_list = {}
     all_objects = AsinModel.objects.all()
     try:
         for temp_obj in chunked(all_objects):
@@ -259,12 +217,83 @@ def get_table(request):
                 description = temp_obj.description
                 jan = temp_obj.jan
                 price = to_user_price(user_obj, temp_obj.price)
+                point = temp_obj.point
+                category = temp_obj.q10_category
 
-                info_list.append([img, temp_obj.asin, price, name, jan, brand, description])
+                if category not in category_list.keys():
+                    category_list[category] = 1
+                else:
+                    category_list[category] += 1
+
+                info_json_list.append({
+                    'asin': temp_obj.asin,
+                    'img_link': img,
+                    "product_name": name,
+                    "brand": brand,
+                    "description": description,
+                    "jan": jan,
+                    "price": price,
+                    "point": point,
+                    "category": category
+                })
     except RuntimeError:
         pass
 
-    return JsonResponse({'data': info_list})
+    with open(MEDIA_ROOT + '/categories.csv', 'r', encoding='utf-8_sig',
+              errors='ignore') as f:
+        categories = [r for r in csv.reader(f) if r and r[0] != '']
+
+    key_list = list(category_list.keys())
+    total_list = {}
+
+    for cat in categories:
+        if cat[4] in key_list:
+            top_num = cat[0]
+            top_name = cat[1]
+            mid_num = cat[2]
+            mid_name = cat[3]
+            sub_num = cat[4]
+            sub_name = cat[5]
+
+            num = category_list[sub_num]
+
+            if top_num not in total_list.keys():
+                total_list[top_num] = {
+                    'num': num,
+                    'name': top_name,
+                    mid_num: {
+                        "num": num,
+                        "name": mid_name,
+                        sub_num: {
+                            "num": num,
+                            "name": sub_name
+                        }
+                    }
+                }
+            else:
+                total_list[top_num]['num'] += num
+
+                if mid_num not in total_list[top_num].keys():
+                    total_list[top_num][mid_num] = {
+                        "num": num,
+                        "name": mid_name,
+                        sub_num: {
+                            "num": num,
+                            "name": sub_name
+                        }
+                    }
+                else:
+                    total_list[top_num][mid_num]['num'] += num
+
+                    if sub_num not in total_list[top_num][mid_num].keys():
+                        total_list[top_num][mid_num][sub_num] = {
+                            "num": num,
+                            "name": sub_name
+                        }
+                    else:
+                        total_list[top_num][mid_num][sub_num]['num'] += num
+
+    return JsonResponse({"cat": total_list, "info_json": info_json_list})
 
 
 def blacklist_view(request):
@@ -401,7 +430,8 @@ def get_log(request):
                 except:
                     pass
 
-            res_list.append([id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+            res_list.append(
+                [id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
             res_list_no_date.append([id_, success_asin_list, failed_list])
             id_ += 1
     except RuntimeError:
@@ -415,7 +445,6 @@ def get_log(request):
     }
 
     return JsonResponse(context)
-
 
 
 def chunked(queryset, chunk_size=1000):

@@ -69,18 +69,21 @@ def records_saved(username, date):
     obj.asin_getting_list = ','.join(asin_getting_list)
     obj.save()
 
-    print('search list', to_search_list)
     if to_search_list:
         # 個数を確認し、5個またはそれ以下のThreadを作成
         class ToSearchThread:
             result_list = {}
             to_delete_asin_list = []
             log_error_reason = []
+            total_length = 0
+            counter = 0
+            step_2_counter = 0
 
-            def __init__(self):
+            def __init__(self, total_length):
                 self.result_list = {}
                 self.to_delete_asin_list = []
                 self.log_error_reason = []
+                self.total_length = total_length
 
         if len(to_search_list) > 10:
             thread_num = 5
@@ -92,7 +95,7 @@ def records_saved(username, date):
         divided_list.append(to_search_list[(thread_num - 1) * length:])
 
         threads = []
-        to_search_class = ToSearchThread
+        to_search_class = ToSearchThread(len(to_search_list))
         for i in range(thread_num):
             threads.append(threading.Thread(
                 target=get_info_from_amazon,
@@ -100,7 +103,8 @@ def records_saved(username, date):
                     "username": username,
                     "to_search_class": to_search_class,
                     'asin_list': divided_list[i],
-                    "certification_key": certification_key
+                    "certification_key": certification_key,
+                    "records_model": corresponding_record_object
                 }
             ))
 
@@ -142,7 +146,8 @@ def records_saved(username, date):
                         jan=temp['jan'],
                         category_tree=temp['category_tree'],
                         price=int(temp['price']),
-                        q10_category=temp['q10_category']
+                        q10_category=temp['q10_category'],
+                        point=int(temp['point'])
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
@@ -191,6 +196,7 @@ def records_saved(username, date):
     obj.save()
 
     corresponding_record_object.already_listed = True
+    corresponding_record_object.status_text = ''
     corresponding_record_object.save()
 
     # 失敗理由リスト　区切り単語："delimiter"
@@ -256,15 +262,17 @@ def re_price():
                 add_log(False, obj.asin, '存在しないASIN')
                 continue
 
-            price = sp_api.get_lowest_price(offers.payload)
+            price, point = sp_api.get_lowest_price(offers.payload)
 
             print(f'price {price}')
 
             if price:
                 add_log(True, obj.asin)
                 obj.price = int(price)
+                obj.point = int(point)
             else:
                 obj.price = 0
+                obj.point = 0
                 add_log(False, obj.asin, '価格取得失敗')
 
             obj.save()

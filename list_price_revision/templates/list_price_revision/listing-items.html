@@ -51,23 +51,37 @@
     </div>
 </div>
 <div id="wrap">
+    <div>
+        <div class="box box-solid box-info">
+            <div class="box-header">検索オプション</div>
+            <div class="box-body" id="search_body">
+                <div class="select_div">
+                    <select class="select2" data-placeholder="大カテゴリ" id="big_cat" onchange="set_category_list(this)">
+                    </select>
+                    <select class="select2" data-placeholder="大カテゴリ" id="mid_cat" onchange="set_category_list(this)" disabled>
+                    </select>
+                    <select class="select2" data-placeholder="大カテゴリ" id="sub_cat" onchange="set_category_list(this)" disabled>
+                    </select>
+                    <button class="btn btn-info">検索</button>
+                </div>
+                <div class="delete_and_download_div">
+                    <div class="delete_div">
+                        <select class="delete_select">
+                            <option value="selected">選択したアイテムを削除</option>
+                            <option value="all">全商品削除</option>
+                        </select>
+                        <butto class="btn btn-danger"><label class="fa fa-trash-o"></label></button>
+                    </div>
+                    <div class="download_div">
+                        <button class="btn btn-default" style="background-color: #00a65a;color:white;">CSVダウンロード</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="box box-info">
         <div class="box-body">
             <div class="col-sm-12">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <div class="pull-left"
-                             style="display:flex;white-space:nowrap;vertical-align: middle;height:40px;">
-                            <span style="vertical-align: middle;">選択したアイテムを削除：</span>
-                            <button class="btn btn-block btn-danger"
-                                    onclick="post('{% url 'price:listing' %}', {'hello':1})">
-                                <label class="fa fa-trash-o"></label>
-                            </button>
-                            <br>
-                        </div>
-                    </div>
-                </div>
-
                 <table id="foo-table" class="table table-bordered" style="width:100%;">
                     <thead>
                     <tr>
@@ -75,9 +89,10 @@
                         <th>画像</th>
                         <th>ASIN</th>
                         <th>価格</th>
+                        <th>ポイント</th>
+                        <th>ブランド</th>
                         <th>商品名</th>
                         <th>JAN</th>
-                        <th>ブランド</th>
                     </tr>
                     </thead>
                     <tbody id="list_table">
@@ -100,8 +115,7 @@
 </div>
 
 
-<style>
-
+<style about="loading">
     /* 非表示 */
     .is-hide {
         display: none;
@@ -158,7 +172,58 @@
         display: inline-block;
     }
 </style>
+
+<style about="search-box">
+    #search_body {
+        height: 55px;
+        display: flex;
+        /*justify-content: space-evenly;*/
+    }
+    .select2 {
+        width:12%;
+        height: 20%;
+        min-height: 30px;
+        min-width:150px;
+    }
+
+    .select_div {
+        display: flex;
+        justify-content: space-evenly;
+        /*margin-right: auto;*/
+        border-right: 1px solid black;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .delete_and_download_div {
+        display: flex;
+        width:100%;
+        /*justify-content: space-evenly;*/
+    }
+
+    .delete_div {
+        border-right: 1px solid black;
+        width: 50%;
+        display:flex;
+        justify-content: center;
+    }
+
+    .delete_select {
+        width:180px;
+        margin-right: 10px;
+    }
+
+    .download_div {
+        width: 50%;
+        display:flex;
+        justify-content: center;
+    }
+
+</style>
 <script>
+    let cat_json = {}
+    let item_info_json = {}
+
     $(document).ready(function () {
         //tr要素をクリックでイベント発火
         $('table tr').click(function () {
@@ -188,53 +253,132 @@
         //     loader.classList.add('fadeout-loader');
         // }
 
-        set_table();
+        set_cat_and_table();
     });
 
-    async function set_table() {
+    function set_option_html(temp_j) {
+        let category_keys = Object.keys(temp_j);
+        let option_html = '';
+        let total_item_num = 0;
+
+        for (key of category_keys) {
+            if (key === 'num' || key === 'name')
+                continue
+
+            option_html += "<option value='" + key + "'>" + temp_j[key]['name'] + "(" + temp_j[key]['num'] + ")</option>"
+            total_item_num += temp_j[key]['num'];
+        }
+
+        return "<option value='全て'>全て(" + total_item_num + ")</option>" + option_html
+    }
+
+    function set_category_list(element=null) {
+        let big_cat_elm = document.getElementById('big_cat');
+        let mid_cat_elm = document.getElementById('mid_cat');
+        let sub_cat_elm = document.getElementById('sub_cat');
+
+        if (element === null) {
+            $("#big_cat").html(set_option_html(cat_json));
+        }
+        else {
+            let big_cat_id = big_cat_elm.value;
+
+            if (element.id === 'big_cat') {
+                if (big_cat_id === '全て') {
+                    mid_cat_elm.disabled = true;
+                    sub_cat_elm.disabled = true;
+                    mid_cat_elm.innerHTML = '';
+                    sub_cat_elm.innerHTML = '';
+                } else {
+                    mid_cat_elm.disabled = false;
+                    sub_cat_elm.disabled = true;
+
+                    $("#mid_cat").html(set_option_html(cat_json[big_cat_id]));
+                }
+            } else if (element.id === 'mid_cat') {
+                let mid_cat = element.value;
+
+                if (mid_cat_elm.value === '全て') {
+                    sub_cat_elm.disabled = true;
+                    sub_cat_elm.innerHTML = '';
+                }
+                else{
+                    sub_cat_elm.disabled = false;
+                }
+
+                $("#sub_cat").html(set_option_html(cat_json[big_cat_id][mid_cat]))
+            }
+        }
+
+    }
+
+    function table_inner_html(temp_j) {
+        return [
+            '<td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>',
+            '<td><img src="' + temp_j['img_link'] + '" style="height: 120px;"/></td>',
+            '<td class="asin"><a class="asin" href="https://www.amazon.co.jp/dp/' + temp_j['asin'] + '" target="_blank">' + temp_j['asin'] + '</a></td>',
+            '<td>' + temp_j['price'] + '</td>',
+            '<td>' + temp_j['point'] + '</td>',
+            '<td>' + temp_j['brand'] + '</td>',
+            '<td>' + temp_j['product_name'] + '</a></td>',
+            '<td>' + temp_j['jan'] + '</td>'
+        ]
+    }
+
+    function set_table_with_json(category_list=[]) {
+        console.log(item_info_json[0]);
+        if (category_list.length === 0) {
+            let list_table = $('#foo-table');
+            // list_table.DataTable().rows().remove();
+            // list_table.DataTable().draw();
+            for (let elm of item_info_json)
+                list_table.DataTable().row.add(table_inner_html(elm));
+            list_table.DataTable().draw();
+        }
+    }
+
+    // カテゴリリストとテーブルを描画
+    async function set_cat_and_table() {
         let link = '{% url 'price:get_listing' %}';
 
-        console.log(link);
-
-        let res = await fetch(link)
-        .then(response => {
-            return response.json();
-        })
+        await fetch(link)
+        .then(response => {return response.json()})
         .then(data => {
-
-            for (let li of data.data) {
-                $("#foo-table").DataTable().row.add([
-                    '<td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>',
-                    '<td><img src="' + li[0] + '" style="height: 120px;"/></td>',
-                    '<td class="asin">' + li[1] + '</td>',
-                    '<td>' + li[2] + '</td>',
-                    '<td><a href="https://www.amazon.co.jp/dp/' + li[1] + '" target="_blank">' + li[3] + '</a></td>',
-                    '<td>' + li[4] + '</td>',
-                    '<td>' + li[5] + '</td>'
-                ])
-            }
-
-            // テーブル描画
-            $('#foo-table').DataTable().draw();
+            cat_json = data.cat;
+            item_info_json = data.info_json;
+            set_category_list();
+            set_table_with_json();
 
             stop_load();
+            set_checkable();
         })
-        .catch(error => {
+        .catch(error => {})
+    }
 
+    function set_checkable() {
+        //tr要素をクリックでイベント発火
+        $('table tr').click(function () {
+            //td要素からチェックボックスを探す
+            var $c = $(this).children('td').children('input[type=checkbox]');
+            if ($c.prop('checked'))
+                $c.prop('checked', '');
+            else
+                $c.prop('checked', 'checked');
         });
     }
 
     function stop_load() {
         // ロード停止
-        bg = document.getElementById('loader-bg');
-        loader = document.getElementById('loader');
+        let bg = document.getElementById('loader-bg');
+        let loader = document.getElementById('loader');
 
         bg.classList.add('fadeout-bg');
         loader.classList.add('fadeout-loader');
         bg.setAttribute('class', 'is-hide');
     }
 
-    function post(path, params, method = 'post') {
+    function delete_post(elm, method = 'post') {
+        let path = "{% url 'price:listing' %}"
 
         // The rest of this code assumes you are not using a library.
         // It can be made less verbose if you use one.
@@ -242,17 +386,19 @@
         form.method = method;
         form.action = path;
 
-        var inputElem = document.createElement('input');
+        let inputElem = document.createElement('input');
         inputElem.type = 'hidden';
         inputElem.name = 'csrfmiddlewaretoken';
         inputElem.value = '{{ csrf_token }}';
         form.appendChild(inputElem);
 
-        asin_list = []
-        trs = $(list_table).find('tr');
+        let asin_list = []
+        let trs = $('#list_table').find('tr');
         for (i = 0; i < trs.length; i++)
             if ($(trs[i]).children('td').children('input[type=checkbox]').prop('checked'))
-                asin_list.push($(trs[i]).children('.asin')[0].innerText)
+                asin_list.push(trs[i].getElementsByClassName('asin')[0].innerHTML)
+
+        console.log(asin_list);
 
         const hiddenField = document.createElement('input');
         hiddenField.type = 'hidden';

@@ -34,6 +34,14 @@
     }
 </script>
 
+<style>
+    .readonly_input {
+        width:30px;
+        background:transparent;
+        border:none;
+    }
+</style>
+
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 
 <!--<ul class="messages_ul">-->
@@ -96,28 +104,28 @@
 
                         <tbody>
                             <tr role="row">
-                                <td>0 〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"
+                                <td><input value="0" class="readonly_input" readonly>  〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><label id="min_2" style="font-weight:normal !important">{{ obj.max_1|add:1 }}</label> 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"
+                                <td><input id="min_2" readonly class="readonly_input" value="{{ obj.max_1|add:1 }}"> 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><label id="min_3" style="font-weight:normal !important">{{ obj.max_2|add:1 }}</label> 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"
+                                <td><input id="min_3" class="readonly_input" value="{{ obj.max_2|add:1 }}" > 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><label id="min_4" style="font-weight:normal !important">{{ obj.max_3|add:1 }}</label> 〜 </td>
+                                <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 </td>
                                 <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
                             </tr>
@@ -211,9 +219,9 @@
         max_1 = document.getElementsByName('max_1')[0].value;
         max_2 = document.getElementsByName('max_2')[0].value;
         max_3 = document.getElementsByName('max_3')[0].value;
-        document.getElementById('min_2').innerText = parseInt(max_1) + 1;
-        document.getElementById('min_3').innerText = parseInt(max_2) + 1;
-        document.getElementById('min_4').innerText = parseInt(max_3) + 1;
+        document.getElementById('min_2').value = parseInt(max_1) + 1;
+        document.getElementById('min_3').value = parseInt(max_2) + 1;
+        document.getElementById('min_4').value = parseInt(max_3) + 1;
 
         document.getElementsByName('max_2')[0].min = parseInt(max_1) + 1;
         document.getElementsByName('max_3')[0].min = parseInt(max_2) + 1;

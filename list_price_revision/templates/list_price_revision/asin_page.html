@@ -111,7 +111,11 @@
                     <td>{{info.0}}</td>
                     <td>{{info.1}}</td>
                     <td>{{info.2}}</td>
-                    <td>{% if info.3 %}<i class="fa fa-check-circle" id="green_icon"></i>{% else %}<i class="fa fa-remove" id="red_icon"></i>{%endif%}</td>
+                    {% if info.4 == '' %}
+                        <td>{% if info.3 %}<i class="fa fa-check-circle" id="green_icon"></i>{% else %}<i class="fa fa-remove" id="red_icon"></i>{%endif%}</td>
+                    {% else %}
+                        <td>{{info.4}}</td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
 
@@ -149,5 +153,4 @@ div[class*='col-'] {
 
 </style>
 
-</div>
 {% endblock %}
