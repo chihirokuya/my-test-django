@@ -245,6 +245,7 @@ def get_table(request):
 
     key_list = list(category_list.keys())
     total_list = {}
+    sub_category_names = {}
 
     for cat in categories:
         if cat[4] in key_list:
@@ -254,6 +255,8 @@ def get_table(request):
             mid_name = cat[3]
             sub_num = cat[4]
             sub_name = cat[5]
+
+            sub_category_names[sub_num] = top_name + '<p>' + mid_name + '<p>' + sub_name
 
             num = category_list[sub_num]
 
@@ -293,7 +296,7 @@ def get_table(request):
                     else:
                         total_list[top_num][mid_num][sub_num]['num'] += num
 
-    return JsonResponse({"cat": total_list, "info_json": info_json_list})
+    return JsonResponse({"cat": total_list, "info_json": info_json_list, 'sub_names': sub_category_names})
 
 
 def blacklist_view(request):

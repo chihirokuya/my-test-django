@@ -8,8 +8,7 @@
         <small></small>
     </h1>
     <ol class="breadcrumb">
-        <li><a href="/"><i class="fa fa-dashboard"></i>アプリ選択</a></li>
-        <li><a href="{% url 'price:price-base' %}">出品・価格改定</a></li>
+        <li><a href="{% url 'price:price-base' %}"><i class="fa fa-dashboard"></i>ホーム</a></li>
         <li class="active">出品中</li>
     </ol>
 </section>
@@ -62,18 +61,18 @@
                     </select>
                     <select class="select2" data-placeholder="大カテゴリ" id="sub_cat" onchange="set_category_list(this)" disabled>
                     </select>
-                    <button class="btn btn-info">検索</button>
+                    <button class="btn btn-info" onclick="set_table_with_json()">検索</button>
                 </div>
                 <div class="delete_and_download_div">
                     <div class="delete_div">
-                        <select class="delete_select">
+                        <select class="delete_select" id="delete_select">
                             <option value="selected">選択したアイテムを削除</option>
                             <option value="all">全商品削除</option>
                         </select>
-                        <butto class="btn btn-danger"><label class="fa fa-trash-o"></label></button>
+                        <button class="btn btn-danger" onclick="delete_post()"><label class="fa fa-trash-o"></label></button>
                     </div>
                     <div class="download_div">
-                        <button class="btn btn-default" style="background-color: #00a65a;color:white;">CSVダウンロード</button>
+                        <button class="btn btn-default" style="background-color: #00a65a;color:white;" onclick="download_csv()">CSVダウンロード</button>
                     </div>
                 </div>
             </div>
@@ -85,14 +84,14 @@
                 <table id="foo-table" class="table table-bordered" style="width:100%;">
                     <thead>
                     <tr>
-                        <th></th>
+                        <th id="check_th"></th>
                         <th>画像</th>
                         <th>ASIN</th>
                         <th>価格</th>
                         <th>ポイント</th>
                         <th>ブランド</th>
                         <th>商品名</th>
-                        <th>JAN</th>
+                        <th>カテゴリ</th>
                     </tr>
                     </thead>
                     <tbody id="list_table">
@@ -219,23 +218,19 @@
         justify-content: center;
     }
 
+    /*td {*/
+    /*    max-height:5px*/
+    /*}*/
+
 </style>
+
 <script>
     let cat_json = {}
     let item_info_json = {}
+    let sub_names = {}
 
     $(document).ready(function () {
-        //tr要素をクリックでイベント発火
-        $('table tr').click(function () {
-            //td要素からチェックボックスを探す
-            var $c = $(this).children('td').children('input[type=checkbox]');
-            if ($c.prop('checked'))
-                $c.prop('checked', '');
-            else
-                $c.prop('checked', 'checked');
-        });
-
-        var bg = document.getElementById('loader-bg'),
+        let bg = document.getElementById('loader-bg'),
         loader = document.getElementById('loader');
         /* ロード画面の非表示を解除 */
         bg.classList.remove('is-hide');
@@ -277,12 +272,15 @@
         let mid_cat_elm = document.getElementById('mid_cat');
         let sub_cat_elm = document.getElementById('sub_cat');
 
+        // 初期状態
         if (element === null) {
             $("#big_cat").html(set_option_html(cat_json));
         }
+        // その他
         else {
             let big_cat_id = big_cat_elm.value;
 
+            // 大カテゴリが変更された場合
             if (element.id === 'big_cat') {
                 if (big_cat_id === '全て') {
                     mid_cat_elm.disabled = true;
@@ -294,6 +292,7 @@
                     sub_cat_elm.disabled = true;
 
                     $("#mid_cat").html(set_option_html(cat_json[big_cat_id]));
+                    sub_cat_elm.innerHTML = '';
                 }
             } else if (element.id === 'mid_cat') {
                 let mid_cat = element.value;
@@ -315,26 +314,98 @@
     function table_inner_html(temp_j) {
         return [
             '<td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>',
-            '<td><img src="' + temp_j['img_link'] + '" style="height: 120px;"/></td>',
+            '<td><img src="' + temp_j['img_link'] + '" style="height: 90px;"/></td>',
             '<td class="asin"><a class="asin" href="https://www.amazon.co.jp/dp/' + temp_j['asin'] + '" target="_blank">' + temp_j['asin'] + '</a></td>',
             '<td>' + temp_j['price'] + '</td>',
             '<td>' + temp_j['point'] + '</td>',
             '<td>' + temp_j['brand'] + '</td>',
             '<td>' + temp_j['product_name'] + '</a></td>',
-            '<td>' + temp_j['jan'] + '</td>'
+            '<td>' + sub_names[temp_j['category']] + '</td>'
         ]
     }
 
-    function set_table_with_json(category_list=[]) {
-        console.log(item_info_json[0]);
-        if (category_list.length === 0) {
-            let list_table = $('#foo-table');
-            // list_table.DataTable().rows().remove();
-            // list_table.DataTable().draw();
-            for (let elm of item_info_json)
-                list_table.DataTable().row.add(table_inner_html(elm));
-            list_table.DataTable().draw();
+    function set_table_with_json() {
+        let list_table = $('#foo-table').DataTable();
+        list_table.rows().remove();
+
+        let big_cat = $("#big_cat").val();
+        let mid_cat = $("#mid_cat").val();
+        let sub_cat = $("#sub_cat").val();
+
+        let category_list=[]
+
+        // 大カテゴリ：全て
+        if (big_cat === '全て') {
+
         }
+        // 中カテゴリ：全て
+        else if (mid_cat === '全て') {
+            for (let temp_mid of Object.keys(cat_json[big_cat])) {
+                if (temp_mid !== 'name' && temp_mid !== 'num')
+                    category_list.push(...Object.keys(cat_json[big_cat][temp_mid]));
+            }
+        }
+        // その他
+        else {
+            if (sub_cat === '全て') {
+                category_list = Object.keys(cat_json[big_cat][mid_cat]);
+            }
+            else {
+                category_list = [sub_cat]
+            }
+        }
+
+        let index = category_list.indexOf('num')
+        while (true) {
+            index = category_list.indexOf('num')
+            if (index > -1) {
+                category_list.splice(index, 1)
+            }
+            else
+                break
+        }
+
+        while (true) {
+            index = category_list.indexOf('name')
+            if (index > -1) {
+                category_list.splice(index, 1)
+            }
+            else
+                break
+        }
+
+        if (category_list.length === 0) {
+            for (let elm of item_info_json)
+                list_table.row.add(table_inner_html(elm));
+            list_table.draw();
+        }
+        else {
+            for(let temp_j of item_info_json) {
+                if (category_list.includes(temp_j['category']))
+                    list_table.row.add(table_inner_html(temp_j))
+            }
+        }
+
+        $("#foo-table").DataTable({
+            destroy: true,
+            bAutoWidth: false,
+            aoColumns: [
+                {sWidth: '0%', bSortable:false},
+                {sWidth: '10%'},
+                {sWidth: '5%'},
+                {sWidth: '5%'},
+                {sWidth: '5%'},
+                {sWidth: '5%'},
+                {sWidth: '14%'},
+                {sWidth: '10%'},
+            ],
+            select: {
+                style: 'multi'
+            },
+        }).columns.adjust();
+        // $("#foo-table").DataTable().columns.adjust().draw();
+
+        set_checkable();
     }
 
     // カテゴリリストとテーブルを描画
@@ -346,18 +417,18 @@
         .then(data => {
             cat_json = data.cat;
             item_info_json = data.info_json;
+            sub_names = data.sub_names;
             set_category_list();
             set_table_with_json();
 
             stop_load();
-            set_checkable();
         })
         .catch(error => {})
     }
 
     function set_checkable() {
         //tr要素をクリックでイベント発火
-        $('table tr').click(function () {
+        $("#foo-table").DataTable().$('tr').click(function () {
             //td要素からチェックボックスを探す
             var $c = $(this).children('td').children('input[type=checkbox]');
             if ($c.prop('checked'))
@@ -377,11 +448,9 @@
         bg.setAttribute('class', 'is-hide');
     }
 
-    function delete_post(elm, method = 'post') {
+    function delete_post(method = 'post') {
         let path = "{% url 'price:listing' %}"
 
-        // The rest of this code assumes you are not using a library.
-        // It can be made less verbose if you use one.
         const form = document.createElement('form');
         form.method = method;
         form.action = path;
@@ -393,12 +462,17 @@
         form.appendChild(inputElem);
 
         let asin_list = []
-        let trs = $('#list_table').find('tr');
-        for (i = 0; i < trs.length; i++)
-            if ($(trs[i]).children('td').children('input[type=checkbox]').prop('checked'))
-                asin_list.push(trs[i].getElementsByClassName('asin')[0].innerHTML)
-
-        console.log(asin_list);
+        if ($("#delete_select").val() !== 'all') {
+            for (let elm of $("#foo-table").DataTable().$('tr')) {
+                if ($(elm).children('td').children('input[type=checkbox]').prop('checked'))
+                    asin_list.push(elm.getElementsByClassName('asin')[0].innerHTML)
+            }
+        }
+        else {
+            for (let temp_j of item_info_json) {
+                asin_list.push(temp_j['asin'])
+            }
+        }
 
         const hiddenField = document.createElement('input');
         hiddenField.type = 'hidden';
@@ -409,6 +483,46 @@
         document.body.appendChild(form);
         form.submit();
     }
+
+    function download_csv() {
+        const filename = '商品一覧.csv';
+
+        // csvようテキスト作成
+        let text = 'ASIN, 価格, ポイント, ブランド, 商品名, カテゴリ'
+        for (let temp_j of item_info_json) {
+            text += '\n';
+            text += temp_j['asin'] + ', ' + temp_j['price'] + ', ' + temp_j['point']
+                    + ', ' + temp_j['brand'] + ', ' + temp_j['product_name'] + ', ' + temp_j['category']
+        }
+        //BOMを付与する（Excelでの文字化け対策）
+        const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+        //Blobでデータを作成する
+        const blob = new Blob([bom, text], { type: "text/csv" });
+
+        //IE10/11用(download属性が機能しないためmsSaveBlobを使用）
+        if (window.navigator.msSaveBlob) {
+            window.navigator.msSaveBlob(blob, filename);
+            //その他ブラウザ
+        } else {
+            //BlobからオブジェクトURLを作成する
+            const url = (window.URL || window.webkitURL).createObjectURL(blob);
+            //ダウンロード用にリンクを作成する
+            const download = document.createElement("a");
+            //リンク先に上記で生成したURLを指定する
+            download.href = url;
+            //download属性にファイル名を指定する
+            download.download = filename;
+            //作成したリンクをクリックしてダウンロードを実行する
+            download.click();
+            //createObjectURLで作成したオブジェクトURLを開放する
+            (window.URL || window.webkitURL).revokeObjectURL(url);
+        }
+    }
+
+    document.getElementById('check_th').addEventListener('dblclick', function(e){
+        for (let tr of $("#foo-table").DataTable().$('tr'))
+            tr.click();
+    });
 
 </script>
 

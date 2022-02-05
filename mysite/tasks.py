@@ -311,6 +311,8 @@ def re_price():
 @shared_task
 def delete_items(username, to_delete_asin_list):
     obj: ListingModel = ListingModel.objects.get(username=username)
+    obj.asin_list = ','.join(list(dict.fromkeys(obj.asin_list.split(','))))
+    obj.save()
     certification_key = get_certification_key(username)
 
     user_obj = UserModel.objects.get(username=username)
