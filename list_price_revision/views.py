@@ -202,6 +202,49 @@ def get_table(request):
 
     info_json_list = []
     category_list = {}
+
+    start = time.perf_counter()
+    all_objects = AsinModel.objects.values('asin', 'photo_list', 'product_name', 'brand', 'description', 'price', 'point', 'q10_category')
+    for temp_obj in all_objects:
+        temp_obj: dict
+        if temp_obj['asin'] in asin_list:
+            img = temp_obj['photo_list'].split('\n')[0]
+            name = temp_obj['product_name']
+            try:
+                brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj['brand'])
+                brand = brand_obj.brand_name
+            except:
+                brand = ''
+            description = temp_obj['description']
+            price = to_user_price(user_obj, temp_obj['price'])
+            point = temp_obj['point']
+            category = temp_obj['q10_category']
+
+            if category not in category_list.keys():
+                category_list[category] = 1
+            else:
+                category_list[category] += 1
+
+            user_price = to_user_price(user_obj, price)
+
+            info_json_list.append({
+                'asin': temp_obj['asin'],
+                'img_link': img,
+                "product_name": name,
+                "brand": brand,
+                "description": description,
+                "price": price,
+                "point": point,
+                "category": category,
+                "profit": user_price - price
+            })
+
+    print(f'{time.perf_counter() - start}秒')
+
+    start = time.perf_counter()
+
+    info_json_list = []
+    category_list = {}
     all_objects = AsinModel.objects.all()
     try:
         for temp_obj in chunked(all_objects):
@@ -241,6 +284,51 @@ def get_table(request):
                 })
     except RuntimeError:
         pass
+
+    print(f'{time.perf_counter() - start}秒')
+
+    start = time.perf_counter()
+
+    info_json_list = []
+    category_list = {}
+    all_objects = AsinModel.objects.all()
+    for temp_obj in all_objects.iterator():
+        temp_obj: AsinModel
+        if temp_obj.asin in asin_list:
+            img = temp_obj.photo_list.split('\n')[0]
+            name = temp_obj.product_name
+            try:
+                brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+                brand = brand_obj.brand_name
+            except:
+                brand = ''
+            description = temp_obj.description
+            jan = temp_obj.jan
+            price = to_user_price(user_obj, temp_obj.price)
+            point = temp_obj.point
+            category = temp_obj.q10_category
+
+            if category not in category_list.keys():
+                category_list[category] = 1
+            else:
+                category_list[category] += 1
+
+            user_price = to_user_price(user_obj, price)
+
+            info_json_list.append({
+                'asin': temp_obj.asin,
+                'img_link': img,
+                "product_name": name,
+                "brand": brand,
+                "description": description,
+                "jan": jan,
+                "price": price,
+                "point": point,
+                "category": category,
+                "profit": user_price - price
+            })
+
+    print(f'{time.perf_counter() - start}秒')
 
     with open(MEDIA_ROOT + '/categories.csv', 'r', encoding='utf-8_sig',
               errors='ignore') as f:
