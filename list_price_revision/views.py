@@ -198,7 +198,7 @@ def get_table(request):
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=username)
     asin_list = list_obj.asin_list.split(',')
-    user_obj = UserModel.objects.get(username=username)
+    user_obj: UserModel = UserModel.objects.get(username=username)
 
     info_json_list = []
     category_list = {}
@@ -225,6 +225,8 @@ def get_table(request):
                 else:
                     category_list[category] += 1
 
+                user_price = to_user_price(user_obj, price)
+
                 info_json_list.append({
                     'asin': temp_obj.asin,
                     'img_link': img,
@@ -234,7 +236,8 @@ def get_table(request):
                     "jan": jan,
                     "price": price,
                     "point": point,
-                    "category": category
+                    "category": category,
+                    "profit": user_price - price
                 })
     except RuntimeError:
         pass
