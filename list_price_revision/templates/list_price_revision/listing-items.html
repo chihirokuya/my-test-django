@@ -88,6 +88,7 @@
                         <th>画像</th>
                         <th>ASIN</th>
                         <th>価格</th>
+                        <th>利益額</th>
                         <th>ポイント</th>
                         <th>ブランド</th>
                         <th>商品名</th>
@@ -95,17 +96,6 @@
                     </tr>
                     </thead>
                     <tbody id="list_table">
-<!--                    {% for info in info_list %}-->
-<!--                    <tr role="row">-->
-<!--                        <td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>-->
-<!--                        <td><img src="{{info.0}}" style="height: 120px;"/></td>-->
-<!--                        <td class="asin">{{info.1}}</td>-->
-<!--                        <td>{{info.2}}</td>-->
-<!--                        <td><a href="https://www.amazon.co.jp/dp/{{info.1}}" target="_blank">{{info.3}}</a></td>-->
-<!--                        <td>{{info.4}}</td>-->
-<!--                        <td>{{info.5}}</td>-->
-<!--                    </tr>-->
-<!--                    {% endfor %}}-->
                     </tbody>
                 </table>
             </div>
@@ -316,7 +306,8 @@
             '<td><input type="checkbox" style="position:relative; vertical-align: middle;"/></td>',
             '<td><img src="' + temp_j['img_link'] + '" style="height: 90px;"/></td>',
             '<td class="asin"><a class="asin" href="https://www.amazon.co.jp/dp/' + temp_j['asin'] + '" target="_blank">' + temp_j['asin'] + '</a></td>',
-            '<td>' + temp_j['price'] + temp_j['profit'] + '</td>',
+            '<td>' + temp_j['price'] + '</td>',
+            '<td>' + temp_j['profit'] + '</td>',
             '<td>' + temp_j['point'] + '</td>',
             '<td>' + temp_j['brand'] + '</td>',
             '<td>' + temp_j['product_name'] + '</a></td>',
@@ -392,6 +383,7 @@
             aoColumns: [
                 {sWidth: '0%', bSortable:false},
                 {sWidth: '10%'},
+                {sWidth: '5%'},
                 {sWidth: '5%'},
                 {sWidth: '5%'},
                 {sWidth: '5%'},
