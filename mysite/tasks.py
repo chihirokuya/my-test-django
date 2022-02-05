@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import shared_task
-import time
+import glob
 import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
@@ -365,6 +365,16 @@ def backup_clean_up():
             os.mkdir(backup_dir)
 
         copyfile(os.path.join(BASE_DIR, 'db.sqlite3'), backup_dir + f'/{now}.sqlite3')
+
+        file_list = glob.glob(backup_dir + '/*')
+        for file in file_list:
+            date = file.split(' ')[0].split('-')
+            try:
+                date = datetime.date(year=int(date[0]), month=int(date[1]), day=int(date[2]))
+                if (now - date).days >= 15:
+                    os.remove(file)
+            except:
+                continue
     except:
         pass
 
