@@ -904,7 +904,12 @@ def update_price(username):
         else:
             log_failed.append([key, reason])
 
-            delete_item(certification_key, initial_letter + asin[1:])
+            temp_res = delete_item(certification_key, initial_letter + asin[1:])
+            if type(temp_res) is bool:
+                asin_list_ = listing_obj.asin_list.split(',')
+                asin_list_.remove(key) if key in asin_list_ else asin_list_
+                listing_obj.asin_list = ','.join(asin_list_)
+                listing_obj.save()
 
     try:
         user_obj: UserModel = UserModel.objects.get(username=username)
@@ -913,6 +918,8 @@ def update_price(username):
         return
 
     listing_obj: ListingModel = ListingModel.objects.get(username=username)
+    listing_obj.asin_list = ','.join(list(dict.fromkeys(listing_obj.asin_list.split(','))))
+    listing_obj.save()
     asin_list = listing_obj.asin_list.split(',')
 
     for asin in asin_list:
