@@ -892,6 +892,8 @@ def delete_item(certification_key, item_code):
 
 def update_price(username):
     certification_key = get_certification_key(username)
+    user_obj: UserModel = UserModel.objects.get(username=username)
+    delete_or_not = user_obj.delete_or_not
 
     log_success = []
     log_failed = []
@@ -904,12 +906,13 @@ def update_price(username):
         else:
             log_failed.append([key, reason])
 
-            temp_res = delete_item(certification_key, initial_letter + asin[1:])
-            if type(temp_res) is bool:
-                asin_list_ = listing_obj.asin_list.split(',')
-                asin_list_.remove(key) if key in asin_list_ else asin_list_
-                listing_obj.asin_list = ','.join(asin_list_)
-                listing_obj.save()
+            if delete_or_not:
+                temp_res = delete_item(certification_key, initial_letter + asin[1:])
+                if type(temp_res) is bool:
+                    asin_list_ = listing_obj.asin_list.split(',')
+                    asin_list_.remove(key) if key in asin_list_ else asin_list_
+                    listing_obj.asin_list = ','.join(asin_list_)
+                    listing_obj.save()
 
     try:
         user_obj: UserModel = UserModel.objects.get(username=username)
