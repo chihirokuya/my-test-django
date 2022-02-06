@@ -264,8 +264,6 @@ def re_price():
 
             price, point = sp_api.get_lowest_price(offers.payload)
 
-            print(f'price {price}')
-
             if price:
                 add_log(True, obj.asin)
                 obj.price = int(price)

@@ -264,7 +264,7 @@ def get_table(request):
                     brand = ''
                 description = temp_obj.description
                 jan = temp_obj.jan
-                price = to_user_price(user_obj, temp_obj.price)
+                user_price = to_user_price(user_obj, temp_obj.price)
                 point = temp_obj.point
                 category = temp_obj.q10_category
 
@@ -273,8 +273,6 @@ def get_table(request):
                 else:
                     category_list[category] += 1
 
-                user_price = to_user_price(user_obj, price)
-
                 info_json_list.append({
                     'asin': temp_obj.asin,
                     'img_link': img,
@@ -282,10 +280,10 @@ def get_table(request):
                     "brand": brand,
                     "description": description,
                     "jan": jan,
-                    "price": price,
+                    "price": user_price,
                     "point": point,
                     "category": category,
-                    "profit": user_price - price
+                    "profit": user_price - temp_obj.price
                 })
     except RuntimeError:
         pass
