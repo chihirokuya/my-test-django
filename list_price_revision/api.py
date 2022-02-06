@@ -66,7 +66,7 @@ def to_user_price(obj: UserModel, price):
 
     x = price * (1 + rieki / 100) + kotei
 
-    return int(x + x/9)
+    return int(x + x/prop)
 
 
 class SpApiFunction:
