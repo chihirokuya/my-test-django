@@ -58,6 +58,7 @@ def base_view(request):
         linked_asin_list = list(filter(None, q10_obj.linked_asin_list.split(',')))
 
     context = {
+        'obj': user_obj,
         "asin_list_length": len(asin_list),
         "total_length": len(total_asin_list),
         "linked_length": len(linked_asin_list),
@@ -70,7 +71,7 @@ def base_view(request):
 
 
 def asin_view(request):
-    # obj = UserModel.objects.get(username=request.user)
+    user_obj = UserModel.objects.get(username=request.user)
 
     if not ListingModel.objects.filter(username=request.user).exists():
         ListingModel(username=request.user).save()
@@ -161,6 +162,7 @@ def asin_view(request):
         pass
 
     context = {
+        'obj': user_obj,
         "pre_asin_list": pre_asin_list,
         "records": records,
         'waiting_list': '\n'.join(list_obj.asin_waiting_list.split(',')),
@@ -170,7 +172,7 @@ def asin_view(request):
 
 def listing_view(request):
     context = {
-        # "info_list": info_list,
+        "obj": UserModel.objects.get(username=request.user),
         "info_list": [],
         'username': str(request.user)
     }
@@ -189,6 +191,175 @@ def listing_view(request):
                 messages.error(request, '内部エラーが発生しました。\n' + f'{e}')
 
     return render(request, base_path + 'listing-items.html', context)
+
+
+def blacklist_view(request):
+    amazon_group_list = ['Alcoholic Beverage', 'Amazon SMP', 'Amazon Tablets', 'Apparel', 'Art and Craft Supply',
+                         'Authority Non Buyable', 'Automotive Parts and Accessories', 'Baby Product', 'Beauty', 'BISS',
+                         'BISS Basic', 'Book', 'CE', 'Digital Accessories 3', 'Digital Accessories 4',
+                         'Digital Device Accessory', 'DVD', 'Fabric', 'GPS or Navigation System', 'Grocery',
+                         'Hand Tools', 'Health and Beauty', 'Hobby', 'Home', 'Home Improvement', 'Home Theater',
+                         'Jewelry', 'Kitchen', 'Lawn & Patio', 'Lighting', 'Luggage', 'Major Appliances', 'MotorCycle',
+                         'Music', 'Musical Instruments', 'Office Product', 'Pantry', 'PC Accessory',
+                         'Personal Computer', 'Pet Products', 'Photography', 'Premium Consumer Electronics Brands',
+                         'Prestige Beauty', 'Receiver or Amplifier', 'Shoes', 'Single Detail Page Misc', 'Software',
+                         'Speakers', 'Sports', 'Toy', 'Video', 'Video Games', 'Watch', 'Wireless',
+                         'Wireless Phone Accessory']
+    obj = UserModel.objects.get(username=request.user)
+
+    context = {
+        'amazon_group_list': amazon_group_list,
+        'obj': obj,
+        'amazon_group_blacklist': obj.group_black.split(','),
+    }
+
+    if request.method == 'POST':
+        temp = request.POST
+
+        try:
+            obj.maker_name_blacklist = temp['maker_name_blacklist']
+            obj.asin_blacklist = temp['asin_blacklist']
+            obj.words_blacklist = temp['words_blacklist']
+
+            # 商品グループについて
+            amazon_group_blacklist = []
+            for group in amazon_group_list:
+                if group in temp.keys():
+                    amazon_group_blacklist.append(group)
+            obj.group_black = ','.join(amazon_group_blacklist)
+
+            obj.save()
+            messages.success(request, '情報が更新されました')
+
+        except:
+            messages.error(request, '保存内容に誤りがあります。')
+
+        return redirect(reverse('price:blacklist'))
+
+    return render(request, base_path + 'blacklist.html', context)
+
+
+def setting_view(request):
+    obj: UserModel = UserModel.objects.get(username=request.user)
+    context = {
+        'obj': obj,
+        'alphabets': [chr(i) for i in list(range(65, 91))],
+        'alert': False
+    }
+
+    if request.method == 'POST':
+        temp = request.POST
+        if 'q10_id' in temp:
+            try:
+                obj.q10_id = temp['q10_id']
+                obj.q10_password = temp['q10_password']
+                obj.q10_api = temp['q10_api']
+                obj.description_header = temp['description_header']
+                obj.description_footer = temp['description_footer']
+                obj.initial_letter = temp['initial_letter']
+                obj.delete_or_not = True if 'delete_or_not' in temp.keys() else False
+                obj.shipping_code = temp['shipping_code']
+                obj.stock_num = int(temp['stock_num'])
+                obj.photo_num = int(temp['photo_num'])
+                obj.max_1 = int(temp['max_1'])
+                obj.max_2 = int(temp['max_2'])
+                obj.max_3 = int(temp['max_3'])
+                obj.rieki_1 = int(temp['rieki_1'])
+                obj.rieki_2 = int(temp['rieki_2'])
+                obj.rieki_3 = int(temp['rieki_3'])
+                obj.rieki_4 = int(temp['rieki_4'])
+                obj.kotei_1 = int(temp['kotei_1'])
+                obj.kotei_2 = int(temp['kotei_2'])
+                obj.kotei_3 = int(temp['kotei_3'])
+                obj.kotei_4 = int(temp['kotei_4'])
+                obj.mega_wari = temp['mega_wari'] == 'true'
+                obj.shop_name = temp['shop_name']
+                obj.save()
+
+                messages.success(request, '情報が更新されました')
+            except:
+                messages.error(request, '保存内容に誤りがあります。')
+        elif 'check_api' in temp:
+            try:
+                obj.q10_id = temp['acc_id']
+                obj.q10_password = temp['acc_pass']
+                obj.q10_api = temp['acc_api']
+                obj.save()
+
+                cert_key = get_certification_key(str(request.user))
+
+                if cert_key == '':
+                    obj.api_ok = False
+                    messages.error(request, '接続に失敗しました。')
+                else:
+                    obj.api_ok = True
+                    messages.success(request, '接続に成功しました')
+
+                obj.save()
+            except:
+                messages.error(request, 'エラーが発生しました。')
+
+        return redirect(reverse('price:setting'))
+
+    return render(request, base_path + 'setting.html', context)
+
+
+def log_view(request):
+    context = {
+        "obj": UserModel.objects.get(username=request.user)
+    }
+    return render(request, base_path + 'log_page.html', context)
+
+
+def chunked(queryset, chunk_size=1000):
+    start = 0
+    while True:
+        chunk = queryset[start:start + chunk_size]
+        for obj in chunk:
+            yield obj
+        if len(chunk) < chunk_size:
+            raise StopIteration
+        start += chunk_size
+
+
+
+# 軽API
+def get_log(request):
+    log_obj_list = LogModel.objects.filter(username=request.user)
+
+    # id, 日付、動作内容、成功ASIN数、失敗ASIN数
+    res_list = []
+    # id, 成功ASINリスト、[[失敗ASIN、理由]]
+    res_list_no_date = []
+    id_ = 1
+    try:
+        for obj in chunked(log_obj_list):
+            obj: LogModel
+            total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
+            success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
+            failed_list = []
+            for val in obj.cause_list.split(delimiter):
+                temp = val.split(':')
+                try:
+                    failed_list.append([temp[0], temp[1]])
+                except:
+                    pass
+
+            res_list.append(
+                [id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+            res_list_no_date.append([id_, success_asin_list, failed_list])
+            id_ += 1
+    except RuntimeError:
+        pass
+
+    res_list.sort(key=lambda x: x[1], reverse=True)
+
+    context = {
+        "res_list": res_list,
+        "no_date": res_list_no_date
+    }
+
+    return JsonResponse(context)
 
 
 def get_table(request):
@@ -349,163 +520,25 @@ def get_table(request):
     return JsonResponse({"cat": total_list, "info_json": info_json_list, 'sub_names': sub_category_names})
 
 
-def blacklist_view(request):
-    amazon_group_list = ['Alcoholic Beverage', 'Amazon SMP', 'Amazon Tablets', 'Apparel', 'Art and Craft Supply',
-                         'Authority Non Buyable', 'Automotive Parts and Accessories', 'Baby Product', 'Beauty', 'BISS',
-                         'BISS Basic', 'Book', 'CE', 'Digital Accessories 3', 'Digital Accessories 4',
-                         'Digital Device Accessory', 'DVD', 'Fabric', 'GPS or Navigation System', 'Grocery',
-                         'Hand Tools', 'Health and Beauty', 'Hobby', 'Home', 'Home Improvement', 'Home Theater',
-                         'Jewelry', 'Kitchen', 'Lawn & Patio', 'Lighting', 'Luggage', 'Major Appliances', 'MotorCycle',
-                         'Music', 'Musical Instruments', 'Office Product', 'Pantry', 'PC Accessory',
-                         'Personal Computer', 'Pet Products', 'Photography', 'Premium Consumer Electronics Brands',
-                         'Prestige Beauty', 'Receiver or Amplifier', 'Shoes', 'Single Detail Page Misc', 'Software',
-                         'Speakers', 'Sports', 'Toy', 'Video', 'Video Games', 'Watch', 'Wireless',
-                         'Wireless Phone Accessory']
-    obj = UserModel.objects.get(username=request.user)
+def sell_and_not_stock(request):
+    username = request.user
 
-    context = {
-        'amazon_group_list': amazon_group_list,
-        'obj': obj,
-        'amazon_group_blacklist': obj.group_black.split(','),
-    }
+    if not ListingModel.objects.filter(username=username).exists():
+        ListingModel(username=request.user).save()
+    list_obj = ListingModel.objects.get(username=username)
+    asin_list = list_obj.asin_list.split(',')
 
-    if request.method == 'POST':
-        temp = request.POST
-
-        try:
-            obj.maker_name_blacklist = temp['maker_name_blacklist']
-            obj.asin_blacklist = temp['asin_blacklist']
-            obj.words_blacklist = temp['words_blacklist']
-
-            # 商品グループについて
-            amazon_group_blacklist = []
-            for group in amazon_group_list:
-                if group in temp.keys():
-                    amazon_group_blacklist.append(group)
-            obj.group_black = ','.join(amazon_group_blacklist)
-
-            obj.save()
-            messages.success(request, '情報が更新されました')
-
-        except:
-            messages.error(request, '保存内容に誤りがあります。')
-
-        return redirect(reverse('price:blacklist'))
-
-    return render(request, base_path + 'blacklist.html', context)
-
-
-def setting_view(request):
-    obj: UserModel = UserModel.objects.get(username=request.user)
-    context = {
-        'obj': obj,
-        'alphabets': [chr(i) for i in list(range(65, 91))],
-        'alert': False
-    }
-
-    if request.method == 'POST':
-        temp = request.POST
-        if 'q10_id' in temp:
-            try:
-                obj.q10_id = temp['q10_id']
-                obj.q10_password = temp['q10_password']
-                obj.q10_api = temp['q10_api']
-                obj.description_header = temp['description_header']
-                obj.description_footer = temp['description_footer']
-                obj.initial_letter = temp['initial_letter']
-                obj.delete_or_not = True if 'delete_or_not' in temp.keys() else False
-                obj.shipping_code = temp['shipping_code']
-                obj.stock_num = int(temp['stock_num'])
-                obj.photo_num = int(temp['photo_num'])
-                obj.max_1 = int(temp['max_1'])
-                obj.max_2 = int(temp['max_2'])
-                obj.max_3 = int(temp['max_3'])
-                obj.rieki_1 = int(temp['rieki_1'])
-                obj.rieki_2 = int(temp['rieki_2'])
-                obj.rieki_3 = int(temp['rieki_3'])
-                obj.rieki_4 = int(temp['rieki_4'])
-                obj.kotei_1 = int(temp['kotei_1'])
-                obj.kotei_2 = int(temp['kotei_2'])
-                obj.kotei_3 = int(temp['kotei_3'])
-                obj.kotei_4 = int(temp['kotei_4'])
-                obj.save()
-
-                messages.success(request, '情報が更新されました')
-            except:
-                messages.error(request, '保存内容に誤りがあります。')
-        elif 'check_api' in temp:
-            try:
-                obj.q10_id = temp['acc_id']
-                obj.q10_password = temp['acc_pass']
-                obj.q10_api = temp['acc_api']
-                obj.save()
-
-                cert_key = get_certification_key(str(request.user))
-
-                if cert_key == '':
-                    obj.api_ok = False
-                    messages.error(request, '接続に失敗しました。')
-                else:
-                    obj.api_ok = True
-                    messages.success(request, '接続に成功しました')
-
-                obj.save()
-            except:
-                messages.error(request, 'エラーが発生しました。')
-
-        return redirect(reverse('price:setting'))
-
-    return render(request, base_path + 'setting.html', context)
-
-
-def log_view(request):
-    return render(request, base_path + 'log_page.html')
-
-
-def get_log(request):
-    log_obj_list = LogModel.objects.filter(username=request.user)
-
-    # id, 日付、動作内容、成功ASIN数、失敗ASIN数
-    res_list = []
-    # id, 成功ASINリスト、[[失敗ASIN、理由]]
-    res_list_no_date = []
-    id_ = 1
+    selling_num = 0
+    no_stock_num = 0
+    all_objects = AsinModel.objects.values('price', 'asin')
     try:
-        for obj in chunked(log_obj_list):
-            obj: LogModel
-            total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
-            success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
-            failed_list = []
-            for val in obj.cause_list.split(delimiter):
-                temp = val.split(':')
-                try:
-                    failed_list.append([temp[0], temp[1]])
-                except:
-                    pass
-
-            res_list.append(
-                [id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
-            res_list_no_date.append([id_, success_asin_list, failed_list])
-            id_ += 1
+        for elm in chunked(all_objects):
+            if elm['asin'] in asin_list:
+                if elm['price'] == 0:
+                    no_stock_num += 1
+                else:
+                    selling_num += 1
     except RuntimeError:
         pass
 
-    res_list.sort(key=lambda x: x[1], reverse=True)
-
-    context = {
-        "res_list": res_list,
-        "no_date": res_list_no_date
-    }
-
-    return JsonResponse(context)
-
-
-def chunked(queryset, chunk_size=1000):
-    start = 0
-    while True:
-        chunk = queryset[start:start + chunk_size]
-        for obj in chunk:
-            yield obj
-        if len(chunk) < chunk_size:
-            raise StopIteration
-        start += chunk_size
+    return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})

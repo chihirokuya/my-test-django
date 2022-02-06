@@ -519,7 +519,7 @@
 
     document.getElementById('check_th').addEventListener('dblclick', function(e){
         for (let tr of $("#foo-table").DataTable().$('tr'))
-            tr.click();
+            tr.getElementsByTagName('input')[0].click();
     });
 
 </script>

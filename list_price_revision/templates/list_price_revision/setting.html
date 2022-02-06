@@ -83,8 +83,10 @@
             <div class="box-header">
                 <h3 class="box-title">価格設定</h3>
             </div>
-            <!-- /.box-header -->
-
+            <div id="mega_div">
+                <label><input type="radio" id="mega_wari" value="false" name="mega_wari" form="UserForm">メガ割</label>
+                <label><input type="radio" id="normal" name="mega_wari" value="false" form="UserForm">通常</label>
+            </div>
             <div class="box-body">
                 <div class="col-sm-12">
                     <table id="example2" class="table table-bordered table-hover dataTable" role="grid" aria-describedby="example2_info">
@@ -103,37 +105,37 @@
 
                         <tbody>
                             <tr role="row">
-                                <td><input value="0" class="readonly_input" readonly>  〜 <input type="number" name="max_1" style="width: 50px;" value="{{ obj.max_1 }}" form="UserForm"
+                                <td><input value="0" class="readonly_input" readonly>  〜 <input type="number" name="max_1" value="{{ obj.max_1 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><input id="min_2" readonly class="readonly_input" value="{{ obj.max_1|add:1 }}"> 〜 <input type="number" name="max_2" style="width: 50px;" value="{{ obj.max_2 }}" form="UserForm"
+                                <td><input id="min_2" readonly class="readonly_input" value="{{ obj.max_1|add:1 }}"> 〜 <input type="number" name="max_2" value="{{ obj.max_2 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><input id="min_3" class="readonly_input" value="{{ obj.max_2|add:1 }}" > 〜 <input type="number" name="max_3" style="width: 50px;" value="{{ obj.max_3 }}" form="UserForm"
+                                <td><input id="min_3" class="readonly_input" value="{{ obj.max_2|add:1 }}" > 〜 <input type="number" name="max_3" value="{{ obj.max_3 }}" form="UserForm"
                                 onchange="update_val()"></td>
                                 <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm"></td>
                             </tr>
 
                             <tr role="row">
-                                <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 </td>
+                                <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 <label style="width:50px;"></label></td>
                                 <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
                             </tr>
                         </tbody>
 
                     </table>
-                    ※X = (Amazon価格ーポイント）X（1 + 利益率) + 固定費<p></p>
-                    ※出品価格＝X + X/9<p></p>
-                    ※利益額＝出品価格ー（Amazon価格ーポイント）<p></p>
+                    <p>※X = (Amazon価格ーポイント）×（1 + 利益率) + 固定費</p>
+                    <p id="x_">※出品価格＝X + X/9</p>
+                    <p>※利益額＝出品価格ー(Amazon価格ーポイント)</p>
                 </div>
 
 
@@ -152,6 +154,12 @@
             <div class="box-body">
                 <form role="form">
                     <!-- textarea -->
+                    <div class="form-group">
+                        <label>ショップ名</label>
+                        <input class="form-control" placeholder="" value="{{ obj.shop_name }}"
+                               name="shop_name" form="UserForm">
+                    </div>
+
                     <div class="form-group">
                         <label>商品詳細・上段</label>
                         <textarea class="form-control" rows="3" placeholder="" name="description_header" form="UserForm">{{ obj.description_header }}</textarea>
@@ -206,7 +214,6 @@
             <!-- /.box-body -->
         </div>
     </div>
-
 </div>
 
 <form method="POST" action="" id="UserForm">{% csrf_token %}
@@ -215,7 +222,45 @@
     </div>
 </form>
 
+<style>
+    table {
+        table-layout: fixed;
+        width:100%;
+        text-align: center;
+    }
+
+    th {
+        text-align: center;
+    }
+    td input {
+        width: 50px;
+    }
+
+    #mega_div {
+        width:100%;
+        justify-content: space-evenly;
+        display: flex;
+    }
+    #mega_wari {
+        margin-left: 30px;
+    }
+</style>
+
 <script>
+    $(document).ready(function() {
+        if ({{obj.mega_wari|yesno:"true, false"}})
+        {
+            $('#mega_wari').prop('checked', true);
+            $("#mega_wari").val('true');
+            $("#x_").text('※出品価格＝X + X/8')
+        }
+        else {
+            $('#normal').prop('checked', true);
+            $("#mega_wari").val('false');
+            $("x_").text('※出品価格＝X + X/9')
+        }
+    })
+
     function update_val() {
         max_1 = document.getElementsByName('max_1')[0].value;
         max_2 = document.getElementsByName('max_2')[0].value;
@@ -276,5 +321,21 @@
           document.body.appendChild(form);
           form.submit();
         }
+
+        document.getElementById("mega_wari").addEventListener('change', function(e){
+            if ($("#mega_wari").prop('checked')) {
+                $("#normal").prop('checked', false);
+                $("#mega_wari").val('true');
+                $("#x_").text('※出品価格＝X + X/8');
+            }
+        })
+
+        document.getElementById("normal").addEventListener('change', function(e){
+            if ($("#normal").prop('checked')) {
+                $("#mega_wari").prop('checked', false);
+                $("#mega_wari").val('false');
+                $("#x_").text('※出品価格＝X + X/9');
+            }
+        })
 </script>
 {% endblock %}

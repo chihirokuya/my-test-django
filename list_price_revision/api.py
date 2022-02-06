@@ -46,6 +46,7 @@ keepa_key_list = [
 # 価格設定
 def to_user_price(obj: UserModel, price):
     price = int(price)
+    prop = 9
 
     if price <= obj.max_1:
         rieki = obj.rieki_1
@@ -60,7 +61,12 @@ def to_user_price(obj: UserModel, price):
         rieki = obj.rieki_4
         kotei = obj.kotei_4
 
-    return int(price * (1 + rieki / 100) + kotei)
+    if obj.mega_wari:
+        prop = 8
+
+    x = price * (1 + rieki / 100) + kotei
+
+    return int(x + x/9)
 
 
 class SpApiFunction:
@@ -409,8 +415,11 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
 
     weight_list = []
     for key in keepa_key_list:
-        temp_ = keepa.Keepa(accesskey=key)
-        weight_list.append(temp_.tokens_left)
+        try:
+            temp_ = keepa.Keepa(accesskey=key)
+            weight_list.append(temp_.tokens_left)
+        except:
+            pass
 
     total = sum(weight_list)
     length_list = [int(val / total * len(succeed_asin_list)) for val in weight_list]
