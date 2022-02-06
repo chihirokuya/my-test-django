@@ -87,9 +87,10 @@
                         <th id="check_th"></th>
                         <th>画像</th>
                         <th>ASIN</th>
-                        <th>価格</th>
-                        <th>利益額</th>
+                        <th>Q10価格</th>
+                        <th>Amazon価格</th>
                         <th>ポイント</th>
+                        <th>利益額</th>
                         <th>ブランド</th>
                         <th>商品名</th>
                         <th>カテゴリ</th>
@@ -307,8 +308,9 @@
             '<td><img src="' + temp_j['img_link'] + '" style="height: 90px;"/></td>',
             '<td class="asin"><a class="asin" href="https://www.amazon.co.jp/dp/' + temp_j['asin'] + '" target="_blank">' + temp_j['asin'] + '</a></td>',
             '<td>' + temp_j['price'] + '</td>',
-            '<td>' + temp_j['profit'] + '</td>',
+            '<td>' + temp_j['amazon_price'] + '</td>',
             '<td>' + temp_j['point'] + '</td>',
+            '<td>' + temp_j['profit'] + '</td>',
             '<td>' + temp_j['brand'] + '</td>',
             '<td>' + temp_j['product_name'] + '</a></td>',
             '<td>' + sub_names[temp_j['category']] + '</td>'
@@ -388,12 +390,16 @@
                 {sWidth: '5%'},
                 {sWidth: '5%'},
                 {sWidth: '5%'},
+                {sWidth: '5%'},
                 {sWidth: '14%'},
                 {sWidth: '10%'},
             ],
             select: {
                 style: 'multi'
             },
+            order: [
+                1
+            ]
         }).columns.adjust();
         // $("#foo-table").DataTable().columns.adjust().draw();
 

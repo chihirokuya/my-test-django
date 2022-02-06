@@ -281,6 +281,7 @@ def get_table(request):
                     "description": description,
                     "jan": jan,
                     "price": user_price,
+                    "amazon_price": temp_obj.price,
                     "point": point,
                     "category": category,
                     "profit": user_price - temp_obj.price
