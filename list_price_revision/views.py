@@ -346,7 +346,7 @@ def get_log(request):
                     pass
 
             res_list.append(
-                [id_, obj.date, obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+                [id_, obj.date.strftime('%Y-%m-%d %H:%M'), obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
             res_list_no_date.append([id_, success_asin_list, failed_list])
             id_ += 1
     except RuntimeError:
