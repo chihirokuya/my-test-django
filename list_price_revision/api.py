@@ -358,7 +358,7 @@ def get_cat_from_csv(category_tree):
     return ''
 
 
-def get_info_from_amazon(username, to_search_class, asin_list, certification_key, records_model:RecordsModel):
+def get_info_from_amazon(username, to_search_class, asin_list, certification_key, records_model: RecordsModel):
     # まずSP-APIから取得できるか確認→取得できたもののみKeepaからも取得
 
     print('####### Amazonから取得 #########')
@@ -906,14 +906,6 @@ def update_price(username):
         else:
             log_failed.append([key, reason])
 
-            if delete_or_not:
-                temp_res = delete_item(certification_key, initial_letter + asin[1:])
-                if type(temp_res) is bool:
-                    asin_list_ = listing_obj.asin_list.split(',')
-                    asin_list_.remove(key) if key in asin_list_ else asin_list_
-                    listing_obj.asin_list = ','.join(asin_list_)
-                    listing_obj.save()
-
     try:
         user_obj: UserModel = UserModel.objects.get(username=username)
         initial_letter = user_obj.initial_letter
@@ -933,9 +925,26 @@ def update_price(username):
                 add_log(False, asin, '存在しないASIN')
                 continue
 
-            link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
-                   f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
-                   f'&Price={to_user_price(user_obj, asin_obj.price)}&Qty={user_obj.stock_num}'
+            if asin_obj.price == 0:
+                if delete_or_not:
+                    temp_res = delete_item(certification_key, initial_letter + asin[1:])
+                    if type(temp_res) is bool:
+                        asin_list_ = listing_obj.asin_list.split(',')
+                        asin_list_.remove(asin) if asin in asin_list_ else asin_list_
+                        listing_obj.asin_list = ','.join(asin_list_)
+                        listing_obj.save()
+                    else:
+                        add_log(False, asin, 'Q10上から削除失敗')
+                    continue
+                else:
+                    # 在庫を０に
+                    link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
+                           f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
+                           f'&Qty=0'
+            else:
+                link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
+                      f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
+                      f'&Price={to_user_price(user_obj, asin_obj.price)}&Qty={user_obj.stock_num}'
 
             res = requests.get(link).json()
 

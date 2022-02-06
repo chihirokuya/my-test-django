@@ -425,15 +425,15 @@
     }
 
     function set_checkable() {
-        //tr要素をクリックでイベント発火
-        $("#foo-table").DataTable().$('tr').click(function () {
-            //td要素からチェックボックスを探す
-            var $c = $(this).children('td').children('input[type=checkbox]');
-            if ($c.prop('checked'))
-                $c.prop('checked', '');
-            else
-                $c.prop('checked', 'checked');
-        });
+        // //tr要素をクリックでイベント発火
+        // $("#foo-table").DataTable().$('tr').click(function () {
+        //     //td要素からチェックボックスを探す
+        //     var $c = $(this).children('td').children('input[type=checkbox]');
+        //     if ($c.prop('checked'))
+        //         $c.prop('checked', '');
+        //     else
+        //         $c.prop('checked', 'checked');
+        // });
     }
 
     function stop_load() {
