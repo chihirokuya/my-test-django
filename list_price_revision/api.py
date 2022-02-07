@@ -159,10 +159,10 @@ class SpApiFunction:
         try:
             offers = offers['Offers']
         except:
-            return '', ''
+            return '', '価格取得失敗'
 
         if not offers:
-            return '', ''
+            return '', '価格取得失敗'
 
         now_price = 10000000
         point = 0
@@ -195,7 +195,7 @@ class SpApiFunction:
                     updated = True
 
         if not updated:
-            return '', ''
+            return '', 'FBA商品ではありませんでした。'
         else:
             return f'{int(now_price)}', point
 
@@ -239,7 +239,7 @@ def get_from_sp_api(asin):
     price, point = sp_api.get_lowest_price(offers.payload)
 
     if price == '':
-        return result, '価格取得失敗', ''
+        return result, point, ''
 
     ok, values = sp_api.get_from_catalog(catalog.payload)
 

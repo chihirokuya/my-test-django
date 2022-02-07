@@ -272,7 +272,7 @@ def re_price():
             else:
                 obj.price = 0
                 obj.point = 0
-                add_log(False, obj.asin, '価格取得失敗')
+                add_log(False, obj.asin, point)
 
             obj.save()
 
