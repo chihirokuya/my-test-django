@@ -396,12 +396,12 @@ def get_table(request):
                     category_list[category] += 1
 
                 info_json_list.append({
-                    'asin': temp_obj.asin,
+                    'asin': temp_obj['asin'],
                     'img_link': img,
                     "product_name": name,
                     "brand": brand,
                     "price": user_price,
-                    "amazon_price": temp_obj.price,
+                    "amazon_price": temp_obj['price'],
                     "point": point,
                     "category": category,
                     "profit": profit
