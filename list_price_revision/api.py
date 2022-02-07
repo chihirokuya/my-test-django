@@ -68,6 +68,9 @@ def to_user_price(obj: UserModel, price):
 
     return int(x + x/prop)
 
+# API用の価格設定
+# def user_price_and_profit()
+
 
 class SpApiFunction:
     credentials = None
@@ -474,10 +477,10 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 resul_, message_ = keepa_info(product)
 
                 if resul_:
-                    category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+                    # category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
 
-                    if category == '':
-                        category = get_cat_from_csv(resul_[3])
+                    # if category == '':
+                    category = get_cat_from_csv(resul_[3])
 
                     if category == '':
                         to_search_class.to_delete_asin_list.append(product['asin'])
