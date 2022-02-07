@@ -16,8 +16,15 @@
 </div>
 
 <div class="col-md-12">
-    <div class="box box-solid box-primary" style="height:300px;">
+    <div class="button-div">
+        <button class="btn btn-default" onclick="add_log()">今日</button>
+        <button class="btn btn-default lg" onclick="add_log(4)">５日間</button>
+        <button class="btn btn-default lg" onclick="add_log(9)">１０日間</button>
+    </div>
+</div>
 
+<div class="col-md-12">
+    <div class="box box-solid box-primary" style="height:300px;">
         <div class="box-header">
             <h3 class="box-title">ログ</h3>
         </div>
@@ -60,6 +67,17 @@
 
 
 <style>
+
+    .button-div {
+        width:100%;
+        display: flex;
+        justify-content: left;
+        padding-bottom: 10px;
+    }
+
+    .lg {
+        margin-left: 10px;
+    }
 
     /* 非表示 */
     .is-hide {
@@ -131,12 +149,6 @@
     var no_date = [];
 
     $(document).ready(function () {
-        var bg = document.getElementById('loader-bg'),
-        loader = document.getElementById('loader');
-        /* ロード画面の非表示を解除 */
-        bg.classList.remove('is-hide');
-        loader.classList.remove('is-hide');
-
         add_log();
     });
 
@@ -191,8 +203,16 @@
         }
     }
 
-    async function add_log() {
+    async function add_log(days=1) {
+        let bg = document.getElementById('loader-bg'),
+            loader = document.getElementById('loader');
+        /* ロード画面の非表示を解除 */
+        bg.classList.remove('is-hide');
+        loader.classList.remove('is-hide');
+
         let link = '{% url 'price:get_log' %}';
+
+        link += '/' + days
 
         let tbody = document.getElementById('foo-table').getElementsByTagName('tbody')[0];
 

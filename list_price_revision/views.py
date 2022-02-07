@@ -325,8 +325,10 @@ def chunked(queryset, chunk_size=1000):
 
 
 # 軽API
-def get_log(request):
-    log_obj_list = LogModel.objects.filter(username=request.user)
+def get_log(request, range=1):
+    start_date = (datetime.datetime.now() - datetime.timedelta(days=range)).strftime('%Y-%m-%d')
+    end_date = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    log_obj_list = LogModel.objects.filter(username=request.user, date__range=[start_date, end_date])
 
     # id, 日付、動作内容、成功ASIN数、失敗ASIN数
     res_list = []

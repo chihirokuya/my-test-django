@@ -12,6 +12,7 @@ urlpatterns = [
     path('blacklist/', views.blacklist_view, name='blacklist'),
     path('setting/', views.setting_view, name='setting'),
     path('log/', views.log_view, name='log'),
-    path('log/get/', views.get_log, name='get_log'),
+    path('log/get', views.get_log, name='get_log'),
+    path('log/get/<int:range>', views.get_log, name='get_log'),
     path('listing/get/', views.get_table, name='get_listing'),
 ]
