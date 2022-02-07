@@ -25,7 +25,7 @@ urlpatterns = [
     path('', include('list_price_revision.urls')),
     path('', include('accounts.urls')),
     path('', include('autobuy.urls')),
-    path('', home_view, name='base'),
+    # path('', home_view, name='base'),
     path('admin/', admin.site.urls),
 ]
 
