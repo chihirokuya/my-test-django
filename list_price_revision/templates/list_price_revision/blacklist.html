@@ -1,18 +1,6 @@
 {% extends 'list_price_revision/base.html' %}
 
 
-{% block dashboard %}
-<section class="content-header">
-    <h1>
-        <small></small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a href="{% url 'price:price-base' %}"><i class="fa fa-dashboard"></i>ホーム</a></li>
-        <li class="active">ブラックリスト</li>
-    </ol>
-</section>
-{% endblock %}
-
 {% block content %}
 {% if messages %}
 {% for message in messages %}

@@ -1,18 +1,6 @@
 {% extends 'list_price_revision/base.html' %}
 {% load static %}
 
-{% block dashboard %}
-<section class="content-header">
-    <h1>
-        <small></small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a href="{% url 'price:price-base' %}"><i class="fa fa-dashboard"></i>ホーム</a></li>
-        <li class="active">ログ</li>
-    </ol>
-</section>
-{% endblock %}
-
 {% block content %}
 
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
@@ -153,6 +141,7 @@
     });
 
     function row_clicked(tr) {
+        console.log('here');
         let td = ''
         let id = $($(tr)[0]).children('.id_')[0].innerText;
         let list = []
@@ -214,19 +203,22 @@
             .then(data => {
                 no_date = data['no_date'];
 
-                for (info of data['res_list']) {
-                    let tr = document.createElement('tr')
-                    tr.setAttribute("role", 'row');
-                    tr.setAttribute("onclick", "row_clicked(this)")
+                console.log('receved');
+                // for (info of)
 
-                    tr.innerHTML = "<td>" + info[1] + "</td>\n" +
+                let innerHTML = ''
+                for (let info of data['res_list']) {
+                    innerHTML +=
+                        '<tr role="row" onclick="row_clicked(this)">' +
+                        "<td>" + info[1] + "</td>\n" +
                         "<td>" + info[2] + "</td>\n" +
                         "<td>" + info[3] + "</td>\n" +
                         "<td>" + info[4] + "</td>\n" +
-                        "<td class=\"id_\" style=\"display:none\">" + info[0] + "</td>"
-
-                    tbody.appendChild(tr);
+                        "<td class=\"id_\" style=\"display:none\">" + info[0] + "</td>" +
+                        '</tr>'
                 }
+
+                tbody.innerHTML = innerHTML
             })
             .catch(error => {
 

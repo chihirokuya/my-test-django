@@ -2,19 +2,6 @@
 {% load static %}
 
 
-{% block dashboard %}
-<section class="content-header">
-    <h1>
-        <small></small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a href="{% url 'price:price-base' %}"><i class="fa fa-dashboard"></i>ホーム</a></li>
-        <li class="active">出品中</li>
-    </ol>
-</section>
-{% endblock %}
-
-
 {% block content %}
 
 {% if messages %}
