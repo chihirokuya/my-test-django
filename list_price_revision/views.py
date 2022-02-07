@@ -10,6 +10,7 @@ import os
 import pytz
 import csv
 import threading
+from dateutil import tz
 from mysite.tasks import records_saved, link_q10_account
 from mysite import tasks
 
@@ -327,7 +328,9 @@ def chunked(queryset, chunk_size=1000):
 # 軽API
 def get_log(request, range=1):
     start_date = (datetime.datetime.now() - datetime.timedelta(days=range)).strftime('%Y-%m-%d')
-    end_date = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    end_date = (datetime.datetime.today()).strftime('%Y-%m-%d')
+    print(start_date)
+    print(end_date)
     log_obj_list = LogModel.objects.filter(username=request.user, date__range=[start_date, end_date])
 
     # id, 日付、動作内容、成功ASIN数、失敗ASIN数
@@ -349,7 +352,7 @@ def get_log(request, range=1):
                     pass
 
             res_list.append(
-                [id_, obj.date.strftime('%Y-%m-%d %H:%M'), obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
+                [id_, obj.date.astimezone(tz.gettz('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M'), obj.type, len(success_asin_list), len(total_asin_list) - len(success_asin_list)])
             res_list_no_date.append([id_, success_asin_list, failed_list])
             id_ += 1
     except RuntimeError:
