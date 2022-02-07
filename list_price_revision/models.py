@@ -28,6 +28,7 @@ class UserModel(models.Model):
     group_black = models.TextField(default='', blank=True)
 
     # 価格関連
+    min_1 = models.IntegerField(default=0, null=True, blank=True)
     max_1 = models.IntegerField(default=0, blank=True)
     max_2 = models.IntegerField(default=0, blank=True)
     max_3 = models.IntegerField(default=0, blank=True)

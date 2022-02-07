@@ -261,6 +261,7 @@ def setting_view(request):
                 obj.shipping_code = temp['shipping_code']
                 obj.stock_num = int(temp['stock_num'])
                 obj.photo_num = int(temp['photo_num'])
+                obj.min_1 = int(temp['min_1'])
                 obj.max_1 = int(temp['max_1'])
                 obj.max_2 = int(temp['max_2'])
                 obj.max_3 = int(temp['max_3'])

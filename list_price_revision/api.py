@@ -45,6 +45,9 @@ def to_user_price(obj: UserModel, price):
     price = int(price)
     prop = 9
 
+    if obj.min_1 > price:
+        return 0
+
     if price <= obj.max_1:
         rieki = obj.rieki_1
         kotei = obj.kotei_1
@@ -664,6 +667,9 @@ def upload_new_item(asin, username, certification_key):
     if black:
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
 
+    if to_user_price(user_obj, obj.price) == 0:
+        return False, f'最低価格以下の商品です。'
+
     to_remove_list = []
     product_name = obj.product_name
     description = obj.description.split('\n')
@@ -976,7 +982,8 @@ def update_price(username):
                 add_log(False, asin, '存在しないASIN')
                 continue
 
-            if asin_obj.price == 0:
+            user_price = to_user_price(user_obj, asin_obj.price)
+            if asin_obj.price == 0 or user_price == 0:
                 if delete_or_not:
                     temp_res = delete_item(certification_key, initial_letter + asin[1:])
                     if type(temp_res) is bool:
@@ -995,7 +1002,7 @@ def update_price(username):
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                       f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
-                      f'&Price={to_user_price(user_obj, asin_obj.price)}&Qty={user_obj.stock_num}'
+                      f'&Price={user_price}&Qty={user_obj.stock_num}'
 
             res = requests.get(link).json()
 
