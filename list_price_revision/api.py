@@ -258,6 +258,7 @@ def keepa_info(product):
 
 
 def get_category_qoo10(product_name):
+    print('category')
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X'
                              ' 10_11_5) AppleWebKit/537.36 (KHTML, like '
                              'Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -278,6 +279,7 @@ def get_category_qoo10(product_name):
         elm = soup.find(id='category_result_list')
 
         if elm is None:
+            print('elm none')
             return ''
 
     elms = elm.find_all('a')
@@ -288,6 +290,7 @@ def get_category_qoo10(product_name):
                 link = elm['href'].split('gdlc_cd=')
                 if len(link) != 1:
                     if link[1][0] == '3':
+                        print('found')
                         return link[1]
 
     elms = soup.find_all(class_='sbj')
@@ -311,12 +314,14 @@ def get_category_qoo10(product_name):
             elm = soup.find(id='img_search_gdsc_cd')
 
             if elm is not None:
+                print('found')
                 return elm['value']
 
     return ''
 
 
 def get_cat_from_csv(category_tree):
+    print(category_tree)
     with open(MEDIA_ROOT + '/categories.csv', 'r', encoding='utf-8_sig',
               errors='ignore') as f:
         categories = [r for r in csv.reader(f) if r and r[0] != '']
@@ -369,6 +374,8 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
 
     print('####### Amazonから取得 #########')
     temp = len(asin_list) // 10
+    if temp == 0:
+        temp = 1
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
     for i, asin in enumerate(asin_list):
         skip = False
@@ -461,7 +468,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                         products.append(api.query(asin_, wait=True, domain='JP')[0])
                     except:
                         to_search_class.to_delete_asin_list.append(asin_)
-                        to_search_class.log_error_list.append([asin_, str(e)])
+                        to_search_class.log_error_reason.append([asin_, str(e)])
 
             for product in products:
                 resul_, message_ = keepa_info(product)
@@ -472,14 +479,18 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                     if category == '':
                         category = get_cat_from_csv(resul_[3])
 
-                    to_search_class.result_list[product['asin']]['links'] = resul_[0]
-                    to_search_class.result_list[product['asin']]['description'] = resul_[1]
-                    to_search_class.result_list[product['asin']]['jan'] = resul_[2]
-                    to_search_class.result_list[product['asin']]['category_tree'] = resul_[3]
-                    to_search_class.result_list[product['asin']]['q10_category'] = category
+                    if category == '':
+                        to_search_class.to_delete_asin_list.append(product['asin'])
+                        to_search_class.log_error_reason.append([product['asin'], 'カテゴリ取得に失敗しました。'])
+                    else:
+                        to_search_class.result_list[product['asin']]['links'] = resul_[0]
+                        to_search_class.result_list[product['asin']]['description'] = resul_[1]
+                        to_search_class.result_list[product['asin']]['jan'] = resul_[2]
+                        to_search_class.result_list[product['asin']]['category_tree'] = resul_[3]
+                        to_search_class.result_list[product['asin']]['q10_category'] = category
                 else:
                     to_search_class.to_delete_asin_list.append(product['asin'])
-                    to_search_class.log_error_list.append([product['asin'], message_])
+                    to_search_class.log_error_reason.append([product['asin'], message_])
 
             to_search_class.step_2_counter += len(asins)
             if update:
@@ -707,7 +718,13 @@ def upload_new_item(asin, username, certification_key):
     else:
         try:
             if 'Can not register the goods' in res['ResultMsg']:
-                return True, res['ResultMsg']
+                return False, res['ResultMsg']
+        except:
+            pass
+
+        try:
+            if res['ResultMsg'] != '':
+                return False, res['ResultMsg']
         except:
             pass
 

@@ -168,6 +168,7 @@ def records_saved(username, date):
     print(to_transfer_list)
     for asin in to_transfer_list:
         ok, reason = upload_new_item(asin, username, certification_key)
+        print(ok, reason)
         if ok:
             try:
                 asin_waiting_list.remove(asin)
