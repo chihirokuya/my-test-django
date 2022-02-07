@@ -332,7 +332,6 @@ def get_log(request):
     # id, 成功ASINリスト、[[失敗ASIN、理由]]
     res_list_no_date = []
     id_ = 1
-    start = time.perf_counter()
     try:
         for obj in chunked(log_obj_list):
             obj: LogModel
@@ -352,7 +351,6 @@ def get_log(request):
             id_ += 1
     except RuntimeError:
         pass
-    print(f'{time.perf_counter() - start}秒')
 
     res_list.sort(key=lambda x: x[1], reverse=True)
 
