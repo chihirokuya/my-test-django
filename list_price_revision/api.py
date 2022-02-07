@@ -69,7 +69,32 @@ def to_user_price(obj: UserModel, price):
     return int(x + x/prop)
 
 # API用の価格設定
-# def user_price_and_profit()
+def user_price_and_profit(obj: UserModel, price):
+    price = int(price)
+    prop = 9
+
+    if price <= obj.max_1:
+        rieki = obj.rieki_1
+        kotei = obj.kotei_1
+    elif price <= obj.max_2:
+        rieki = obj.rieki_2
+        kotei = obj.kotei_2
+    elif price <= obj.max_3:
+        rieki = obj.rieki_3
+        kotei = obj.kotei_3
+    else:
+        rieki = obj.rieki_4
+        kotei = obj.kotei_4
+
+    if obj.mega_wari:
+        prop = 8
+
+    x = price * (1 + rieki / 100) + kotei
+
+    sell_price = int(x + x/prop)
+    profit = int(sell_price - price - kotei - sell_price * 0.1)
+
+    return sell_price, profit
 
 
 class SpApiFunction:

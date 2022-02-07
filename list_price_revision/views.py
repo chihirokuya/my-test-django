@@ -3,7 +3,7 @@ from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv
+from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit
 from django.contrib import messages
 import datetime
 import os
@@ -433,7 +433,7 @@ def get_table(request):
                     brand = brand_obj.brand_name
                 except:
                     brand = ''
-                user_price = to_user_price(user_obj, temp_obj.price)
+                user_price, profit = user_price_and_profit(user_obj, temp_obj.price)
                 point = temp_obj.point
                 category = temp_obj.q10_category
 
@@ -451,7 +451,7 @@ def get_table(request):
                     "amazon_price": temp_obj.price,
                     "point": point,
                     "category": category,
-                    "profit": user_price - temp_obj.price
+                    "profit": profit
                 })
     except RuntimeError:
         pass
