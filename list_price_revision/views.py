@@ -371,54 +371,47 @@ def get_table(request):
     asin_list = list_obj.asin_list.split(',')
     user_obj: UserModel = UserModel.objects.get(username=username)
 
-    # # asin = models.CharField(max_length=10)
-    # #
-    # # product_name = models.TextField(blank=True, default='')
-    # # brand = models.TextField(blank=True, default='')
-    # # product_group = models.TextField(blank=True, default='')
-    # # photo_list = models.TextField(blank=True, default='')
-    # # description = models.TextField(blank=True, default='')
-    # # jan = models.TextField(max_length=100, default='', blank=True)
-    # # category_tree = models.JSONField(blank=True, default={})
-    # # price = models.IntegerField(default=0, blank=True)
-    # # point = models.IntegerField(default=0, blank=True, null=True)
-    # #
-    # # q10_category = models.CharField(default='', blank=True, max_length=10000)
-    # start = time.perf_counter()
-    # info_json_list = []
-    # category_list = {}
-    # from django.db import connection
-    # with connection.cursor() as cursor:
-    #     cursor.execute("SELECT * FROM list_price_revision_asinmodel")
-    #     res = cursor.fetchall()
-    # for temp in res:
-    #     if temp[1] in asin_list:
-    #         try:
-    #             brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp[3])
-    #             brand = brand_obj.brand_name
-    #         except:
-    #             brand = ''
-    #
-    #         category = temp[9]
-    #         price = temp[8]
-    #         if category not in category_list.keys():
-    #             category_list[category] = 1
-    #         else:
-    #             category_list[category] += 1
-    #
-    #         user_price = to_user_price(user_obj, price)
-    #         info_json_list.append({
-    #             'asin': temp[1],
-    #             'img_link': temp[10].split('\n')[0],
-    #             "product_name": temp[2],
-    #             "brand": brand,
-    #             "price": price,
-    #             "point": temp[11],
-    #             "category": category,
-    #             "profit": user_price - price
-    #         })
-    #
-    # print(f'{time.perf_counter() - start}')
+    start = time.perf_counter()
+    info_json_list = []
+    category_list = {}
+    all_objects = AsinModel.objects.values('photo_list', 'asin', 'product_name', 'brand', 'price', 'point', 'q10_category')
+    try:
+        for temp_obj in chunked(all_objects):
+            temp_obj: AsinModel
+            if temp_obj['asin'] in asin_list:
+                img = temp_obj['photo_list'].split('\n')[0]
+                name = temp_obj['product_name']
+                try:
+                    brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj['brand'])
+                    brand = brand_obj.brand_name
+                except:
+                    brand = ''
+                user_price, profit = user_price_and_profit(user_obj, temp_obj['price'])
+                point = temp_obj['point']
+                category = temp_obj['q10_category']
+
+                if category not in category_list.keys():
+                    category_list[category] = 1
+                else:
+                    category_list[category] += 1
+
+                info_json_list.append({
+                    'asin': temp_obj.asin,
+                    'img_link': img,
+                    "product_name": name,
+                    "brand": brand,
+                    "price": user_price,
+                    "amazon_price": temp_obj.price,
+                    "point": point,
+                    "category": category,
+                    "profit": profit
+                })
+    except RuntimeError:
+        pass
+
+    print(f'{time.perf_counter()-start}秒')
+
+    start = time.perf_counter()
     info_json_list = []
     category_list = {}
     all_objects = AsinModel.objects.all()
@@ -455,6 +448,8 @@ def get_table(request):
                 })
     except RuntimeError:
         pass
+
+    print(f'{time.perf_counter()-start}秒')
 
     with open(MEDIA_ROOT + '/categories.csv', 'r', encoding='utf-8_sig',
               errors='ignore') as f:
