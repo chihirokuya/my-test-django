@@ -332,6 +332,7 @@ def get_log(request):
     # id, 成功ASINリスト、[[失敗ASIN、理由]]
     res_list_no_date = []
     id_ = 1
+    start = time.perf_counter()
     try:
         for obj in chunked(log_obj_list):
             obj: LogModel
@@ -351,6 +352,7 @@ def get_log(request):
             id_ += 1
     except RuntimeError:
         pass
+    print(f'{time.perf_counter() - start}秒')
 
     res_list.sort(key=lambda x: x[1], reverse=True)
 
@@ -370,46 +372,6 @@ def get_table(request):
     list_obj = ListingModel.objects.get(username=username)
     asin_list = list_obj.asin_list.split(',')
     user_obj: UserModel = UserModel.objects.get(username=username)
-
-    start = time.perf_counter()
-    info_json_list = []
-    category_list = {}
-    all_objects = AsinModel.objects.values('photo_list', 'asin', 'product_name', 'brand', 'price', 'point', 'q10_category')
-    try:
-        for temp_obj in chunked(all_objects):
-            temp_obj: AsinModel
-            if temp_obj['asin'] in asin_list:
-                img = temp_obj['photo_list'].split('\n')[0]
-                name = temp_obj['product_name']
-                try:
-                    brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj['brand'])
-                    brand = brand_obj.brand_name
-                except:
-                    brand = ''
-                user_price, profit = user_price_and_profit(user_obj, temp_obj['price'])
-                point = temp_obj['point']
-                category = temp_obj['q10_category']
-
-                if category not in category_list.keys():
-                    category_list[category] = 1
-                else:
-                    category_list[category] += 1
-
-                info_json_list.append({
-                    'asin': temp_obj['asin'],
-                    'img_link': img,
-                    "product_name": name,
-                    "brand": brand,
-                    "price": user_price,
-                    "amazon_price": temp_obj['price'],
-                    "point": point,
-                    "category": category,
-                    "profit": profit
-                })
-    except RuntimeError:
-        pass
-
-    print(f'{time.perf_counter()-start}秒')
 
     start = time.perf_counter()
     info_json_list = []
