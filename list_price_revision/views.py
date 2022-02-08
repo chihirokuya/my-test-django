@@ -126,6 +126,8 @@ def asin_view(request):
                     list_obj.save()
                     new_records.save()
 
+                    records_saved.delay(str(request.user), date)
+
                     messages.success(request, '正常に更新されました。')
                     records = []
                 else:
