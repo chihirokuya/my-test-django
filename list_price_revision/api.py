@@ -43,7 +43,6 @@ keepa_key_list = [
 # 価格設定
 def to_user_price(obj: UserModel, price):
     price = int(price)
-    prop = 9
 
     if obj.min_1 > price or obj.max_4 < price:
         return 0
@@ -61,18 +60,14 @@ def to_user_price(obj: UserModel, price):
         rieki = obj.rieki_4
         kotei = obj.kotei_4
 
-    if obj.mega_wari:
-        prop = 8
-
     x = price * (1 + rieki / 100) + kotei
 
-    return int(x + x / prop)
+    return int(x)
 
 
 # API用の価格設定
 def user_price_and_profit(obj: UserModel, price):
     price = int(price)
-    prop = 9
 
     if obj.min_1 > price or obj.max_4 < price:
         return 0, 0
@@ -90,12 +85,9 @@ def user_price_and_profit(obj: UserModel, price):
         rieki = obj.rieki_4
         kotei = obj.kotei_4
 
-    if obj.mega_wari:
-        prop = 8
-
     x = price * (1 + rieki / 100) + kotei
 
-    sell_price = int(x + x / prop)
+    sell_price = int(x)
     profit = int(sell_price - price - kotei - sell_price * 0.1)
 
     return sell_price, profit
