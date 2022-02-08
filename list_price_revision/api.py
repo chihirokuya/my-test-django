@@ -45,7 +45,7 @@ def to_user_price(obj: UserModel, price):
     price = int(price)
     prop = 9
 
-    if obj.min_1 > price:
+    if obj.min_1 > price or obj.max4 < price:
         return 0
 
     if price <= obj.max_1:
@@ -66,12 +66,16 @@ def to_user_price(obj: UserModel, price):
 
     x = price * (1 + rieki / 100) + kotei
 
-    return int(x + x/prop)
+    return int(x + x / prop)
+
 
 # API用の価格設定
 def user_price_and_profit(obj: UserModel, price):
     price = int(price)
     prop = 9
+
+    if obj.min_1 > price or obj.max4 < price:
+        return 0, 0
 
     if price <= obj.max_1:
         rieki = obj.rieki_1
@@ -91,7 +95,7 @@ def user_price_and_profit(obj: UserModel, price):
 
     x = price * (1 + rieki / 100) + kotei
 
-    sell_price = int(x + x/prop)
+    sell_price = int(x + x / prop)
     profit = int(sell_price - price - kotei - sell_price * 0.1)
 
     return sell_price, profit
@@ -668,7 +672,7 @@ def upload_new_item(asin, username, certification_key):
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
 
     if to_user_price(user_obj, obj.price) == 0:
-        return False, f'最低価格以下の商品です。'
+        return False, f'最低価格以下または最高価格以上の商品です。'
 
     to_remove_list = []
     product_name = obj.product_name
@@ -1001,8 +1005,8 @@ def update_price(username):
                            f'&Qty=0'
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
-                      f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
-                      f'&Price={user_price}&Qty={user_obj.stock_num}'
+                       f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
+                       f'&Price={user_price}&Qty={user_obj.stock_num}'
 
             res = requests.get(link).json()
 
@@ -1039,3 +1043,32 @@ def update_price(username):
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
              success_asin_list=','.join(log_success), cause_list=cause_list,
              date=datetime.datetime.now()).save()
+
+
+# 自動購入関連
+def get_new_orders(username):
+    cert_key = get_certification_key(username)
+
+    if cert_key != '':
+        header = {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "QAPIVersion": '1.0',
+            'GiosisCertificationKey': cert_key
+        }
+
+        now = datetime.datetime.now()
+        data = {
+            "ShippingStat": "2",
+            "search_Sdate": (now - datetime.timedelta(days=20)).strftime('%Y%m%d'),
+            "search_Edate": now.strftime('%Y%m%d'),
+        }
+
+        try:
+            return requests.post(
+                    'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ShippingBasic.GetShippingInfo_v2',
+                    headers=header, data=data
+                ).json()['ResultObject']
+        except:
+            pass
+
+    return []

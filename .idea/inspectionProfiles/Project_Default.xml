@@ -21,6 +21,7 @@
           <option value="list_price_revision.models.RecordsModel.objects" />
           <option value="list_price_revision.models.LogModel.objects" />
           <option value="django.db.models.fields.TextField.split" />
+          <option value="autobuy.models.OrderModel.objects" />
         </list>
       </option>
     </inspection_tool>

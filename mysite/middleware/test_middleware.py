@@ -10,7 +10,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
     ]
 
     def process_response(self, request, response):
-        if not UserModel.objects.filter(username=request.user):
+        if not UserModel.objects.filter(username=request.user).exists():
             UserModel.objects.create(username=request.user)
 
         try:

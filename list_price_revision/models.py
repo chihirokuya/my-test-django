@@ -32,6 +32,7 @@ class UserModel(models.Model):
     max_1 = models.IntegerField(default=0, blank=True)
     max_2 = models.IntegerField(default=0, blank=True)
     max_3 = models.IntegerField(default=0, blank=True)
+    max_4 = models.IntegerField(default=0, blank=True)
     rieki_1 = models.IntegerField(default=0, blank=True)
     rieki_2 = models.IntegerField(default=0, blank=True)
     rieki_3 = models.IntegerField(default=0, blank=True)

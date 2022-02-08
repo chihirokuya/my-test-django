@@ -117,7 +117,8 @@
                             </tr>
 
                             <tr role="row">
-                                <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 <label style="width:50px;"></label></td>
+                                <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 <input type="number" name="max_4" value="{{ obj.max_4 }}" form="UserForm"
+                                                                                                                              onchange="update_val()" class="num_input"></label></td>
                                 <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
                                 <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
                             </tr>
@@ -250,13 +251,16 @@
             $("#mega_wari").val('false');
             $("x_").text('※出品価格＝X + X/9')
         }
+
+        update_val();
     })
 
     function update_val() {
-        min_1 = document.getElementsByName('min_1')[0].value;
-        max_1 = document.getElementsByName('max_1')[0].value;
-        max_2 = document.getElementsByName('max_2')[0].value;
-        max_3 = document.getElementsByName('max_3')[0].value;
+        let min_1 = document.getElementsByName('min_1')[0].value;
+        let max_1 = document.getElementsByName('max_1')[0].value;
+        let max_2 = document.getElementsByName('max_2')[0].value;
+        let max_3 = document.getElementsByName('max_3')[0].value;
+
         document.getElementById('min_2').value = parseInt(max_1) + 1;
         document.getElementById('min_3').value = parseInt(max_2) + 1;
         document.getElementById('min_4').value = parseInt(max_3) + 1;
@@ -264,6 +268,7 @@
         document.getElementsByName('max_1')[0].min = parseInt(min_1) + 1;
         document.getElementsByName('max_2')[0].min = parseInt(max_1) + 1;
         document.getElementsByName('max_3')[0].min = parseInt(max_2) + 1;
+        document.getElementsByName('max_4')[0].min = parseInt(max_3) + 1;
 
         if (parseInt(document.getElementsByName('max_1')[0].value) <= parseInt(min_1)) {
             document.getElementsByName('max_1')[0].value = parseInt(max_1) + 1;
@@ -275,6 +280,10 @@
 
         if (parseInt(document.getElementsByName('max_3')[0].value) <= parseInt(max_2)) {
             document.getElementsByName('max_3')[0].value = parseInt(max_2) + 1;
+        }
+
+        if (parseInt(document.getElementsByName('max_4')[0].value) <= parseInt(max_3)) {
+            document.getElementsByName('max_4')[0].value = parseInt(max_3) + 1;
         }
     }
 

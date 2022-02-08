@@ -1,0 +1,289 @@
+{% extends 'list_price_revision/base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+
+<div id="loader-bg" class="is-hide">
+    <div id="loader" class="is-hide">
+        <p>
+            <img src="{% static 'loading.gif' %}"><br>
+        </p>
+    </div>
+</div>
+<div class="col-md-12">
+    <div class="box box-solid box-primary">
+        <div class="box-header">新規注文</div>
+        <div class="box-body">
+            <div class="button_div">
+                <button class="btn btn-info al" onclick="reload_button_clicked()"><label class="fa fa-repeat"></label>更新する</button>
+                <button class="btn btn-danger il" onclick="delete_order()"><label class="fa fa-trash-o il"></label>削除</button>
+            </div>
+            <table id="foo-table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>注文番号</th>
+                        <th>注文日</th>
+                        <th>商品名</th>
+                        <th>数量</th>
+                        <th>受取人名</th>
+                        <th>受取人電話番号</th>
+                        <th>受取人携帯電話番号</th>
+                        <th>住所</th>
+                        <th>郵便番号</th>
+                        <th>供給原価の合計</th>
+                        <th>販売者商品コード</th>
+                    </tr>
+                </thead>
+                <tbody id="order-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style about="loading">
+    /* 非表示 */
+    .is-hide {
+        display: none;
+    }
+
+    /* ローディング画面をフェードアウト */
+    .fadeout-bg {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .8s;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ローダーをフェードアウト */
+    .fadeout-loader {
+        transition-property: opacity;
+        transition-delay: .9s;
+        transition-duration: .3s;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ローディング画面 */
+    #loader-bg {
+        background: #ffffff;
+        height: 100%;
+        left: 0;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+        opacity: 0.5;
+    }
+
+    #loader {
+        height: 120px;
+        left: 50%;
+        margin-left: -60px;
+        margin-top: -60px;
+        position: fixed;
+        top: 50%;
+        width: 120px;
+    }
+
+    #loader p {
+        color: #454545;
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+    }
+
+    #loader p img {
+        display: inline-block;
+    }
+</style>
+<style>
+    .button_div {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .il {
+        padding-right: 10px;
+    }
+
+    .fa-repeat {
+        margin-right: 5px;
+    }
+
+    .al {
+        margin-bottom: 10px;
+    }
+    .box-solid.box-primary {
+        height:500px;
+    }
+
+    .box-header {
+        height: 10%;
+    }
+
+    .box-body {
+        display:block;
+        height: 90%;
+        overflow:scroll;
+        /*background-color: #50D4FD;*/
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #eae7f5;
+    }
+
+    thead {
+        background-color: #03b9e6;
+    }
+
+    tbody tr {
+        display: table-row;
+        width:100%;
+        table-layout: fixed;
+    }
+
+    tbody tr td {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    th {
+        white-space: nowrap;
+    }
+
+    tbody {
+        overflow: scroll;
+    }
+
+    table {
+        height: 90%;
+        display: block;
+        overflow-x: scroll;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
+
+<script>
+
+    $(document).ready(function () {
+
+        start_load();
+
+        set_order_list();
+    });
+
+    async function delete_order() {
+        let link = '{% url 'buy:order' %}0';
+        let checks = document.getElementsByClassName('checks');
+
+        let to_del_list = []
+        for (let check of checks) {
+            if (check.checked)
+                to_del_list.push(parseInt(check.value));
+        }
+
+        const method = 'POST'
+        const body = JSON.stringify({data:to_del_list})
+        const headers = new Headers({
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+
+        const getCookie = (name) => {
+            if (document.cookie && document.cookie !== '') {
+                for (const cookie of document.cookie.split(';')) {
+                    const [key, value] = cookie.trim().split('=')
+                    if (key === name) {
+                        return decodeURIComponent(value)
+                    }
+                }
+            }
+        }
+        const csrftoken = getCookie('csrftoken')
+
+        await fetch(link, {
+            method: method,
+            body: body,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                'X-CSRFToken': csrftoken,
+            }
+        })
+        .then(res => {})
+        .catch(console.error);
+
+        await set_order_list();
+    }
+
+    async function set_order_list() {
+        let link = '{% url 'buy:order' %}0';
+
+        await fetch(link)
+        .then(response => {return response.json();})
+        .then(data => {
+            let innerHTML = '';
+            let order_numbers = Object.keys(data.order_list);
+            let order_list = data.order_list;
+
+            for (o_n of order_numbers) {
+                let temp = order_list[o_n];
+                innerHTML +=
+                    "<tr>" +
+                    "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
+                    "<td>" + o_n + "</td>" +
+                    "<td>" + temp['date'] + "</td>" +
+                    "<td>" + temp['prod_name'] + "</td>" +
+                    "<td>" + temp['qty'] + "</td>" +
+                    "<td>" + temp['name'] + "</td>" +
+                    "<td>" + temp['phone_num'] + "</td>" +
+                    "<td>" + temp['mobile_num'] + "</td>" +
+                    "<td>" + temp['address'] + "</td>" +
+                    "<td>" + temp['zip_code'] + "</td>" +
+                    "<td>" + temp['total'] + "</td>" +
+                    "<td>" + temp['item_code'] + "</td>" +
+                    "</tr>"
+            }
+
+            document.getElementById('order-body').innerHTML = innerHTML;
+        })
+        .catch(error => {})
+
+        stop_load();
+    }
+
+    async function reload_button_clicked() {
+        start_load();
+
+        let link = '{% url 'buy:order' %}1';
+
+        await fetch(link)
+        .catch(error => {console.log(error)});
+
+        await set_order_list();
+    }
+
+    function start_load() {
+        let bg = document.getElementById('loader-bg'),
+            loader = document.getElementById('loader');
+        /* ロード画面の非表示を解除 */
+        bg.classList.remove('is-hide');
+        loader.classList.remove('is-hide');
+    }
+
+    function stop_load() {
+        // ロード停止
+        let bg = document.getElementById('loader-bg');
+        let loader = document.getElementById('loader');
+
+        // bg.classList.add('fadeout-bg');
+        // loader.classList.add('fadeout-loader');
+        bg.setAttribute('class', 'is-hide');
+    }
+</script>
+
+{% endblock %}
