@@ -89,6 +89,8 @@ class AsinModel(models.Model):
         except:
             return ''
 
+    sell_num = models.IntegerField(default=0, blank=True, null=True)
+
 
 class RecordsModel(models.Model):
     username = models.CharField(max_length=1000, null=True, default='')

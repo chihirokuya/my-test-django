@@ -238,22 +238,15 @@
             let order_list = data.order_list;
 
             for (o_n of order_numbers) {
-                let temp = order_list[o_n];
                 innerHTML +=
                     "<tr>" +
                     "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
-                    "<td>" + o_n + "</td>" +
-                    "<td>" + temp['date'] + "</td>" +
-                    "<td>" + temp['prod_name'] + "</td>" +
-                    "<td>" + temp['qty'] + "</td>" +
-                    "<td>" + temp['name'] + "</td>" +
-                    "<td>" + temp['phone_num'] + "</td>" +
-                    "<td>" + temp['mobile_num'] + "</td>" +
-                    "<td>" + temp['address'] + "</td>" +
-                    "<td>" + temp['zip_code'] + "</td>" +
-                    "<td>" + temp['total'] + "</td>" +
-                    "<td>" + temp['item_code'] + "</td>" +
-                    "</tr>"
+                    "<td <div contenteditable>" + o_n + "</div></td>"
+                let temp = order_list[o_n];
+                for (key of Object.keys(temp)) {
+                    innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+                }
+                innerHTML += "</tr>"
             }
 
             document.getElementById('order-body').innerHTML = innerHTML;

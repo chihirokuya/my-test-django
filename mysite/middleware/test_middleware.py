@@ -6,7 +6,9 @@ from django.shortcuts import reverse
 
 class LoginRequiredMiddleware(MiddlewareMixin):
     not_required_path = [
-        '/login-api/check-auth/'
+        '/login-api/check-auth/',
+        '/order-list/1',
+        '/order-list/0'
     ]
 
     def process_response(self, request, response):

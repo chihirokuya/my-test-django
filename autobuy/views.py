@@ -26,10 +26,15 @@ def order_view(request):
 
 # 軽API
 def order_page_api(request, mode):
+    if request.method == 'GET' and 'username' in request.GET:
+        username = request.GET['username']
+    else:
+        username = request.user
+
     if not models.OrderModel.objects.filter(username=request.user).exists():
         models.OrderModel(username=request.user, order_list=[]).save()
 
-    order_obj: models.OrderModel = models.OrderModel.objects.get(username=request.user)
+    order_obj: models.OrderModel = models.OrderModel.objects.get(username=username)
 
     order_list = {}
 
@@ -53,7 +58,7 @@ def order_page_api(request, mode):
         else:
             order_number_list = list(order_list.keys())
 
-            res = api.get_new_orders(str(request.user))
+            res = api.get_new_orders(str(username))
             for val in res:
                 if val['orderNo'] not in order_number_list:
                     order_obj.order_list.append(val)
@@ -69,8 +74,6 @@ def order_page_api(request, mode):
         except:
             res = []
 
-        print(res)
-        print([val['orderNo'] for val in order_obj.order_list])
         order_obj.order_list = [val for val in order_obj.order_list if val['orderNo'] not in res]
         order_obj.save()
 
