@@ -671,8 +671,9 @@ def upload_new_item(asin, username, certification_key):
     if black:
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
 
-    if to_user_price(user_obj, obj.price) == 0:
-        return False, f'最低価格以下または最高価格以上の商品です。'
+    user_price = to_user_price(user_obj, obj.price)
+    if user_price == 0:
+        return False, f'最低価格以下または最高価格以上の商品です。({user_price}円)'
 
     to_remove_list = []
     product_name = obj.product_name
