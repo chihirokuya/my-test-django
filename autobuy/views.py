@@ -29,7 +29,10 @@ def order_page_api(request, mode):
     if request.method == 'GET' and 'username' in request.GET:
         username = request.GET['username']
     else:
-        username = request.user
+        if request.method == 'POST' and 'username' in request.POST:
+            username = request.POST['username']
+        else:
+            username = request.user
 
     if not models.OrderModel.objects.filter(username=request.user).exists():
         models.OrderModel(username=request.user, order_list=[]).save()

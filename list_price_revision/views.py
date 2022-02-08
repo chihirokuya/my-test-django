@@ -275,7 +275,6 @@ def setting_view(request):
                 obj.kotei_2 = int(temp['kotei_2'])
                 obj.kotei_3 = int(temp['kotei_3'])
                 obj.kotei_4 = int(temp['kotei_4'])
-                obj.mega_wari = temp['mega_wari'] == 'true'
                 obj.shop_name = temp['shop_name']
                 obj.save()
 

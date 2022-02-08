@@ -73,10 +73,6 @@
             <div class="box-header">
                 <h3 class="box-title">価格設定</h3>
             </div>
-            <div id="mega_div">
-                <label><input type="radio" id="mega_wari" value="false" name="mega_wari" form="UserForm">メガ割</label>
-                <label><input type="radio" id="normal" name="mega_wari" value="false" form="UserForm">通常</label>
-            </div>
             <div class="box-body">
                 <div class="col-sm-12">
                     <table id="example2" class="table table-bordered table-hover dataTable" role="grid" aria-describedby="example2_info">
@@ -124,9 +120,7 @@
                         </tbody>
 
                     </table>
-                    <p>※X = (Amazon価格ーポイント）×（1 + 利益率) + 固定費</p>
-                    <p id="x_">※出品価格＝X + X/9</p>
-                    <p>※利益額＝出品価格ー(Amazon価格ーポイント)</p>
+                    <p>※出品価格 = (Amazon価格ーポイント）×（1 + 利益率) + 固定費</p>
                 </div>
 
 
@@ -227,30 +221,11 @@
         width: 50px;
     }
 
-    #mega_div {
-        width:100%;
-        justify-content: space-evenly;
-        display: flex;
-    }
-    #mega_wari {
-        margin-left: 30px;
-    }
+
 </style>
 
 <script>
     $(document).ready(function() {
-        if ({{obj.mega_wari|yesno:"true, false"}})
-        {
-            $('#mega_wari').prop('checked', true);
-            $("#mega_wari").val('true');
-            $("#x_").text('※出品価格＝X + X/8')
-        }
-        else {
-            $('#normal').prop('checked', true);
-            $("#mega_wari").val('false');
-            $("x_").text('※出品価格＝X + X/9')
-        }
-
         update_val();
     })
 
@@ -327,20 +302,5 @@
           form.submit();
         }
 
-    document.getElementById("mega_wari").addEventListener('change', function(e){
-        if ($("#mega_wari").prop('checked')) {
-            $("#normal").prop('checked', false);
-            $("#mega_wari").val('true');
-            $("#x_").text('※出品価格＝X + X/8');
-        }
-    })
-
-    document.getElementById("normal").addEventListener('change', function(e){
-        if ($("#normal").prop('checked')) {
-            $("#mega_wari").prop('checked', false);
-            $("#mega_wari").val('false');
-            $("#x_").text('※出品価格＝X + X/9');
-        }
-    })
 </script>
 {% endblock %}

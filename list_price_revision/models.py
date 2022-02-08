@@ -45,9 +45,6 @@ class UserModel(models.Model):
     # API確認終わっているか。
     api_ok = models.BooleanField(default=False, null=True, blank=True)
 
-    # メガ割か
-    mega_wari = models.BooleanField(default=False, blank=True, null=True)
-
     shop_name = models.CharField(max_length=1000, default='', blank=True, null=True)
 
 
