@@ -382,7 +382,7 @@ def backup_clean_up():
     try:
         for obj in chunked(objects):
             try:
-                if (now - obj.date).days >= 15:
+                if (now - obj.date).days >= 10:
                     obj.delete()
             except:
                 pass
@@ -393,7 +393,7 @@ def backup_clean_up():
         objects = LogModel.objects.all()
         for obj in chunked(objects):
             try:
-                if (now - obj.date).days >= 15:
+                if (now - obj.date).days >= 10:
                     obj.delete()
             except:
                 pass

@@ -126,8 +126,6 @@ def asin_view(request):
                     list_obj.save()
                     new_records.save()
 
-                    records_saved.delay(str(request.user), date)
-
                     messages.success(request, '正常に更新されました。')
                     records = []
                 else:
@@ -266,6 +264,7 @@ def setting_view(request):
                 obj.max_1 = int(temp['max_1'])
                 obj.max_2 = int(temp['max_2'])
                 obj.max_3 = int(temp['max_3'])
+                obj.max_4 = int(temp['max_4'])
                 obj.rieki_1 = int(temp['rieki_1'])
                 obj.rieki_2 = int(temp['rieki_2'])
                 obj.rieki_3 = int(temp['rieki_3'])

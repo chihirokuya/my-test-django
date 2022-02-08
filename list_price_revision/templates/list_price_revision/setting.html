@@ -23,12 +23,11 @@
 
 <style>
     .readonly_input {
-        width:50px;
         background:transparent;
         border:none;
     }
-    .num_input {
-        width:50px;
+    .num_input, .readonly_input {
+        width:100px;
     }
 </style>
 
@@ -98,29 +97,29 @@
                             <tr role="row">
                                 <td><input name="min_1" type="number" form="UserForm" value="{{ obj.min_1 }}" class="num_input" onchange="update_val()">  〜 <input type="number" name="max_1" value="{{ obj.max_1 }}" form="UserForm"
                                 onchange="update_val()" class="num_input"></td>
-                                <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm"></td>
-                                <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_1" value="{{ obj.rieki_1 }}" form="UserForm" class="num_input"></td>
+                                <td><input type="number" name="kotei_1" value="{{ obj.kotei_1 }}" form="UserForm" class="num_input"></td>
                             </tr>
 
                             <tr role="row">
                                 <td><input id="min_2" readonly class="readonly_input" value="{{ obj.max_1|add:1 }}"> 〜 <input type="number" name="max_2" value="{{ obj.max_2 }}" form="UserForm"
                                 onchange="update_val()" class="num_input"></td>
-                                <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm"></td>
-                                <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_2" value="{{ obj.rieki_2 }}" form="UserForm" class="num_input"></td>
+                                <td><input type="number" name="kotei_2" value="{{ obj.kotei_2 }}" form="UserForm" class="num_input"></td>
                             </tr>
 
                             <tr role="row">
                                 <td><input id="min_3" class="readonly_input" value="{{ obj.max_2|add:1 }}" > 〜 <input type="number" name="max_3" value="{{ obj.max_3 }}" form="UserForm"
                                 onchange="update_val()" class="num_input"></td>
-                                <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm"></td>
-                                <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_3" value="{{ obj.rieki_3 }}" form="UserForm" class="num_input"></td>
+                                <td><input type="number" name="kotei_3" value="{{ obj.kotei_3 }}" form="UserForm" class="num_input"></td>
                             </tr>
 
                             <tr role="row">
                                 <td><input id="min_4" class="readonly_input" value="{{ obj.max_3|add:1 }}" readonly> 〜 <input type="number" name="max_4" value="{{ obj.max_4 }}" form="UserForm"
                                                                                                                               onchange="update_val()" class="num_input"></label></td>
-                                <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm"></td>
-                                <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm"></td>
+                                <td><input type="number" name="rieki_4" value="{{ obj.rieki_4 }}" form="UserForm" class="num_input"></td>
+                                <td><input type="number" name="kotei_4" value="{{ obj.kotei_4 }}" form="UserForm" class="num_input"></td>
                             </tr>
                         </tbody>
 
@@ -216,7 +215,7 @@
 
 <style>
     table {
-        table-layout: fixed;
+        /*table-layout: fixed;*/
         width:100%;
         text-align: center;
     }
