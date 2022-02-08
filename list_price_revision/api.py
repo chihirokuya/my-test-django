@@ -45,7 +45,7 @@ def to_user_price(obj: UserModel, price):
     price = int(price)
     prop = 9
 
-    if obj.min_1 > price or obj.max4 < price:
+    if obj.min_1 > price or obj.max_4 < price:
         return 0
 
     if price <= obj.max_1:
@@ -74,7 +74,7 @@ def user_price_and_profit(obj: UserModel, price):
     price = int(price)
     prop = 9
 
-    if obj.min_1 > price or obj.max4 < price:
+    if obj.min_1 > price or obj.max_4 < price:
         return 0, 0
 
     if price <= obj.max_1:
