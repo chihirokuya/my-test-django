@@ -19,13 +19,71 @@
         div = document.getElementsByClassName('alert alert-success alert-dismissible')[0];
         div.parentNode.removeChild(div);
     }
+
+    function csv_uploaded(elm) {
+        let id = elm.id;
+
+        let file = event.target.files[0];
+
+        //readerオブジェクトを作成
+        let reader = new FileReader();
+
+        // ファイル読み取りを実行
+        reader.readAsText(file);
+
+        reader.onload = function(event) {
+
+            let result = event.target.result;
+
+            let res_list = result.split('\n');
+
+            // let innerText = '';
+            // for (val of res_list) {
+            //     if (val !== 'ASIN')
+            //         innerText += `\n${val}`;
+            // }
+            //
+            // console.log(innerText);
+
+            document.getElementsByName(elm.id)[0].textContent = result;
+        };
+
+        //読み込めなかった場合のエラー処理
+        reader.onerror = function() {
+            alert("エラー：ファイルをロードできません。");
+        };
+    }
 </script>
+
+<style>
+    .file_upload_div {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    input[type=file] {
+        display: none;
+    }
+
+    .upload_label {
+        background-color: #0b93d5;
+        width: 70px;
+        text-align: center;
+        color:white;
+        border-radius: 10px;
+    }
+</style>
 
 <div class="row">
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <h3 class="box-title">商品名・メーカー</h3>
+                <div class="file_upload_div">
+                    <h3 class="box-title">商品名・メーカー</h3>
+                    <label class="upload_label">
+                        <input type="file" id="maker_name_blacklist" onchange="csv_uploaded(this)"/>CSVから
+                    </label>
+                </div>
             </div>
 
             <div class="box-body">
@@ -37,7 +95,12 @@
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <h3 class="box-title">ASIN</h3>
+                <div class="file_upload_div">
+                    <h3 class="box-title">ASIN</h3>
+                    <label class="upload_label">
+                        <input type="file" id="asin_blacklist" onchange="csv_uploaded(this)"/>CSVから
+                    </label>
+                </div>
             </div>
 
             <div class="box-body">
@@ -49,7 +112,12 @@
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <h3 class="box-title">除外ワード</h3>
+                <div class="file_upload_div">
+                    <h3 class="box-title">除外ワード</h3>
+                    <label class="upload_label">
+                        <input type="file" id="words_blacklist" onchange="csv_uploaded(this)"/>CSVから
+                    </label>
+                </div>
             </div>
 
             <div class="box-body">
