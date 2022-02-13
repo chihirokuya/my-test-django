@@ -282,14 +282,22 @@ def keepa_info(product):
 
 
 def get_category_qoo10(product_name):
-    print('category')
+    proxy_list_path = MEDIA_ROOT + '/ips-zone3.txt'
+
+    with open(proxy_list_path, 'r') as f:
+        temp = f.read().split('\n')
+
+    proxies = {
+        "http": random.choice(temp)
+    }
+
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X'
                              ' 10_11_5) AppleWebKit/537.36 (KHTML, like '
                              'Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
     soup = BeautifulSoup(
         requests.get('https://www.qoo10.jp/s/?keyword=' + quote(product_name),
-                     headers=headers).text,
+                     headers=headers, proxies=proxies).text,
         'html.parser')
 
     elm = soup.find(id='category_result_list')
@@ -297,7 +305,7 @@ def get_category_qoo10(product_name):
     if elm is None:
         soup = BeautifulSoup(
             requests.get('https://www.qoo10.jp/s/?keyword=' + quote(product_name[:50]),
-                         headers=headers).text,
+                         headers=headers, proxies=proxies).text,
             'html.parser')
 
         elm = soup.find(id='category_result_list')
@@ -314,7 +322,6 @@ def get_category_qoo10(product_name):
                 link = elm['href'].split('gdlc_cd=')
                 if len(link) != 1:
                     if link[1][0] == '3':
-                        print('found')
                         return link[1]
 
     elms = soup.find_all(class_='sbj')
@@ -333,7 +340,7 @@ def get_category_qoo10(product_name):
                 break
 
         if link != '':
-            soup = BeautifulSoup(requests.get(link, headers).text, 'html.parser')
+            soup = BeautifulSoup(requests.get(link, headers, proxies=proxies).text, 'html.parser')
 
             elm = soup.find(id='img_search_gdsc_cd')
 
@@ -498,10 +505,10 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 resul_, message_ = keepa_info(product)
 
                 if resul_:
-                    # category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+                    category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
 
-                    # if category == '':
-                    category = get_cat_from_csv(resul_[3])
+                    if category == '':
+                        category = get_cat_from_csv(resul_[3])
 
                     if category == '':
                         to_search_class.to_delete_asin_list.append(product['asin'])
