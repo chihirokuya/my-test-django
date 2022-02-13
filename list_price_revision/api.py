@@ -597,13 +597,13 @@ def get_all_items(certification_key):
             '&returnType=json'
             '&method=ItemsLookup.GetAllGoodsInf'
             'o&ItemStatus=S2'
-            '&Page=1').json()
+            f'&Page={page}').json()
 
         items.extend(res['ResultObject']['Items'])
 
     items = [val['SellerCode'] for val in items]
 
-    return items
+    return list(dict.fromkeys(items))
 
 
 def search_brand(certification_key, keyword):
@@ -784,6 +784,7 @@ def get_item_info(certification_key, seller_code):
 
 def link_q10_items(certification_key, username):
     item_link_obj: Q10ItemsLink = Q10ItemsLink.objects.get(username=username)
+
     if item_link_obj.still_getting:
         return
     else:

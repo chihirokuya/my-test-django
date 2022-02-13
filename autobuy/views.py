@@ -23,6 +23,13 @@ def order_view(request):
     return render(request, base_path + 'order_page.html', context)
 
 
+def setting_view(request):
+    context = {
+        "obj": UserModel.objects.get(username=request.user)
+    }
+    return render(request, base_path + 'setting.html', context)
+
+
 
 # 軽API
 def order_page_api(request, mode):
@@ -62,9 +69,13 @@ def order_page_api(request, mode):
             order_number_list = list(order_list.keys())
 
             res = api.get_new_orders(str(username))
+            key_list = []
             for val in res:
+                key_list.append(val['orderNo'])
                 if val['orderNo'] not in order_number_list:
                     order_obj.order_list.append(val)
+
+            order_obj.order_list = [val for val in order_obj.order_list if val['orderNo'] in key_list]
             order_obj.save()
 
             return HttpResponse()
