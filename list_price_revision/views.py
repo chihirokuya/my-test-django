@@ -207,10 +207,14 @@ def blacklist_view(request):
                          'Speakers', 'Sports', 'Toy', 'Video', 'Video Games', 'Watch', 'Wireless',
                          'Wireless Phone Accessory']
     obj = UserModel.objects.get(username=request.user)
+    if not UserModel.objects.filter(username='admin').exists():
+        UserModel(username='admin').save()
+
+    ad_obj = UserModel.objects.get(username='admin')
 
     context = {
         'amazon_group_list': amazon_group_list,
-        'obj': obj,
+        'obj': ad_obj,
         'amazon_group_blacklist': obj.group_black.split(','),
     }
 
@@ -218,9 +222,17 @@ def blacklist_view(request):
         temp = request.POST
 
         try:
-            obj.maker_name_blacklist = temp['maker_name_blacklist']
-            obj.asin_blacklist = temp['asin_blacklist']
-            obj.words_blacklist = temp['words_blacklist']
+            current_name_blacklist = ad_obj.maker_name_blacklist.split('\n')
+            current_name_blacklist.extend(temp['maker_name_blacklist'].split('\n'))
+            ad_obj.maker_name_blacklist = '\n'.join([val.strip() for val in list(dict.fromkeys(current_name_blacklist))])
+
+            current_asin_blacklist = ad_obj.asin_blacklist.split('\n')
+            current_asin_blacklist.extend(temp['asin_blacklist'].split('\n'))
+            ad_obj.asin_blacklist = '\n'.join(list(dict.fromkeys(current_asin_blacklist)))
+
+            current_words_blacklist = ad_obj.words_blacklist.split('\n')
+            current_words_blacklist.extend(temp['words_blacklist'].split('\n'))
+            ad_obj.words_blacklist = '\n'.join(list(dict.fromkeys(current_words_blacklist)))
 
             # 商品グループについて
             amazon_group_blacklist = []
@@ -230,10 +242,11 @@ def blacklist_view(request):
             obj.group_black = ','.join(amazon_group_blacklist)
 
             obj.save()
+            ad_obj.save()
             messages.success(request, '情報が更新されました')
 
-        except:
-            messages.error(request, '保存内容に誤りがあります。')
+        except Exception as e:
+            messages.error(request, f'保存内容に誤りがあります。{e}')
 
         return redirect(reverse('price:blacklist'))
 

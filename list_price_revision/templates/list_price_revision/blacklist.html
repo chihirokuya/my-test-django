@@ -56,6 +56,10 @@
 </script>
 
 <style>
+    .half {
+        max-height:50vh;
+    }
+
     .file_upload_div {
         display: flex;
         justify-content: space-between;
@@ -74,20 +78,22 @@
     }
 </style>
 
-<div class="row">
+<div class="half">
+    <h1 style="display: flex;justify-content: center">追加登録</h1>
+    <div class="row">
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <div class="file_upload_div">
-                    <h3 class="box-title">商品名・メーカー</h3>
-                    <label class="upload_label">
-                        <input type="file" id="maker_name_blacklist" onchange="csv_uploaded(this)"/>CSVから
-                    </label>
-                </div>
+<!--                <div class="file_upload_div">-->
+                <h3 class="box-title">商品名・メーカー</h3>
+<!--                    <label class="upload_label">-->
+<!--                        <input type="file" id="maker_name_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+<!--                    </label>-->
+<!--                </div>-->
             </div>
 
             <div class="box-body">
-            <textarea class="form-control" rows=25 placeholder="" name="maker_name_blacklist" form="BlackForm">{{ obj.maker_name_blacklist }}</textarea>
+            <textarea class="form-control" rows=25 placeholder="" name="maker_name_blacklist" form="BlackForm"></textarea>
             </div>
         </div>
     </div>
@@ -95,16 +101,16 @@
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <div class="file_upload_div">
-                    <h3 class="box-title">ASIN</h3>
-                    <label class="upload_label">
-                        <input type="file" id="asin_blacklist" onchange="csv_uploaded(this)"/>CSVから
-                    </label>
-                </div>
+<!--                <div class="file_upload_div">-->
+                <h3 class="box-title">ASIN</h3>
+<!--                    <label class="upload_label">-->
+<!--                        <input type="file" id="asin_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+<!--                    </label>-->
+<!--                </div>-->
             </div>
 
             <div class="box-body">
-                <textarea class="form-control" rows=25 placeholder="" name="asin_blacklist" form="BlackForm">{{ obj.asin_blacklist }}</textarea>
+                <textarea class="form-control" rows=25 placeholder="" name="asin_blacklist" form="BlackForm"></textarea>
             </div>
         </div>
     </div>
@@ -112,16 +118,16 @@
     <div class="col-md-3">
         <div class="box box-info">
             <div class="box-header with-border">
-                <div class="file_upload_div">
-                    <h3 class="box-title">除外ワード</h3>
-                    <label class="upload_label">
-                        <input type="file" id="words_blacklist" onchange="csv_uploaded(this)"/>CSVから
-                    </label>
-                </div>
+<!--                <div class="file_upload_div">-->
+                <h3 class="box-title">除外ワード</h3>
+<!--                    <label class="upload_label">-->
+<!--                        <input type="file" id="words_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+<!--                    </label>-->
+<!--                </div>-->
             </div>
 
             <div class="box-body">
-                <textarea class="form-control" rows=25 placeholder="" name="words_blacklist" form="BlackForm">{{ obj.words_blacklist }}</textarea>
+                <textarea class="form-control" rows=25 placeholder="" name="words_blacklist" form="BlackForm"></textarea>
             </div>
         </div>
     </div>
@@ -149,8 +155,66 @@
 </div>
 
 <form method="POST" action="" id="BlackForm">{% csrf_token %}
-    <div style="width:20%;margin:auto;">
-        <input type="submit" class="btn btn-block btn-info" value="保存" onclick="my_func()" style="height: 45px;">
+    <div style="display: flex; justify-content: center">
+        <input type="submit" class="btn btn-block btn-info" value="保存" style="height: 45px;width:100px;">
     </div>
 </form>
+</div>
+
+<div class="half">
+    <h1 style="display: flex;justify-content: center">登録済み</h1>
+    <div class="row">
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <!--                <div class="file_upload_div">-->
+                <h3 class="box-title">商品名・メーカー</h3>
+                <!--                    <label class="upload_label">-->
+                <!--                        <input type="file" id="maker_name_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+                <!--                    </label>-->
+                <!--                </div>-->
+            </div>
+
+            <div class="box-body">
+                <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.maker_name_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <!--                <div class="file_upload_div">-->
+                <h3 class="box-title">ASIN</h3>
+                <!--                    <label class="upload_label">-->
+                <!--                        <input type="file" id="asin_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+                <!--                    </label>-->
+                <!--                </div>-->
+            </div>
+
+            <div class="box-body">
+                <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.asin_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <!--                <div class="file_upload_div">-->
+                <h3 class="box-title">除外ワード</h3>
+                <!--                    <label class="upload_label">-->
+                <!--                        <input type="file" id="words_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
+                <!--                    </label>-->
+                <!--                </div>-->
+            </div>
+
+            <div class="box-body">
+                <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.words_blacklist }}</textarea>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
 {% endblock %}

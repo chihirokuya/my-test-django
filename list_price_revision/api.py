@@ -627,15 +627,18 @@ def search_brand(certification_key, keyword):
 
 def upload_new_item(asin, username, certification_key):
     user_obj = UserModel.objects.get(username=username)
+    if not UserModel.objects.filter(username='admin').exists():
+        UserModel(username='admin').save()
+    ad_obj = UserModel.objects.get(username='admin')
     initial_letter = user_obj.initial_letter
     stock_num = user_obj.stock_num
     shipping_code = user_obj.shipping_code
 
     # ブラックリスト系
     try:
-        black_maker_item_name = list(filter(None, user_obj.maker_name_blacklist.split('\n')))
-        black_asins = list(filter(None, user_obj.asin_blacklist.split('\n')))
-        remove_words = user_obj.words_blacklist.split('\n')
+        black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
+        black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
+        remove_words = ad_obj.words_blacklist.split('\n')
         black_amazon_group = user_obj.group_black.split(',')
     except:
         black_maker_item_name = []
