@@ -1,5 +1,4 @@
 import json
-
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 from . import models
@@ -9,6 +8,11 @@ from list_price_revision import api
 
 
 base_path = 'autobuy/'
+
+
+def assert_existence_of_user(username):
+    if not models.BuyUserModel.objects.filter(username=username).exists():
+        models.BuyUserModel(username=username).save()
 
 
 def order_view(request):
@@ -24,8 +28,11 @@ def order_view(request):
 
 
 def setting_view(request):
+    assert_existence_of_user(request.user)
+
     context = {
-        "obj": UserModel.objects.get(username=request.user)
+        "obj": UserModel.objects.get(username=request.user),
+        "buy_obj": models.BuyUserModel.objects.get(username=request.user)
     }
     return render(request, base_path + 'setting.html', context)
 

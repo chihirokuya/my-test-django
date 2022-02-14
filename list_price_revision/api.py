@@ -1,5 +1,4 @@
 import threading
-
 from sp_api.api import Catalog, Products
 from sp_api.base import Marketplaces
 from sp_api.base.exceptions import SellingApiRequestThrottledException, SellingApiBadRequestException, \
@@ -1076,3 +1075,27 @@ def get_new_orders(username):
             pass
 
     return []
+
+
+def cancel_order(username):
+    header = {
+        "Content-Type": 'application/x-www-form-urlencoded',
+        "QAPIVersion": '1.0',
+        'GiosisCertificationKey': get_certification_key(username)
+    }
+
+    data = {
+        "ContrNo": "706877267",
+        "SellerMemo": "在庫切れのためキャンセルさせていただきます。",
+    }
+
+    res = requests.post('https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi/Claim.SetCancelProcess',
+                        headers=header, data=data).json()
+
+    print(res)
+    for val in res['ResultObject']:
+        print(val)
+        print(val['orderNo'])
+
+    req = requests.post('http://127.0.0.1:8000/order-list/0', {'username': 'chihiro', "data": [707435993]})
+    print(req.text)
