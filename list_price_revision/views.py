@@ -216,6 +216,9 @@ def blacklist_view(request):
         'amazon_group_list': amazon_group_list,
         'obj': ad_obj,
         'amazon_group_blacklist': obj.group_black.split(','),
+        'maker': ad_obj.maker_name_blacklist.split('\n'),
+        'asins': ad_obj.asin_blacklist.split('\n'),
+        'words': ad_obj.words_blacklist.split('\n')
     }
 
     if request.method == 'POST':

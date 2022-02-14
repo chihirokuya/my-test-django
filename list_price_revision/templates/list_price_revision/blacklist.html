@@ -73,6 +73,19 @@
         color:white;
         border-radius: 10px;
     }
+
+    table {
+        width:100%;
+    }
+
+    .il {
+        height:500px;
+        overflow-y: scroll;
+    }
+
+    table tr:nth-child(odd) {
+        background-color: #eee;
+    }
 </style>
 
 <div class="half">
@@ -81,16 +94,15 @@
             <div class="col-md-3">
                 <div class="box box-info">
                     <div class="box-header with-border">
-                        <!--                <div class="file_upload_div">-->
                         <h3 class="box-title">商品名・メーカー</h3>
-                        <!--                    <label class="upload_label">-->
-                        <!--                        <input type="file" id="maker_name_blacklist" onchange="csv_uploaded(this)"/>CSVから-->
-                        <!--                    </label>-->
-                        <!--                </div>-->
                     </div>
 
-                    <div class="box-body">
-                        <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.maker_name_blacklist }}</textarea>
+                    <div class="box-body il">
+                        <table>
+                            {% for elm in maker %}
+                                <tr><td>{{ elm }}</td></tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>
@@ -106,8 +118,12 @@
                         <!--                </div>-->
                     </div>
 
-                    <div class="box-body">
-                        <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.asin_blacklist }}</textarea>
+                    <div class="box-body il">
+                        <table>
+                            {% for elm in asins %}
+                                <tr><td>{{ elm }}</td></tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>
@@ -123,8 +139,12 @@
                         <!--                </div>-->
                     </div>
 
-                    <div class="box-body">
-                        <textarea class="form-control" rows=25 placeholder="" readonly>{{ obj.words_blacklist }}</textarea>
+                    <div class="box-body il">
+                        <table>
+                            {% for elm in words %}
+                                <tr><td>{{ elm }}</td></tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>

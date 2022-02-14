@@ -93,6 +93,21 @@
                         <input type="radio" name="mega_wari" {% if buy_obj.mega_wari == False %}checked{% endif %}/>通常
                     </label>
                 </div>
+
+                <div class="form-group">
+                    <div>
+                        <label>赤字</label>
+                        <label>
+                            <input type="number" />円まで
+                        </label>
+                    </div>
+                    <div>
+                        <label>カード残高</label>
+                        <label>
+                            <input/>円
+                        </label>
+                    </div>
+                </div>
             </div>
             <!-- /.box-body -->
         </div>
@@ -100,7 +115,6 @@
 </div>
 
 # その他
-mega_wari = models.BooleanField(default=False, null=True, blank=True)
 akaji = models.IntegerField(default=0, blank=True, null=True)
 card_res = models.IntegerField(default=0, blank=True, null=True)
 commission_fee = models.IntegerField(default=0, blank=True, null=True)
