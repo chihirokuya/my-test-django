@@ -358,24 +358,6 @@ def re_price_users():
 @shared_task
 def backup_clean_up():
     now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
-    try:
-        backup_dir = os.path.join(BASE_DIR, 'BACKUP')
-        if not os.path.isdir(backup_dir):
-            os.mkdir(backup_dir)
-
-        copyfile(os.path.join(BASE_DIR, 'db.sqlite3'), backup_dir + f'/{now}.sqlite3')
-
-        file_list = glob.glob(backup_dir + '/*')
-        for file in file_list:
-            date = file.split(' ')[0].split('-')
-            try:
-                date = datetime.date(year=int(date[0]), month=int(date[1]), day=int(date[2]))
-                if (now - date).days >= 15:
-                    os.remove(file)
-            except:
-                continue
-    except:
-        pass
 
     # Remove records data
     objects = RecordsModel.objects.all()
