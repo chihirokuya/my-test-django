@@ -5,19 +5,19 @@ delimiter = "delimiter"
 
 
 class UserModel(models.Model):
-    username = models.CharField(max_length=1000, blank=True)
+    username = models.TextField(blank=True)
 
     # q10アカウント
-    q10_id = models.CharField(max_length=1000, blank=True)
-    q10_password = models.CharField(max_length=1000, blank=True)
-    q10_api = models.CharField(max_length=1000, blank=True, default='')
+    q10_id = models.TextField(blank=True)
+    q10_password = models.TextField(blank=True)
+    q10_api = models.TextField(blank=True, default='')
 
     # Q10出品情報
     description_header = models.TextField(default='', null=True, blank=True)
     description_footer = models.TextField(default='', blank=True)
-    initial_letter = models.CharField(max_length=1, blank=True)
+    initial_letter = models.TextField(max_length=1, blank=True)
     delete_or_not = models.BooleanField(default=False, blank=True)
-    shipping_code = models.CharField(max_length=1000, default='', blank=True)
+    shipping_code = models.TextField(default='', blank=True)
     stock_num = models.IntegerField(default=3, blank=True)
     photo_num = models.IntegerField(default=3, blank=True)
 
@@ -45,11 +45,11 @@ class UserModel(models.Model):
     # API確認終わっているか。
     api_ok = models.BooleanField(default=False, null=True, blank=True)
 
-    shop_name = models.CharField(max_length=1000, default='', blank=True, null=True)
+    shop_name = models.TextField(default='', blank=True, null=True)
 
 
 class ListingModel(models.Model):
-    username = models.CharField(max_length=1000, blank=True)
+    username = models.TextField(blank=True)
 
     # 出品中ASIN
     asin_list = models.TextField(default='', blank=True)
@@ -62,7 +62,7 @@ class ListingModel(models.Model):
 
 
 class AsinModel(models.Model):
-    asin = models.CharField(max_length=10)
+    asin = models.TextField()
 
     product_name = models.TextField(blank=True, default='')
     brand = models.TextField(blank=True, default='')
@@ -74,7 +74,7 @@ class AsinModel(models.Model):
     price = models.IntegerField(default=0, blank=True)
     point = models.IntegerField(default=0, blank=True, null=True)
 
-    q10_category = models.CharField(default='', blank=True, max_length=10000)
+    q10_category = models.TextField(default='', blank=True)
 
     def ph(self):
         return self.photo_list.split('\n')[0]
@@ -90,7 +90,7 @@ class AsinModel(models.Model):
 
 
 class RecordsModel(models.Model):
-    username = models.CharField(max_length=1000, null=True, default='')
+    username = models.TextField(null=True, default='')
     date = models.DateTimeField(default=datetime.datetime.now(), null=True, blank=True)
 
     total_length = models.IntegerField(null=True, default=0, blank=True)
@@ -104,12 +104,12 @@ class RecordsModel(models.Model):
 
 
 class Q10BrandCode(models.Model):
-    brand_name = models.CharField(max_length=10000)
-    code = models.CharField(max_length=10000)
+    brand_name = models.TextField()
+    code = models.TextField()
 
 
 class Q10ItemsLink(models.Model):
-    username = models.CharField(max_length=1000)
+    username = models.TextField()
 
     total_asin_list = models.TextField(default='', null=True, blank=True)
     linked_asin_list = models.TextField(default='', null=True, blank=True)
@@ -118,11 +118,11 @@ class Q10ItemsLink(models.Model):
 
 
 class LogModel(models.Model):
-    username = models.CharField(max_length=1000)
+    username = models.TextField()
 
     date = models.DateTimeField()
     # 価格改定or出品or削除
-    type = models.CharField(max_length=1000)
+    type = models.TextField()
     # 動作を行う際に入ってくるasinリスト
     input_asin_list = models.TextField(default='', null=True, blank=True)
     # 成功したリスト
