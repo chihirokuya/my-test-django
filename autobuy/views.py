@@ -5,6 +5,7 @@ from . import models
 from list_price_revision.models import UserModel
 from list_price_revision.views import chunked
 from list_price_revision import api
+from django.contrib import messages
 
 
 base_path = 'autobuy/'
@@ -29,11 +30,60 @@ def order_view(request):
 
 def setting_view(request):
     assert_existence_of_user(request.user)
+    buy_obj: models.BuyUserModel = models.BuyUserModel.objects.get(username=request.user)
+
+    if request.method == 'POST':
+        try:
+            if type(request.body) == bytes:
+                res = json.loads(request.body)['data']
+            else:
+                res = request.body['data']
+
+            buy_obj.mail_address = res['mail_address']
+            buy_obj.mail_pass = res['mail_pass']
+            buy_obj.credit_card = res['credit_card']
+            buy_obj.name = res['name']
+            buy_obj.post_num = res['post_num']
+            buy_obj.prefecture = res['prefecture']
+            buy_obj.address = res['address']
+            buy_obj.phone_num = res['phone_num']
+            buy_obj.mega_wari = res['mega_wari']
+            buy_obj.akaji = int(res['akaji'])
+            buy_obj.card_res = int(res['card_res'])
+            buy_obj.commission_fee = int(res['commission_fee'])
+            proxy_list = []
+            for proxy in res['proxy_list']:
+                proxy_list.append({
+                    "ip": proxy[0],
+                    "port": proxy[1],
+                    "id": proxy[2],
+                    "password": proxy[3],
+                })
+
+            buy_obj.proxy_list = proxy_list
+            buy_obj.save()
+
+            return JsonResponse({'ok': True})
+        except Exception as e:
+            return JsonResponse({"ok": False, "reason": str(e)})
+
+    post_nums = buy_obj.post_num.split('-')
+
+    if len(post_nums) == 1:
+        post_nums.append('')
+
+    proxy_list = []
+    for proxy in buy_obj.proxy:
+        proxy_list.append(list(proxy.values()))
 
     context = {
         "obj": UserModel.objects.get(username=request.user),
-        "buy_obj": models.BuyUserModel.objects.get(username=request.user)
+        "buy_obj": buy_obj,
+        "post_1": post_nums[0],
+        'post_2': post_nums[1],
+        "proxy_list": proxy_list
     }
+
     return render(request, base_path + 'setting.html', context)
 
 

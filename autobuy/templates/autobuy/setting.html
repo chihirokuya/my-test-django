@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+
 <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 
 <div class="row row-eq-height" style="display:flex;align-items: stretch;">
@@ -15,19 +16,19 @@
                 <div class="form-group">
                     <label >メールアドレス</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ mail_address }}" id="mail_address">
+                           value="{{ buy_obj.mail_address }}" id="mail_address">
                 </div>
 
                 <div class="form-group">
                     <label >パスワード</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ mail_pass }}" id="mail_pass">
+                           value="{{ buy_obj.mail_pass }}" id="mail_pass">
                 </div>
 
                 <div class="form-group">
                     <label >クレジットカード</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ credit_card }}" id="credit_card">
+                           value="{{ buy_obj.credit_card }}" id="credit_card">
                 </div>
             </div>
         </div>
@@ -41,14 +42,14 @@
                 <div class="form-group">
                     <label >氏名</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ name }}" id="name">
+                           value="{{ buy_obj.name }}" id="name">
                 </div>
 
                 <div class="form-group al">
                     <div>
                         <label >郵便番号</label>
                         <div class="post_div il">
-                            <input type="number" id="post_1">ー<input type="number" id="post_2">
+                            <input type="number" id="post_1" value="{{ post_1 }}">ー<input type="number" id="post_2" value="{{ post_2 }}">
                         </div>
                     </div>
 
@@ -64,13 +65,13 @@
                 <div class="form-group">
                     <label >住所</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ address }}" id="address">
+                           value="{{ buy_obj.address }}" id="address">
                 </div>
 
                 <div class="form-group">
                     <label >電話番号</label>
                     <input type="text" class="form-control" placeholder=""
-                           value="{{ phone_num }}" id="phone_num">
+                           value="{{ buy_obj.phone_num }}" id="phone_num">
                 </div>
             </div>
 
@@ -83,9 +84,9 @@
             <div class="box-header">
                 <h3 class="box-title">その他</h3>
             </div>
-            <!-- /.box-header -->
             <div class="box-body">
-                <div class="form-group" style="display: flex; justify-content: space-evenly">
+                <div style="height:20%;">
+                    <div class="form-group" style="display: flex; justify-content: space-evenly">
                     <label>
                         <input type="radio" name="mega_wari" {% if buy_obj.mega_wari %}checked{% endif %}/>メガ割
                     </label>
@@ -94,33 +95,142 @@
                     </label>
                 </div>
 
-                <div class="form-group">
+                    <div style="display: flex;justify-content: space-evenly">
+                <span class="el">
+                    <label>赤字</label>
                     <div>
-                        <label>赤字</label>
                         <label>
-                            <input type="number" />円まで
+                            <input type="number" id="akaji" value="{{ buy_obj.akaji }}"/>円
                         </label>
                     </div>
+                </span>
+                <span class="el">
+                    <label>カード残高</label>
                     <div>
-                        <label>カード残高</label>
                         <label>
-                            <input/>円
+                            <input type="number" id="card_res" value="{{ buy_obj.card_res }}"/>円
                         </label>
+                    </div>
+                </span>
+                <span class="el">
+                    <label>手数料</label>
+                    <div>
+                        <label>
+                            <input id="commission_fee" type="number" value="{{ buy_obj.commission_fee }}"/>円
+                        </label>
+                    </div>
+                </span>
+            </div>
+                </div>
+
+                <div style="height:70%;position: absolute;margin-top: 20px;width:97%;">
+                    <div style="height:80%;">
+                        <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>IPアドレス</th>
+                                <th>ポート</th>
+                                <th>ID</th>
+                                <th>パスワード</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                            {% for proxy in proxy_list %}
+                                <tr role="row">
+                                    <td>{{ proxy.0 }}</td>
+                                    <td>{{ proxy.1 }}</td>
+                                    <td>{{ proxy.2 }}</td>
+                                    <td>{{ proxy.3 }}</td>
+                                    <td><button style="background-color: #ef7985; height: 25px; margin-top: 0"
+                                                onclick="remove_proxy(this)">削除</button></td>
+                                </tr>
+                            {% endfor %}
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                    </div>
+                    <div style="height:20%;">
+                        <div style="margin-top: 10px;text-align: center;">
+                            <input placeholder="IPアドレス" id="ip"/>
+                            <input placeholder="ポート番号" id="port"/>
+                            <br>
+                            <input placeholder="ID" id="id"/>
+                            <input placeholder="パスワード" id="passwd"/>
+                        </div>
+                        <div style="display: flex;justify-content:center;margin-top: 10px;">
+                            <button onclick="(function(){
+                                const tr = document.createElement('tr');
+                                tr.setAttribute('role', 'row');
+
+                                let td = document.createElement('td');
+                                td.innerText = document.querySelector('#ip').value;
+                                console.log(td);
+                                tr.appendChild(td);
+
+                                td = document.createElement('td');
+                                td.innerText = document.querySelector('#port').value;
+                                tr.appendChild(td);
+
+                                td = document.createElement('td');
+                                td.innerText = document.querySelector('#id').value;
+                                tr.appendChild(td);
+
+                                td = document.createElement('td');
+                                td.innerText = document.querySelector('#passwd').value;
+                                tr.appendChild(td);
+
+                                td = document.createElement('td');
+                                let button = document.createElement('button');
+                                button.setAttribute('style', 'background-color: #ef7985; height: 25px; margin-top: 0');
+                                button.setAttribute('onclick', 'remove_proxy(this)');
+                                button.innerText = '削除';
+                                td.appendChild(button);
+                                tr.appendChild(td);
+
+                                document.querySelector('tbody').appendChild(tr);
+
+                                document.querySelector('#ip').value = '';
+                                document.querySelector('#port').value = '';
+                                document.querySelector('#id').value = '';
+                                document.querySelector('#passwd').value = '';
+                            })()">追加</button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <!-- /.box-body -->
         </div>
     </div>
 </div>
 
-# その他
-akaji = models.IntegerField(default=0, blank=True, null=True)
-card_res = models.IntegerField(default=0, blank=True, null=True)
-commission_fee = models.IntegerField(default=0, blank=True, null=True)
-proxy = models.JSONField(blank=True)
+<div style="display: flex;justify-content: center;">
+    <button class="btn btn-info" style="width:100px;" onclick="save_func()">保存</button>
+</div>
 
 <style>
+    table {
+        border:10px solid black;
+        max-height:100%;
+        height:100%;
+        overflow:scroll;
+    }
+    tbody td, thead th {
+        text-align: center;
+    }
+
+    .el {
+        width:100%;
+        text-align: center;
+    }
+    .el:nth-child(1), .el:nth-child(2) {
+        border-right:1px solid black;
+    }
+    .el input {
+        width:80px;
+        margin-right: 5px;
+        margin-left: 20px;
+    }
+
     .al {
         display: flex;
     }
@@ -146,13 +256,98 @@ proxy = models.JSONField(blank=True)
 
     function set_prefecture() {
         let innerHTML = '';
+        let select = $("#prefecture");
 
         for (let elm of prefectures) {
             innerHTML += "<option value='" + elm + "'>" + elm + "</option>"
         }
 
-        $("#prefecture").html(innerHTML);
+        select.html(innerHTML);
+
+        let prefecture = '{{ buy_obj.prefecture }}';
+        select.val(prefecture);
     }
+
+    function remove_proxy(elm) {
+        {#const table = document.querySelector('table');#}
+        elm.closest('tr').remove();
+    }
+
+    async function save_func() {
+        let link = '{% url 'buy:setting' %}'
+        let trs = document.querySelector('tbody').querySelectorAll('tr');
+        let proxy_list = []
+        for (let tr of trs) {
+            let temp = []
+            for (let td of tr.querySelectorAll('td')) {
+                temp.push(td.innerText);
+            }
+
+            proxy_list.push(temp);
+        }
+
+        let body = {
+            data: {
+                mail_address: document.querySelector('#mail_address').value,
+                mail_pass: document.querySelector('#mail_pass').value,
+                credit_card: document.querySelector('#credit_card').value,
+                name: document.querySelector('#name').value,
+                post_num: document.querySelector("#post_1").value + '-' + document.querySelector("#post_2").value,
+                prefecture: document.querySelector('#prefecture').value,
+                address: document.querySelector('#address').value,
+                phone_num: document.querySelector('#phone_num').value,
+                mega_wari: document.querySelector('[name=mega_wari]').checked,
+                akaji: document.querySelector('#akaji').value,
+                card_res: document.querySelector('#card_res').value,
+                commission_fee: document.querySelector('#commission_fee').value,
+                proxy_list: proxy_list
+            }
+        }
+
+        const getCookie = (name) => {
+            if (document.cookie && document.cookie !== '') {
+                for (const cookie of document.cookie.split(';')) {
+                    const [key, value] = cookie.trim().split('=')
+                    if (key === name) {
+                        return decodeURIComponent(value)
+                    }
+                }
+            }
+        }
+        const csrftoken = getCookie('csrftoken')
+
+        await fetch(link, {
+            method: 'POST',
+            body: JSON.stringify(body),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                'X-CSRFToken': csrftoken,
+            }
+        })
+        .then(res => {return res.json()})
+        .then(data => {
+            let div = document.createElement('div');
+            let innerHTML = '';
+            if (data.ok)
+                innerHTML += '<div class="alert alert-success alert-dismissible" onclick="delete_fun()">'
+            else
+                innerHTML += '<div class="alert alert-error alert-dismissible" onclick="delete_fun()">'
+
+            innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>'
+
+            if (data.ok)
+                innerHTML += '<h4><i class="icon fa fa-check"></i> 保存完了!</h4>'
+            else {
+                innerHTML += '<h4><i class="icon fa fa-check"></i> 保存失敗。</h4>'
+                innerHTML += data.reason;
+            }
+
+            div.innerHTML = innerHTML;
+            document.querySelector('.content').prepend(div);
+        })
+        .catch(console.error);
+    }
+
 </script>
 
 {% endblock %}

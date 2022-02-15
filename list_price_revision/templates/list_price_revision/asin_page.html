@@ -2,25 +2,6 @@
 
 {% block content %}
 
-{% if messages %}
-{% for message in messages %}
-<div class="alert alert-{{ message.tags }} alert-dismissible" onclick="delete_fun()">
-    <button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>
-    <h4><i class="icon fa fa-check"></i> {% if message.tags %}保存完了!{% else %}保存失敗。{% endif %}</h4>
-    {% for message in messages %}
-    <p> {{ message }}</p>
-    {% endfor %}
-</div>
-{% endfor %}
-{% endif %}
-
-<script>
-    function delete_fun() {
-        div = document.getElementsByClassName('alert alert-success alert-dismissible')[0];
-        div.parentNode.removeChild(div);
-    }
-</script>
-
 <div class="row equal">
 <div class="col-md-6">
     <div class="box box-solid box-primary">
