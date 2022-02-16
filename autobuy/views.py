@@ -89,6 +89,10 @@ def setting_view(request):
 
 
 # 軽API
+def assert_user_pass(username, password):
+    return
+
+
 def order_page_api(request, mode):
     if request.method == 'GET' and 'username' in request.GET:
         username = request.GET['username']
@@ -149,3 +153,15 @@ def order_page_api(request, mode):
         order_obj.save()
 
         return HttpResponse('')
+
+
+def get_orders(request):
+    return JsonResponse({"data": 'test'})
+
+
+def update_orders(request):
+    return
+
+
+def delete_orders(request):
+    return

@@ -306,7 +306,7 @@ def setting_view(request):
 
                 cert_key = get_certification_key(str(request.user))
 
-                if cert_key == '':
+                if not cert_key:
                     obj.api_ok = False
                     messages.error(request, '接続に失敗しました。')
                 else:

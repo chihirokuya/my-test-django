@@ -10,7 +10,7 @@ urlpatterns = [
     path('buy/setting', views.setting_view, name='setting'),
 
     # order api list
-    # path('order/api/getAllOrders'),
-    # path('order/api/updateOrders'),  # success and fail
-    # path('order/api/update_orders'),
+    path('order/api/getAllOrders', views.get_orders),
+    path('order/api/updateOrders', views.update_orders),  # success and fail
+    path('order/api/deleteOrders', views.delete_orders),
 ]
