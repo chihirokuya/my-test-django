@@ -116,6 +116,7 @@ def assert_user_pass(request):
 def update_orders(order_obj, username, order_number_list):
     try:
         res = api.get_new_orders(username)
+        print(res)
         key_list = []
         for val in res:
             key_list.append(val['orderNo'])
