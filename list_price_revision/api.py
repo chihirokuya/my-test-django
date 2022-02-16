@@ -1077,7 +1077,7 @@ def get_new_orders(username):
     return []
 
 
-def cancel_order(username):
+def cancel_order(username, contract_number, message):
     header = {
         "Content-Type": 'application/x-www-form-urlencoded',
         "QAPIVersion": '1.0',
@@ -1085,17 +1085,17 @@ def cancel_order(username):
     }
 
     data = {
-        "ContrNo": "706877267",
-        "SellerMemo": "在庫切れのためキャンセルさせていただきます。",
+        "ContrNo": contract_number,
+        "SellerMemo": message,
     }
 
     res = requests.post('https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi/Claim.SetCancelProcess',
                         headers=header, data=data).json()
 
-    print(res)
-    for val in res['ResultObject']:
-        print(val)
-        print(val['orderNo'])
+    if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
+        return True, ''
+    else:
+        if 'ResultMsg' in res.keys():
+            return False, res['ResultMsg']
 
-    req = requests.post('http://127.0.0.1:8000/order-list/0', {'username': 'chihiro', "data": [707435993]})
-    print(req.text)
+        return False, ''

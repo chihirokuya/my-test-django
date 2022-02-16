@@ -11,6 +11,6 @@ urlpatterns = [
 
     # order api list
     path('order/api/getAllOrders', views.get_orders),
-    path('order/api/updateOrders', views.update_orders),  # success and fail
-    path('order/api/deleteOrders', views.delete_orders),
+    path('order/api/deleteOrders', views.cancel_order),
+    path('order/api/myDeliveryInfo', views.get_my_delivery_info)
 ]

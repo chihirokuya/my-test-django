@@ -43,6 +43,39 @@
     </div>
 </div>
 
+<div class="col-md-12">
+    <div class="box box-solid box-danger">
+        <div class="box-header">エラーが出た注文</div>
+        <div class="box-body">
+            <div class="button_div">
+                <button class="btn btn-danger al" onclick="reload_button_clicked()"><label class="fa fa-repeat"></label>更新する</button>
+                <button class="btn btn-danger il" onclick="delete_order()"><label class="fa fa-trash-o il"></label>削除</button>
+            </div>
+            <table class="table table-bordered two">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>エラー原因</th>
+                    <th>注文番号</th>
+                    <th>注文日</th>
+                    <th>商品名</th>
+                    <th>数量</th>
+                    <th>受取人名</th>
+                    <th>受取人電話番号</th>
+                    <th>受取人携帯電話番号</th>
+                    <th>住所</th>
+                    <th>郵便番号</th>
+                    <th>供給原価の合計</th>
+                    <th>販売者商品コード</th>
+                </tr>
+                </thead>
+                <tbody id="error_body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <style about="loading">
     /* 非表示 */
     .is-hide {
@@ -101,6 +134,9 @@
     }
 </style>
 <style>
+    .box-solid{
+        height: 40vh;
+    }
     .button_div {
         display: flex;
         justify-content: space-between;
@@ -116,10 +152,6 @@
 
     .al {
         margin-bottom: 10px;
-    }
-    .box-solid.box-primary {
-        /*height:500px;*/
-        height:50vh;
     }
 
     .box-header {
@@ -167,21 +199,27 @@
     }
 
     table {
+        background-color: rgba(136, 136, 136, 0.13);
         height: 90%;
         display: block;
         overflow-x: scroll;
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
     }
+
+    .two thead{
+        background-color: #ee3148;
+    }
 </style>
 
 <script>
+    let order_failed_list = {};
 
     $(document).ready(function () {
 
         start_load();
 
-        set_order_list();
+        get_order_failed();
     });
 
     async function delete_order() {
@@ -227,33 +265,68 @@
         await set_order_list();
     }
 
-    async function set_order_list() {
+    async function get_order_failed() {
         let link = '{% url 'buy:order' %}0';
 
         await fetch(link)
         .then(response => {return response.json();})
         .then(data => {
-            let innerHTML = '';
-            let order_numbers = Object.keys(data.order_list);
-            let order_list = data.order_list;
-
-            for (o_n of order_numbers) {
-                innerHTML +=
-                    "<tr>" +
-                    "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
-                    "<td <div contenteditable>" + o_n + "</div></td>"
-                let temp = order_list[o_n];
-                for (key of Object.keys(temp)) {
-                    innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
-                }
-                innerHTML += "</tr>"
-            }
-
-            document.getElementById('order-body').innerHTML = innerHTML;
+            console.log(data);
+            order_failed_list = data;
         })
         .catch(error => {})
 
+        await set_order_list();
+    }
+
+    async function set_order_list() {
+        let innerHTML = '';
+        let order_numbers = Object.keys(order_failed_list.order_list);
+        let order_list = order_failed_list.order_list;
+
+        for (o_n of order_numbers) {
+            innerHTML +=
+                "<tr>" +
+                "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
+                "<td <div contenteditable>" + o_n + "</div></td>"
+            let temp = order_list[o_n];
+            for (key of Object.keys(temp)) {
+                innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+            }
+            innerHTML += "</tr>"
+        }
+
+        document.getElementById('order-body').innerHTML = innerHTML;
+
+        await set_error_list();
+
         stop_load();
+    }
+
+    async function set_error_list() {
+        let innerHTML = '';
+        let order_numbers = Object.keys(order_failed_list.failed_list);
+        let failed_list = order_failed_list.failed_list;
+
+        for (o_n of order_numbers) {
+            let temp = failed_list[o_n];
+
+            innerHTML +=
+                "<tr>" +
+                "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
+                "<td><input type='checkbox' class='checks' value='"+ temp['reason'] + "' </td>" +
+                "<td <div contenteditable>" + o_n + "</div></td>"
+
+            for (key of Object.keys(temp)) {
+                if (key === 'reason')
+                    continue
+
+                innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+            }
+            innerHTML += "</tr>"
+        }
+
+        document.querySelector('#error_body').innerHTML = innerHTML;
     }
 
     async function reload_button_clicked() {

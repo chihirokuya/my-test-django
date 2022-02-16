@@ -22,6 +22,6 @@ class LoginRequiredMiddleware(MiddlewareMixin):
                 UserModel.objects.create(username=request.user)
 
         if (request.path != reverse('accounts:login') and not request.user.is_authenticated) and request.path not in self.not_required_path\
-                and '/order/api' not in self.not_required_path:
+                and '/order/api' not in request.path:
             return HttpResponseRedirect(reverse('accounts:login'))
         return response

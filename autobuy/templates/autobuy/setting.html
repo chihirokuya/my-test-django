@@ -201,10 +201,26 @@
             </div>
         </div>
     </div>
+
 </div>
 
-<div style="display: flex;justify-content: center;">
-    <button class="btn btn-info" style="width:100px;" onclick="save_func()">保存</button>
+<div class="row" style="flex">
+    <div class="col-md-6">
+        <div class="box box-solid box-warning">
+            <div class="box-header">
+                <h3 class="box-title">キャンセルメッセージ</h3>
+            </div>
+            <div class="box-body">
+                <textarea id="cancel_message" rows="10" style="width: 100%;">{{ buy_obj.cancel_message }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div style="display: flex;justify-content: center;align-items: center; height: 100%;">
+            <button class="btn btn-info" style="width:100px;" onclick="save_func()">保存</button>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -300,7 +316,8 @@
                 akaji: document.querySelector('#akaji').value,
                 card_res: document.querySelector('#card_res').value,
                 commission_fee: document.querySelector('#commission_fee').value,
-                proxy_list: proxy_list
+                proxy_list: proxy_list,
+                cancel_message: document.querySelector('#cancel_message').innerHTML
             }
         }
 
