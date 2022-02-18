@@ -287,7 +287,8 @@ def get_category_qoo10(product_name):
         temp = f.read().split('\n')
 
     proxies = {
-        "http": random.choice(temp)
+        "http": "http://lum-customer-c_e05e8a0c-zone-zone3:b6dy41se5fsa@zproxy.lum-superproxy.io:22225",
+        "https": "https://lum-customer-c_e05e8a0c-zone-zone3:b6dy41se5fsa@zproxy.lum-superproxy.io:22225",
     }
 
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X'
