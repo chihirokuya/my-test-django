@@ -768,7 +768,7 @@ def upload_new_item(asin, username, certification_key):
         'ContactInfo': '',
         'StandardImage': images[0],
         'VideoURL': '',
-        'ItemDescription': html,
+        'ItemDescription': desc_header + '<br>'+ html + '<br>' + desc_footer,
         'AdditionalOption': '',
         'ItemType': '',
         'RetailPrice': 0,
@@ -783,13 +783,7 @@ def upload_new_item(asin, username, certification_key):
     res = requests.post('https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsBasic.SetNewGoods',
                         headers=header, data=data).json()
 
-    with open(MEDIA_ROOT + '/test_res', 'w') as f:
-        f.write('started\n')
-
     if res['ResultCode'] == 0:
-        with open(MEDIA_ROOT + '/test_res', 'a') as f:
-            f.write('success\n')
-
         if images[1:]:
             link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsContents.EditGoodsMultiImage'
 
@@ -803,22 +797,17 @@ def upload_new_item(asin, username, certification_key):
 
             res = requests.post(link, headers=header, data=data)
 
-        try:
-            with open(MEDIA_ROOT + '/test_res', 'a') as f:
-                f.write(f'footer\n')
-            ok, msg = set_header_footer(certification_key, initial_letter + obj.asin[1:], desc_header, desc_footer)
-            with open(MEDIA_ROOT + '/test_res', 'a') as f:
-                f.write(f'{ok} {msg}')
-        except Exception as e:
-            with open(MEDIA_ROOT + '/test_res', 'a') as f:
-                f.write(f'{str(e)}')
-            pass
-
         return True, ''
     else:
         try:
             if 'Can not register the goods' in res['ResultMsg']:
                 return False, res['ResultMsg']
+        except:
+            pass
+
+        try:
+            if 'The number of registered items has been exceeded' in res['ResultMsg']:
+                return False, '出品上限数を超えています。'
         except:
             pass
 
