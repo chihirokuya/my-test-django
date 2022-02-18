@@ -624,6 +624,34 @@ def search_brand(certification_key, keyword):
     return brand_code
 
 
+def set_header_footer(certification_key, item_code, header, footer):
+    headers = {
+        "Content-Type": 'application/x-www-form-urlencoded',
+        "QAPIVersion": '1.0',
+        'GiosisCertificationKey':certification_key
+    }
+
+    data = {
+        'SellerCode': item_code,
+        'EditHeaderYN': True,
+        'Header': header,
+        "EditFooterYN": True,
+        "Footer": footer
+    }
+
+    url = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsContents.EditGoodsHeaderFooter'
+
+    res = requests.post(url, headers=headers, data=data).json()
+
+    if res['ResultCode'] == 0:
+        return True, ''
+    else:
+        try:
+            return False, res['ResultMsg']
+        except Exception as e:
+            return False, str(e)
+
+
 def upload_new_item(asin, username, certification_key):
     user_obj = UserModel.objects.get(username=username)
     if not UserModel.objects.filter(username='admin').exists():
@@ -632,6 +660,24 @@ def upload_new_item(asin, username, certification_key):
     initial_letter = user_obj.initial_letter
     stock_num = user_obj.stock_num
     shipping_code = user_obj.shipping_code
+
+    # header and footer
+    def to_html(text):
+        text = text.split('\n')
+
+        save_text = '<div style="text-align:left">'
+
+        for i in range(len(text)):
+            if text[i] == '':
+                continue
+
+            save_text += text[i] + '<br><br>'
+
+        save_text += '</div>'
+        return save_text
+
+    desc_header = to_html(user_obj.description_header)
+    desc_footer = to_html(user_obj.description_footer)
 
     # ブラックリスト系
     try:
@@ -750,6 +796,11 @@ def upload_new_item(asin, username, certification_key):
                 data[f'EnlargedImage{i + 1}'] = val
 
             res = requests.post(link, headers=header, data=data)
+
+        try:
+            set_header_footer(certification_key, initial_letter + obj.asin[1:], desc_header, desc_footer)
+        except:
+            pass
 
         return True, ''
     else:

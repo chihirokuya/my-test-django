@@ -41,15 +41,15 @@
         </a>
     </li>
     <li class="header">自動購入</li>
-{#    <li class="treeview">#}
-{#        <a href="{% url 'buy:order' %}">#}
-{#            <i class="fa-solid fa-truck"></i>#}
-{#            <span>注文リスト</span>#}
-{#        </a>#}
-{#        <a href="{% url 'buy:setting' %}">#}
-{#            <i class="fa fa-edit"></i>#}
-{#            <span>設定</span>#}
-{#        </a>#}
-{#    </li>#}
+    <li class="treeview">
+        <a href="{% url 'buy:order' %}">
+            <i class="fa-solid fa-truck"></i>
+            <span>注文リスト</span>
+        </a>
+        <a href="{% url 'buy:setting' %}">
+            <i class="fa fa-edit"></i>
+            <span>設定</span>
+        </a>
+    </li>
 </ul>
 {% endblock %}

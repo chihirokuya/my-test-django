@@ -116,7 +116,6 @@ def assert_user_pass(request):
 def update_orders(order_obj, username, order_number_list):
     try:
         res = api.get_new_orders(username)
-        print(res)
         key_list = []
         for val in res:
             key_list.append(val['orderNo'])
@@ -166,7 +165,6 @@ def order_page_api(request, mode):
             failed_list[val['orderNo']] = {
                 "reason": val['reason'],
                 "date": val['orderDate'],
-                "prod_name": val['itemTitle'],
                 "qty": val['orderQty'],
                 "name": val['receiver'],
                 "phone_num": val['receiverTel'],
@@ -174,7 +172,8 @@ def order_page_api(request, mode):
                 "address": val['shippingAddr'],
                 "zip_code": val['zipCode'],
                 "total": val['total'],
-                "item_code": val['sellerItemCode']
+                "item_code": val['sellerItemCode'],
+                "prod_name": val['itemTitle'],
             }
 
         if mode == 0:

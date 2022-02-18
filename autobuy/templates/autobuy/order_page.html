@@ -17,7 +17,7 @@
         <div class="box-body">
             <div class="button_div">
                 <button class="btn btn-info al" onclick="reload_button_clicked()"><label class="fa fa-repeat"></label>更新する</button>
-                <button class="btn btn-danger il" onclick="delete_order()"><label class="fa fa-trash-o il"></label>削除</button>
+                <button class="btn btn-danger il" onclick="delete_order()" style="height: fit-content"><label class="fa fa-trash-o il"></label>削除</button>
             </div>
             <table id="foo-table" class="table table-bordered">
                 <thead>
@@ -58,7 +58,6 @@
                     <th>エラー原因</th>
                     <th>注文番号</th>
                     <th>注文日</th>
-                    <th>商品名</th>
                     <th>数量</th>
                     <th>受取人名</th>
                     <th>受取人電話番号</th>
@@ -67,6 +66,7 @@
                     <th>郵便番号</th>
                     <th>供給原価の合計</th>
                     <th>販売者商品コード</th>
+                    <th>商品名</th>
                 </tr>
                 </thead>
                 <tbody id="error_body">
@@ -144,6 +144,7 @@
 
     .il {
         padding-right: 10px;
+        height: fit-content;
     }
 
     .fa-repeat {
@@ -199,7 +200,7 @@
     }
 
     table {
-        background-color: rgba(136, 136, 136, 0.13);
+        {#background-color: rgba(136, 136, 136, 0.13);#}
         height: 90%;
         display: block;
         overflow-x: scroll;
@@ -262,7 +263,7 @@
         .then(res => {})
         .catch(console.error);
 
-        await set_order_list();
+        await get_order_failed();
     }
 
     async function get_order_failed() {
@@ -314,7 +315,7 @@
             innerHTML +=
                 "<tr>" +
                 "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
-                "<td><input type='checkbox' class='checks' value='"+ temp['reason'] + "' </td>" +
+                "<td <div contenteditable>" + temp['reason'] + "</div></td>" +
                 "<td <div contenteditable>" + o_n + "</div></td>"
 
             for (key of Object.keys(temp)) {
@@ -337,7 +338,7 @@
         await fetch(link)
         .catch(error => {console.log(error)});
 
-        await set_order_list();
+        await get_order_failed();
     }
 
     function start_load() {
