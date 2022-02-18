@@ -396,40 +396,39 @@ def get_table(request):
     start = time.perf_counter()
     info_json_list = []
     category_list = {}
-    # all_objects = AsinModel.objects.all()
+    all_objects = AsinModel.objects.filter(asin__in=asin_list)
     try:
-        # for temp_obj in chunked(all_objects):
-        #     temp_obj: AsinModel
-        #     if temp_obj.asin in asin_list:
-        for asin in asin_list:
-            temp_obj = AsinModel.objects.get(asin=asin)
-            img = temp_obj.photo_list.split('\n')[0]
-            name = temp_obj.product_name
-            try:
-                brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
-                brand = brand_obj.brand_name
-            except:
-                brand = ''
-            user_price, profit = user_price_and_profit(user_obj, temp_obj.price)
-            point = temp_obj.point
-            category = temp_obj.q10_category
+        for temp_obj in chunked(all_objects):
+            temp_obj: AsinModel
+            for asin in asin_list:
+                temp_obj = AsinModel.objects.get(asin=asin)
+                img = temp_obj.photo_list.split('\n')[0]
+                name = temp_obj.product_name
+                try:
+                    brand_obj: Q10BrandCode = Q10BrandCode.objects.get(code=temp_obj.brand)
+                    brand = brand_obj.brand_name
+                except:
+                    brand = ''
+                user_price, profit = user_price_and_profit(user_obj, temp_obj.price)
+                point = temp_obj.point
+                category = temp_obj.q10_category
 
-            if category not in category_list.keys():
-                category_list[category] = 1
-            else:
-                category_list[category] += 1
+                if category not in category_list.keys():
+                    category_list[category] = 1
+                else:
+                    category_list[category] += 1
 
-            info_json_list.append({
-                'asin': temp_obj.asin,
-                'img_link': img,
-                "product_name": name,
-                "brand": brand,
-                "price": user_price,
-                "amazon_price": temp_obj.price,
-                "point": point,
-                "category": category,
-                "profit": profit
-            })
+                info_json_list.append({
+                    'asin': temp_obj.asin,
+                    'img_link': img,
+                    "product_name": name,
+                    "brand": brand,
+                    "price": user_price,
+                    "amazon_price": temp_obj.price,
+                    "point": point,
+                    "category": category,
+                    "profit": profit
+                })
     except RuntimeError:
         pass
 
