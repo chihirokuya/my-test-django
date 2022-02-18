@@ -798,9 +798,9 @@ def upload_new_item(asin, username, certification_key):
             res = requests.post(link, headers=header, data=data)
 
         try:
-            print('set footer')
             ok, msg = set_header_footer(certification_key, initial_letter + obj.asin[1:], desc_header, desc_footer)
-            print(ok, msg)
+            with open(MEDIA_ROOT + '/test_res', 'w') as f:
+                f.write(f'{ok} {msg}')
         except:
             pass
 
