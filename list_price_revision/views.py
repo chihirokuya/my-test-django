@@ -13,6 +13,10 @@ import threading
 from dateutil import tz
 from mysite.tasks import records_saved, link_q10_account
 from mysite import tasks
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from .serializer import AsinSerializer
+
 
 base_path = 'list_price_revision/'
 
@@ -516,3 +520,11 @@ def sell_and_not_stock(request):
         pass
 
     return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})
+
+
+@api_view(['GET'])
+def get_asin_data(request):
+    items = AsinModel.objects.all()
+    serializer = AsinSerializer(items, many=True)
+
+    return Response(serializer.data)

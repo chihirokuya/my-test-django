@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'accounts',
     'autobuy',
     'django_celery_results',
-    'django_celery_beat'
+    'django_celery_beat',
+    "rest_framework"
 ]
 
 MIDDLEWARE = [
