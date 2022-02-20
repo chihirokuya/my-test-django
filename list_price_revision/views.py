@@ -524,7 +524,11 @@ def sell_and_not_stock(request):
 
 @api_view(['GET'])
 def get_asin_data(request):
-    items = AsinModel.objects.all()
+    list_obj = ListingModel.objects.get(username=request.user)
+    asin_list = list_obj.asin_list.split(',')
+
+    items = AsinModel.objects.filter(asin__in=asin_list)
+    # items = AsinModel.objects.all()
     serializer = AsinSerializer(items, many=True)
 
     return Response(serializer.data)
