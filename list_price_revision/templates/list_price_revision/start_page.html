@@ -102,36 +102,36 @@
     </div>
 </div>
 
-<div class="col-md-6">
-    <div class="box box-success al">
-        <div class="box-header with-border">
-            <h3 class="box-title">Q10商品リンク</h3>
-        </div>
-
-        <div class="box-body">
-            初めてご利用なされる際には設定を行った後、『リンク』ボタンを押し、QSMから商品リストを取得してきます。<br>
-            ※リンクボタンを押すと『出品中』のリストが一旦全てリセットされます。
-            <div class="row" style="height:80px;padding:20px">
-                <div class="col-md-2" align="right">
-                    <form method="POST" action="">{% csrf_token %}
-                        <input type="submit" class="btn btn-block btn-{% if still_getting is False %}info{%else%}warning{%endif%}" style="width:80px; vertical-align:middle;"
-                               value="{% if still_getting is False %}リンク{%else%}中止{%endif%}" name="link_button">
-                    </form>
-                </div>
-                <div class="col-md-10">
-                <div class="progress-group">
-                    <span class="progress-text">進捗度</span>
-                    <span class="progress-number"><b>{{ linked_length }}</b>/{{ total_length }}</span>
-
-                    <div class="progress sm">
-                        <div class="progress-bar progress-bar-aqua" style="width: {{ percentage }}%"></div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    </div>
-</div>
+{#<div class="col-md-6">#}
+{#    <div class="box box-success al">#}
+{#        <div class="box-header with-border">#}
+{#            <h3 class="box-title">Q10商品リンク</h3>#}
+{#        </div>#}
+{##}
+{#        <div class="box-body">#}
+{#            初めてご利用なされる際には設定を行った後、『リンク』ボタンを押し、QSMから商品リストを取得してきます。<br>#}
+{#            ※リンクボタンを押すと『出品中』のリストが一旦全てリセットされます。#}
+{#            <div class="row" style="height:80px;padding:20px">#}
+{#                <div class="col-md-2" align="right">#}
+{#                    <form method="POST" action="">{% csrf_token %}#}
+{#                        <input type="submit" class="btn btn-block btn-{% if still_getting is False %}info{%else%}warning{%endif%}" style="width:80px; vertical-align:middle;"#}
+{#                               value="{% if still_getting is False %}リンク{%else%}中止{%endif%}" name="link_button">#}
+{#                    </form>#}
+{#                </div>#}
+{#                <div class="col-md-10">#}
+{#                <div class="progress-group">#}
+{#                    <span class="progress-text">進捗度</span>#}
+{#                    <span class="progress-number"><b>{{ linked_length }}</b>/{{ total_length }}</span>#}
+{##}
+{#                    <div class="progress sm">#}
+{#                        <div class="progress-bar progress-bar-aqua" style="width: {{ percentage }}%"></div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
 
 <style>
     p {
