@@ -151,7 +151,7 @@ def records_saved(username, date):
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
-                    log_failed_asin_list.append([key, temp])
+                    log_failed_asin_list.append([key, ','.join(list(temp.keys()))])
                     print('追加失敗ASIN：', key)
             else:
                 log_failed_asin_list.append(key)
