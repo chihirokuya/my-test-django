@@ -281,11 +281,11 @@ def keepa_info(product):
 
 
 def get_category_qoo10(product_name):
-    proxy_list_path = MEDIA_ROOT + '/ips-zone3.txt'
-
-    with open(proxy_list_path, 'r') as f:
-        temp = f.read().split('\n')
-
+    # proxy_list_path = MEDIA_ROOT + '/ips-zone3.txt'
+    #
+    # with open(proxy_list_path, 'r') as f:
+    #     temp = f.read().split('\n')
+    #
     proxies = {
         "http": "http://lum-customer-c_e05e8a0c-zone-zone3:b6dy41se5fsa@zproxy.lum-superproxy.io:22225",
         "https": "https://lum-customer-c_e05e8a0c-zone-zone3:b6dy41se5fsa@zproxy.lum-superproxy.io:22225",
