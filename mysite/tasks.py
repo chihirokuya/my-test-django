@@ -134,8 +134,8 @@ def records_saved(username, date):
         # ASINモデルを追加していく
         for key in to_search_class.result_list.keys():
             if not AsinModel.objects.filter(asin=key).exists():
+                temp = to_search_class.result_list[key]
                 try:
-                    temp = to_search_class.result_list[key]
                     AsinModel(
                         asin=key,
                         product_name=temp['name'],
@@ -151,7 +151,7 @@ def records_saved(username, date):
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
-                    log_failed_asin_list.append([key, str(e)])
+                    log_failed_asin_list.append([key, temp])
                     print('追加失敗ASIN：', key)
             else:
                 log_failed_asin_list.append(key)
