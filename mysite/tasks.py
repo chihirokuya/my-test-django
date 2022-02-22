@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from mysite.settings import BASE_DIR
 from shutil import copyfile
 import pytz
+from mysite.settings import MEDIA_ROOT
 
 
 # 出品
@@ -38,6 +39,8 @@ def records_saved(username, date):
     最後にRecordModelを更新し完了。
     """
 
+    log_file_path = MEDIA_ROOT + '/' + username
+
     obj = ListingModel.objects.get(username=username)
     corresponding_record_object = RecordsModel.objects.get(username=username, date=date)
     certification_key = get_certification_key(username)
@@ -55,6 +58,9 @@ def records_saved(username, date):
     log_failed_asin_list = []
 
     to_search_list = []
+    with open(log_file_path, 'w') as f:
+        f.write('開始')
+
     for asin in asin_waiting_list:
         if not AsinModel.objects.filter(asin=asin).exists() and asin not in asin_getting_list:
             asin_getting_list.append(asin)
@@ -151,7 +157,7 @@ def records_saved(username, date):
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
-                    log_failed_asin_list.append([key, ','.join(list(temp.keys()))])
+                    log_failed_asin_list.append([key, 'KEEPA失敗'])
                     print('追加失敗ASIN：', key)
             else:
                 log_failed_asin_list.append(key)
