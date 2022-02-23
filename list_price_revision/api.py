@@ -94,6 +94,61 @@ def user_price_and_profit(obj: UserModel, price):
     return sell_price, profit
 
 
+# ブラックリストに含まれるか
+def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
+    ad_obj = UserModel.objects.get(username='admin')
+    asin = asin_obj.asin
+
+    try:
+        black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
+        black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
+        remove_words = ad_obj.words_blacklist.split('\n')
+        black_amazon_group = user_obj.group_black.split(',')
+    except:
+        black_maker_item_name = []
+        black_asins = []
+        remove_words = []
+        black_amazon_group = []
+
+    black = False
+    for black_asin in black_asins:
+        if asin == black_asin.strip():
+            black = True
+            break
+    if black:
+        return False, 'ASINブラックリストに含まれています。'
+
+    try:
+        if asin_obj.product_group and asin_obj.product_group in black_amazon_group:
+            return False, '商品グループがブラックリストに含まれています。'
+    except:
+        pass
+
+    if asin_obj.brand:
+        try:
+            brand_name = Q10BrandCode.objects.get(code=asin_obj.brand).brand_name
+        except Exception as e:
+            print(e)
+            brand_name = ''
+            pass
+    else:
+        brand_name = ''
+
+    black = False
+    for black_word in black_maker_item_name:
+        for desc in asin_obj.description.split('\n'):
+            if black_word in desc:
+                black = True
+        if black:
+            break
+
+        if black_word in asin_obj.product_name or black_word in brand_name:
+            black = True
+            break
+    if black:
+        return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+
+
 class SpApiFunction:
     credentials = None
     counter = 0
@@ -1013,9 +1068,6 @@ def link_q10_items(certification_key, username):
             print('brandしぱい')
 
 
-    print('fin')
-    return
-
     item_link_obj.still_getting = False
     item_link_obj.save()
 
@@ -1079,7 +1131,7 @@ def update_price(username):
                 continue
 
             user_price = to_user_price(user_obj, asin_obj.price)
-            if asin_obj.price == 0 or user_price == 0:
+            if asin_obj.price == 0 or user_price == 0 or not is_in_black(user_obj, asin_obj)[0]:
                 if delete_or_not:
                     temp_res = delete_item(certification_key, initial_letter + asin[1:])
                     if type(temp_res) is bool:
