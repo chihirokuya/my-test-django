@@ -513,6 +513,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                     if category == '':
                         to_search_class.to_delete_asin_list.append(product['asin'])
                         to_search_class.log_error_reason.append([product['asin'], 'カテゴリ取得に失敗しました。'])
+                        to_search_class.result_list.pop(product['asin'])
                     else:
                         to_search_class.result_list[product['asin']]['links'] = resul_[0]
                         to_search_class.result_list[product['asin']]['description'] = resul_[1]
