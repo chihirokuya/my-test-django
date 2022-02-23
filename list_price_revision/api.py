@@ -262,11 +262,15 @@ def keepa_info(product):
         return result, '画像取得失敗'
 
     try:
-        description = product['features']
-        if description is None:
-            description = []
+        d_ = product['features']
+        if d_ is None:
+            d_ = []
     except:
-        description = []
+        d_ = []
+
+    description = []
+    for d in d_:
+        description.append(d.encode('utf-8','ignore').decode("utf-8").strip())
 
     try:
         jan = product['eanList'][0]
