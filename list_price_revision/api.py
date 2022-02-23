@@ -254,7 +254,10 @@ def keepa_info(product):
         links = []
         for image in images:
             links.append(
-                'https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
+                'https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg')
+            )
+        if not links:
+            return result, '画像取得失敗'
     except:
         return result, '画像取得失敗'
 
@@ -523,6 +526,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 else:
                     to_search_class.to_delete_asin_list.append(product['asin'])
                     to_search_class.log_error_reason.append([product['asin'], message_])
+                    to_search_class.result_list.pop(product['asin'])
 
             to_search_class.step_2_counter += len(asins)
             if update:
