@@ -5,7 +5,11 @@ from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLi
 
 
 class AsinAdmin(admin.ModelAdmin):
-    search_fields = ['asin']
+    search_fields = ['asin', 'brand']
+
+
+class BrandAdmin(admin.ModelAdmin):
+    search_fields = ['brand_name']
 
 
 admin.site.register(UserModel)
@@ -13,5 +17,5 @@ admin.site.register(AsinModel, AsinAdmin)
 admin.site.register(RecordsModel)
 admin.site.register(ListingModel)
 admin.site.register(Q10ItemsLink)
-admin.site.register(Q10BrandCode)
+admin.site.register(Q10BrandCode, BrandAdmin)
 admin.site.register(LogModel)
