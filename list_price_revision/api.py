@@ -148,6 +148,7 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
     if black:
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
 
+    return True, ''
 
 class SpApiFunction:
     credentials = None
