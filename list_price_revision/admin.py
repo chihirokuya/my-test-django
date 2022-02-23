@@ -12,10 +12,14 @@ class BrandAdmin(admin.ModelAdmin):
     search_fields = ['brand_name']
 
 
+class ListingAdmin(admin.ModelAdmin):
+    search_fields = ['username']
+
+
 admin.site.register(UserModel)
 admin.site.register(AsinModel, AsinAdmin)
 admin.site.register(RecordsModel)
-admin.site.register(ListingModel)
+admin.site.register(ListingModel, ListingAdmin)
 admin.site.register(Q10ItemsLink)
 admin.site.register(Q10BrandCode,
                     BrandAdmin)
