@@ -17,5 +17,6 @@ admin.site.register(AsinModel, AsinAdmin)
 admin.site.register(RecordsModel)
 admin.site.register(ListingModel)
 admin.site.register(Q10ItemsLink)
-admin.site.register(Q10BrandCode, BrandAdmin)
+admin.site.register(Q10BrandCode,
+                    BrandAdmin)
 admin.site.register(LogModel)
