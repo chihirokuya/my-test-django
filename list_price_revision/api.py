@@ -722,9 +722,25 @@ def upload_new_item(asin, username, certification_key):
     except:
         pass
 
+    if obj.brand:
+        try:
+            brand_name = Q10BrandCode.objects.get(code=obj.brand).brand_name
+        except Exception as e:
+            print(e)
+            brand_name = ''
+            pass
+    else:
+        brand_name = ''
+
     black = False
     for black_word in black_maker_item_name:
-        if black_word in obj.description.split('\n') or black_word == obj.product_name:
+        for desc in obj.description.split('\n'):
+            if black_word in desc:
+                black = True
+        if black:
+            break
+
+        if black_word in obj.product_name or black_word in brand_name:
             black = True
             break
     if black:
