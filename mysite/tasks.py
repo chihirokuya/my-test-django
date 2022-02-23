@@ -39,31 +39,28 @@ def records_saved(username, date):
     最後にRecordModelを更新し完了。
     """
 
-    log_file_path = MEDIA_ROOT + '/' + username
-
     obj = ListingModel.objects.get(username=username)
     corresponding_record_object = RecordsModel.objects.get(username=username, date=date)
     certification_key = get_certification_key(username)
 
-    asin_waiting_list: list = list(obj.asin_waiting_list.split(','))
-    asin_list = list(obj.asin_list.split(','))
-    asin_getting_list = list(obj.asin_getting_list.split(','))
+    asin_waiting_list: list = list(obj.asin_waiting_list.split(','))    # ASIN取得or出品待ち
+    asin_list = list(obj.asin_list.split(','))  # 出品中
+    asin_getting_list = list(obj.asin_getting_list.split(','))  # すでにASINを取得中動作に入っているもの
 
-    new_getting_list = []
-    to_transfer_list = []
-    to_list_but_still_in_waiting = []
+    new_getting_list = []   # 新規取得ASINリスト
+    to_transfer_list = []   # Q10に出品するリスト
+    to_list_but_still_in_waiting = []   # すでにASIN情報取得は完了しているが、Q10への出品が完了していないリスト
 
     # ログ用
     log_success_asin_list = []
     log_failed_asin_list = []
 
-    to_search_list = []
-    with open(log_file_path, 'w') as f:
-        f.write('開始')
+    to_search_list = []  # ASIN情報取得の必要があるリスト
 
     for asin in asin_waiting_list:
+        # ASINがDB上に存在しない and ASIN_GETTING_LIST内に含まれていない ならSP-API&Keepaから取得
         if not AsinModel.objects.filter(asin=asin).exists() and asin not in asin_getting_list:
-            asin_getting_list.append(asin)
+            asin_getting_list.append(asin)  # ASIN_GETTING_LISTに追加
             new_getting_list.append(asin)
             to_search_list.append(asin)
         else:
@@ -127,7 +124,6 @@ def records_saved(username, date):
                 pass
 
         print('削除開始')
-        print(to_search_class.to_delete_asin_list)
         # DeleteListを参考にasin_waiting_listから削除していく
         for asin in to_search_class.to_delete_asin_list:
             try:
@@ -157,17 +153,17 @@ def records_saved(username, date):
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
-                    log_failed_asin_list.append([key, 'KEEPA失敗'])
+                    import json
+                    log_failed_asin_list.append([key, json.dumps(temp)])
                     print('追加失敗ASIN：', key)
             else:
-                log_failed_asin_list.append(key)
+                # log_failed_asin_list.append(key)
                 to_transfer_list.append(key)
         print('追加完了')
     else:
         print('search_listが空なためasin_listに直で追加します。')
 
     to_transfer_list.extend(to_list_but_still_in_waiting)
-
     to_transfer_list = list(filter(None, to_transfer_list))
 
     # 出品→asin_waitingからasin_listに移す
