@@ -15,6 +15,7 @@ import csv
 import re
 import datetime
 from .views import delimiter
+import unicodedata
 import emoji
 
 refresh_token_list = [
@@ -271,7 +272,7 @@ def keepa_info(product):
 
     description = []
     for d in d_:
-        description.append(emoji.get_emoji_regexp().sub(u'', d).strip())
+        description.append(unicodedata.normalize('NFKC', emoji.get_emoji_regexp().sub(u'', d).strip()))
 
     try:
         jan = product['eanList'][0]
