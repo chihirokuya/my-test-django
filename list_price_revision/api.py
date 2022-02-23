@@ -246,6 +246,7 @@ def get_from_sp_api(asin):
     return [values[0], int(float(price)), values[1], values[2]], '', point
 
 
+# [links, description, jan, category_tree], '' または [], '理由'
 def keepa_info(product):
     result = []
     try:
@@ -876,9 +877,9 @@ def link_q10_items(certification_key, username):
 
     if item_link_obj.still_getting:
         return
-    else:
-        item_link_obj.still_getting = True
-        item_link_obj.save()
+    # else:
+    #     item_link_obj.still_getting = True
+    #     item_link_obj.save()
 
     if not ListingModel.objects.filter(username=username).exists():
         ListingModel(username=username).save()
@@ -908,60 +909,40 @@ def link_q10_items(certification_key, username):
         return True
 
     def keepa_fun(asin_list: list):
-        # 3回ためす
-        for j in range(3):
+        try:
+            products = api.query(asin_list, wait=True, domain='JP')
+        except:
+            return False, []
+
+        temp = {}
+        for product in products:
+            temp[product['asin']] = {
+                "ok": False
+            }
+
             try:
-                products = api.query([val[0] for val in asin_list], wait=True, domain='JP')
+                temp[product['asin']]['productGroup'] = product['productGroup']
             except:
-                if j == 2:
-                    print('LinkQ10: Keepaに３回以内に接続できませんでした。')
-                    break
-                time.sleep(3)
                 continue
 
-            to_delete_list = []
-            for i, product in enumerate(products):
-                try:
-                    product_group = product['productGroup']
-                except:
-                    print('failed on product group')
-                    to_delete_list.append(asin_list[i])
-                    continue
+            try:
+                temp[product['asin']]['brand'] = product['brand']
+            except:
+                temp[product['asin']]['brand'] = ''
 
-                photo_list = []
-                try:
-                    images = product['imagesCSV'].split(',')
-                except AttributeError:
-                    print('failed image', asin_list[i][0])
-                    to_delete_list.append(asin_list[i])
-                    continue
+            t, m = keepa_info(product)
 
-                if not images:
-                    to_delete_list.append(asin_list[i])
-                    continue
+            if t:
+                temp[product['asin']]['links'] = t[0]
+                temp[product['asin']]['description'] = t[1]
+                temp[product['asin']]['jan'] = t[2]
+                temp[product['asin']]['category_tree'] = t[3]
+            else:
+                continue
 
-                for image in images:
-                    photo_list.append(
-                        'https://images-na.ssl-images-amazon.com/images/I/' + image.replace('.jpg', '.jpg'))
+            temp[product['asin']]['ok'] = True
 
-                try:
-                    category_tree = product['categoryTree']
-                    if category_tree is None:
-                        to_delete_list.append(asin_list[i])
-                        continue
-                except:
-                    print('failed on cat')
-                    to_delete_list.append(asin_list[i])
-                    continue
-
-                asin_list[i].append([product_group, photo_list, category_tree])
-
-            for li in to_delete_list:
-                asin_list.remove(li)
-
-            break
-
-        return asin_list
+        return temp
 
     def update_listing(asin_):
         # AsinListに追加
@@ -970,6 +951,7 @@ def link_q10_items(certification_key, username):
         listing_obj.asin_list = ','.join(temp)
         listing_obj.save()
 
+    fin = {}
     for asin in items:
         if AsinModel.objects.filter(asin='B' + asin[1:]).exists():
             update_listing('B' + asin[1:])
@@ -983,29 +965,56 @@ def link_q10_items(certification_key, username):
 
         # 10個溜まったならKeepaで取得
         if len(temp_list) == 10:
-            res = keepa_fun(temp_list)
+            asin_list = [val[0] for val in temp_list]
+            print(asin_list)
+            res = keepa_fun(asin_list)
 
-            for result in res:
-                try:
-                    # result: [asin, [product_name, brand, description, jan, q10_category, price], [product_group, photo_list, category_tree]]
-                    obj = AsinModel()
-                    obj.asin = result[0]
-                    obj.product_name = result[1][0]
-                    obj.brand = result[1][1]
-                    obj.description = result[1][2]
-                    obj.jan = result[1][3]
-                    obj.q10_category = result[1][4]
-                    obj.price = int(float(result[1][5]))
-                    obj.product_group = result[2][0]
-                    obj.photo_list = '\n'.join(result[2][1])
-                    obj.category_tree = result[2][2]
-                    obj.save()
-
-                    update_listing(result[0])
-                except Exception as e:
-                    print('LinkQ10Items: リンクに失敗', str(e))
+            for temp in temp_list:
+                if res[temp[0]]['ok']:
+                    fin[temp[0]] = {
+                        "product_name": temp[1][0],
+                        "brand": temp[1][1],
+                        "jan": res[temp[0]]['jan'],
+                        "q10_category": temp[1][4],
+                        "price": temp[1][5],
+                        "productGroup": res[temp[0]]['productGroup'],
+                        "links": res[temp[0]]['links'],
+                        "description": res[temp[0]]['description'],
+                        "category_tree": res[temp[0]]['category_tree'],
+                        "brand_name": res[temp[0]]['brand'],
+                    }
 
             temp_list = []
+
+    for asin in fin.keys():
+        try:
+            temp = fin[asin]
+            obj = AsinModel()
+            obj.asin = asin
+            obj.product_name = temp['product_name']
+            obj.brand = temp['brand']
+            obj.jan = temp['jan']
+            obj.q10_category = '320001763'
+            obj.price = int(float(temp['price']))
+            obj.product_group = temp['productGroup']
+            obj.description = '\n'.join(temp['description'])
+            obj.photo_list = '\n'.join(temp['links'])
+            obj.category_tree = temp['category_tree']
+
+            obj.save()
+            update_listing(asin)
+        except Exception as e:
+            print('LINK失敗', str(e))
+            continue
+
+        try:
+            Q10BrandCode(code=temp['brand'], brand_name=temp['brand_name']).save()
+        except:
+            print('brandしぱい')
+
+
+    print('fin')
+    return
 
     item_link_obj.still_getting = False
     item_link_obj.save()
