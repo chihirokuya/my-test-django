@@ -498,51 +498,6 @@ def get_table(request):
 
 
 def sell_and_not_stock(request):
-    def is_in_black(elm):
-        ad_obj = UserModel.objects.get(username='admin')
-        asin = elm['asin']
-
-        try:
-            black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
-            black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
-            remove_words = ad_obj.words_blacklist.split('\n')
-            black_amazon_group = user_obj.group_black.split(',')
-        except:
-            black_maker_item_name = []
-            black_asins = []
-            remove_words = []
-            black_amazon_group = []
-
-        black = False
-        for black_asin in black_asins:
-            if asin == black_asin.strip():
-                black = True
-                break
-        if black:
-            return False, 'ASINブラックリストに含まれています。'
-
-        try:
-            if elm['product_group'] and elm['product_group'] in black_amazon_group:
-                return False, '商品グループがブラックリストに含まれています。'
-        except:
-            pass
-
-        black = False
-        for black_word in black_maker_item_name:
-            for desc in elm['description'].split('\n'):
-                if black_word in desc:
-                    black = True
-            if black:
-                break
-
-            if black_word in elm['product_name']:
-                black = True
-                break
-        if black:
-            return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
-
-        return True, ''
-
     username = request.user
 
     if not ListingModel.objects.filter(username=username).exists():
@@ -563,12 +518,14 @@ def sell_and_not_stock(request):
     #             selling_num += 1
     # except:
     #     pass
-    all_objects = AsinModel.objects.values('price', 'asin', 'product_name', 'description', 'product_group')
+    all_objects = AsinModel.objects.values('price', 'asin', 'in_black_list')
     try:
         for i, elm in enumerate(chunked(all_objects)):
             print(f'here{i}/{len(all_objects)}')
             if elm['asin'] in asin_list:
-                if elm['price'] == 0 or is_in_black(elm)[0]:
+                if elm['price'] == 0:
+                    no_stock_num += 1
+                elif 'in_black_list' in elm.keys() and elm['in_black_list']:
                     no_stock_num += 1
                 else:
                     selling_num += 1

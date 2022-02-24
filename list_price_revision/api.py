@@ -776,6 +776,9 @@ def upload_new_item(asin, username, certification_key):
 
     try:
         if obj.product_group and obj.product_group in black_amazon_group:
+            if not obj.in_black_list:
+                obj.in_black_list = True
+                obj.save()
             return False, '商品グループがブラックリストに含まれています。'
     except:
         pass
@@ -802,6 +805,10 @@ def upload_new_item(asin, username, certification_key):
             black = True
             break
     if black:
+        if not obj.in_black_list:
+            obj.in_black_list = True
+            obj.save()
+
         return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
 
     user_price = to_user_price(user_obj, obj.price)
@@ -1156,6 +1163,9 @@ def update_price(username):
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
                        f'&Qty=0'
                 msg = 'ブラックリスト商品'
+                if not asin_obj.in_black_list:
+                    asin_obj.in_black_list = True
+                    asin_obj.save()
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
