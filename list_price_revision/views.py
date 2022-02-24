@@ -3,7 +3,7 @@ from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit
+from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit, is_in_black
 from django.contrib import messages
 import datetime
 import os
@@ -45,16 +45,6 @@ def base_view(request):
                 link_q10_account.delay(str(request.user))
 
                 messages.success(request, 'リンクが開始しました。ページを再読み込みする事により進捗状況を更新できます。')
-            else:
-                try:
-                    q10_obj.still_getting = False
-                    q10_obj.total_asin_list = ''
-                    q10_obj.linked_asin_list = ''
-                    q10_obj.save()
-
-                    messages.success(request, 'リンクを中止しました。')
-                except Exception as e:
-                    messages.error(request, 'リンク中止に失敗しました。\n' + str(e))
 
         list_obj = ListingModel.objects.get(username=request.user)
         asin_list = list_obj.asin_list.split(',')
@@ -505,19 +495,30 @@ def sell_and_not_stock(request):
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=username)
     asin_list = list_obj.asin_list.split(',')
+    user_obj = UserModel.objects.get(username=username)
 
     selling_num = 0
     no_stock_num = 0
-    all_objects = AsinModel.objects.values('price', 'asin')
+    all_objects = AsinModel.objects.filter(asin__in=asin_list)
     try:
-        for elm in chunked(all_objects):
-            if elm['asin'] in asin_list:
-                if elm['price'] == 0:
-                    no_stock_num += 1
-                else:
-                    selling_num += 1
-    except RuntimeError:
+        for obj in chunked(all_objects):
+            obj: AsinModel
+            if obj.price == 0 or is_in_black(user_obj, obj):
+                no_stock_num += 1
+            else:
+                selling_num += 1
+    except:
         pass
+    # all_objects = AsinModel.objects.values('price', 'asin')
+    # try:
+    #     for elm in chunked(all_objects):
+    #         if elm['asin'] in asin_list:
+    #             if elm['price'] == 0:
+    #                 no_stock_num += 1
+    #             else:
+    #                 selling_num += 1
+    # except RuntimeError:
+    #     pass
 
     return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})
 
