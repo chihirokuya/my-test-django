@@ -1198,7 +1198,7 @@ def update_price(username):
     for val in log_success:
         success_list += f'{val[0]}:{val[1]}{delimiter}'
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
-             success_asin_list=success_list, cause_list=cause_list,
+             success_asin_list=success_list , cause_list=cause_list,
              date=datetime.datetime.now()).save()
 
 

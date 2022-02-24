@@ -585,7 +585,7 @@ def update_user_price(request):
     except:
         return JsonResponse({'ok': False})
 
-    return JsonResponse({'ok': True})
+    return JsonResponse({'ok': True })
 
 
 
