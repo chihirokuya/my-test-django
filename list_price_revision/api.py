@@ -632,13 +632,21 @@ def get_certification_key(username):
 
         user_id = UserModel.objects.get(username=username).q10_id
         password = UserModel.objects.get(username=username).q10_password
-        res = requests.get(
-            'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?'
-            f'key={api_key}'
-            '&v=1.0'
-            '&returnType=json&method=CertificationAPI.CreateCertificationKey&'
-            f'user_id={user_id}'
-            f'&pwd={password}'
+        header = {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "QAPIVersion": '1.0',
+            "GiosisCertificationKey": api_key
+        }
+
+        data = {
+            "user_id": user_id,
+            "pwd": password,
+        }
+
+        res = requests.post(
+            'http://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/CertificationAPI.CreateCertificationKey',
+            data=data,
+            headers=header
         ).json()
 
         return res['ResultObject']
