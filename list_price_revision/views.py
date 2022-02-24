@@ -489,6 +489,61 @@ def get_table(request):
 
 
 def sell_and_not_stock(request):
+    def is_in_black(elm):
+        ad_obj = UserModel.objects.get(username='admin')
+        asin = elm['asin']
+
+        try:
+            black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
+            black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
+            remove_words = ad_obj.words_blacklist.split('\n')
+            black_amazon_group = user_obj.group_black.split(',')
+        except:
+            black_maker_item_name = []
+            black_asins = []
+            remove_words = []
+            black_amazon_group = []
+
+        black = False
+        for black_asin in black_asins:
+            if asin == black_asin.strip():
+                black = True
+                break
+        if black:
+            return False, 'ASINブラックリストに含まれています。'
+
+        try:
+            if elm['product_group'] and elm['product_group'] in black_amazon_group:
+                return False, '商品グループがブラックリストに含まれています。'
+        except:
+            pass
+
+        if elm['brand']:
+            try:
+                brand_name = Q10BrandCode.objects.get(code=elm['brand']).brand_name
+            except Exception as e:
+                print(e)
+                brand_name = ''
+                pass
+        else:
+            brand_name = ''
+
+        black = False
+        for black_word in black_maker_item_name:
+            for desc in elm['description'].split('\n'):
+                if black_word in desc:
+                    black = True
+            if black:
+                break
+
+            if black_word in elm['product_name'] or black_word in brand_name:
+                black = True
+                break
+        if black:
+            return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+
+        return True, ''
+
     username = request.user
 
     if not ListingModel.objects.filter(username=username).exists():
@@ -500,25 +555,25 @@ def sell_and_not_stock(request):
     selling_num = 0
     no_stock_num = 0
     all_objects = AsinModel.objects.filter(asin__in=asin_list)
-    try:
-        for obj in chunked(all_objects):
-            obj: AsinModel
-            if obj.price == 0 or is_in_black(user_obj, obj):
-                no_stock_num += 1
-            else:
-                selling_num += 1
-    except:
-        pass
-    # all_objects = AsinModel.objects.values('price', 'asin')
     # try:
-    #     for elm in chunked(all_objects):
-    #         if elm['asin'] in asin_list:
-    #             if elm['price'] == 0:
-    #                 no_stock_num += 1
-    #             else:
-    #                 selling_num += 1
-    # except RuntimeError:
+    #     for obj in chunked(all_objects):
+    #         obj: AsinModel
+    #         if obj.price == 0 or is_in_black(user_obj, obj):
+    #             no_stock_num += 1
+    #         else:
+    #             selling_num += 1
+    # except:
     #     pass
+    all_objects = AsinModel.objects.values('price', 'asin', 'product_name', 'description', 'product_group', 'brand')
+    try:
+        for elm in chunked(all_objects):
+            if elm['asin'] in asin_list:
+                if elm['price'] == 0 or is_in_black(elm):
+                    no_stock_num += 1
+                else:
+                    selling_num += 1
+    except RuntimeError:
+        pass
 
     return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})
 
