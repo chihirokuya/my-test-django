@@ -126,7 +126,7 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
 
     if asin_obj.brand:
         try:
-            brand_name = Q10BrandCode.objects.get(code=asin_obj.brand).brand_name
+            brand_name = Q10BrandCode.objects.filter(code=asin_obj.brand)[0].brand_name
         except Exception as e:
             print(e)
             brand_name = ''
@@ -487,7 +487,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 # ブランドがあるなら変換する
                 if result[2]:
                     if Q10BrandCode.objects.filter(brand_name=result[2]).exists():
-                        code = Q10BrandCode.objects.get(brand_name=result[2]).code
+                        code = Q10BrandCode.objects.filter(brand_name=result[2])[0].code
                     else:
                         code = search_brand(certification_key, result[2])
 
@@ -781,7 +781,7 @@ def upload_new_item(asin, username, certification_key):
 
     if obj.brand:
         try:
-            brand_name = Q10BrandCode.objects.get(code=obj.brand).brand_name
+            brand_name = Q10BrandCode.objects.filter(code=obj.brand)[0].brand_name
         except Exception as e:
             print(e)
             brand_name = ''
@@ -1108,7 +1108,7 @@ def update_price(username):
     def add_log(ok, key, reason=''):
         log_total.append(key)
         if ok:
-            log_success.append(key)
+            log_success.append([key, reason])
         else:
             log_failed.append([key, reason])
 
@@ -1125,6 +1125,7 @@ def update_price(username):
 
     for asin in asin_list:
         try:
+            msg = ''
             try:
                 asin_obj: AsinModel = AsinModel.objects.get(asin=asin)
             except:
@@ -1132,7 +1133,7 @@ def update_price(username):
                 continue
 
             user_price = to_user_price(user_obj, asin_obj.price)
-            if asin_obj.price == 0 or user_price == 0 or not is_in_black(user_obj, asin_obj)[0]:
+            if asin_obj.price == 0 or user_price == 0:
                 if delete_or_not:
                     temp_res = delete_item(certification_key, initial_letter + asin[1:])
                     if type(temp_res) is bool:
@@ -1148,15 +1149,22 @@ def update_price(username):
                     link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                            f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
                            f'&Qty=0'
+                    msg = '在庫切れ'
+            elif not is_in_black(user_obj, asin_obj)[0]:
+                link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
+                       f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
+                       f'&Qty=0'
+                msg = 'ブラックリスト商品'
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
                        f'&Price={user_price}&Qty={user_obj.stock_num}'
+                msg = f'価格改定→{user_price}'
 
             res = requests.get(link).json()
 
             if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
-                add_log(True, asin)
+                add_log(True, asin, msg)
             else:
                 error_message = '不明'
                 if 'ResultMsg' in res.keys():

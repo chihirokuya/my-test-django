@@ -194,9 +194,23 @@
             td.innerHTML = '<i class="fa fa-check-circle" style="color: green;">';
             tr.appendChild(td);
 
-            td = document.createElement('td');
-            td.innerText = v;
-            tr.appendChild(td);
+            if (v.length > 1) {
+                td = document.createElement('td');
+                td.innerText = v[0];
+                tr.appendChild(td);
+
+                td = document.createElement('td');
+                td.innerText = v[1];
+                tr.appendChild(td);
+            }
+            else {
+                td = document.createElement('td');
+                td.innerText = v;
+                tr.appendChild(td);
+                tr.appendChild(document.createElement('td'));
+                t_body.appendChild(tr);
+            }
+
             tr.appendChild(document.createElement('td'));
             t_body.appendChild(tr);
         }
