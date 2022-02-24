@@ -1200,13 +1200,17 @@ def update_price(username):
 
     temp = [val[0] for val in log_failed]
     log_total_list = temp
-    log_total_list.extend(log_success)
+    log_total_list.extend([val[0] for val in log_success])
     cause_list = ''
     success_list = ''
     for val in log_failed:
         cause_list += f'{val[0]}:{val[1]}{delimiter}'
     for val in log_success:
         success_list += f'{val[0]}:{val[1]}{delimiter}'
+
+    print(log_total)
+    print(cause_list)
+    print(success_list)
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
              success_asin_list=success_list , cause_list=cause_list,
              date=datetime.datetime.now()).save()
