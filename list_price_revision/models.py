@@ -57,7 +57,7 @@ class ListingModel(models.Model):
     # 出品待ち
     asin_waiting_list = models.TextField(default='', blank=True, null=True)
 
-    # 取得中
+    # 取得中: 同じASINが２回入ってきた時に、片方のみを処理する用。
     asin_getting_list = models.TextField(default='', blank=True, null=True)
 
 
@@ -87,6 +87,8 @@ class AsinModel(models.Model):
             return ''
 
     sell_num = models.IntegerField(default=0, blank=True, null=True)
+
+    in_black_list = models.BooleanField(default=False, blank=True, null=True)
 
 
 class RecordsModel(models.Model):
