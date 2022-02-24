@@ -8,7 +8,8 @@ class LoginRequiredMiddleware(MiddlewareMixin):
     not_required_path = [
         '/login-api/check-auth/',
         '/order-list/1',
-        '/order-list/0'
+        '/order-list/0',
+        '/api/update'
     ]
 
     def process_response(self, request, response):
