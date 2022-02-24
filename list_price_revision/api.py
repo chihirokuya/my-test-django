@@ -150,6 +150,7 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
 
     return True, ''
 
+
 class SpApiFunction:
     credentials = None
     counter = 0

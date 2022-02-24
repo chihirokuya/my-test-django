@@ -194,7 +194,7 @@
             td.innerHTML = '<i class="fa fa-check-circle" style="color: green;">';
             tr.appendChild(td);
 
-            if (v.length > 1) {
+            if (typeof(v) == 'object') {
                 td = document.createElement('td');
                 td.innerText = v[0];
                 tr.appendChild(td);
