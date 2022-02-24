@@ -150,6 +150,22 @@ def asin_view(request):
             except:
                 messages.error(request, 'CSVファイルでない、またはエンコードがSHIFT-JISでない可能性があります。')
 
+        elif 'clean' in request.POST:
+            try:
+                list_obj.asin_waiting_list = ''
+                list_obj.asin_getting_list = ''
+
+                records = RecordsModel.objects.filter(username=request.user)
+                try:
+                    for rec in chunked(records):
+                        rec.delete()
+                except:
+                    pass
+
+                messages.success(request, '削除完了')
+            except Exception as e:
+                messages.error(request, f'削除失敗\n{str(e)}')
+
     records_obj = RecordsModel.objects.all().filter(username=request.user).order_by('-date')
     try:
         for obj_ in chunked(records_obj):
@@ -504,20 +520,9 @@ def sell_and_not_stock(request):
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=username)
     asin_list = list_obj.asin_list.split(',')
-    user_obj = UserModel.objects.get(username=username)
 
     selling_num = 0
     no_stock_num = 0
-    all_objects = AsinModel.objects.filter(asin__in=asin_list)
-    # try:
-    #     for obj in chunked(all_objects):
-    #         obj: AsinModel
-    #         if obj.price == 0 or is_in_black(user_obj, obj):
-    #             no_stock_num += 1
-    #         else:
-    #             selling_num += 1
-    # except:
-    #     pass
     all_objects = AsinModel.objects.values('price', 'asin', 'in_black_list')
     try:
         for i, elm in enumerate(chunked(all_objects)):

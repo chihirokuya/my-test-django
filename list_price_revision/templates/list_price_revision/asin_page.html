@@ -54,6 +54,12 @@
             </form>
         </div>
 
+        <div class="box-footer">
+            <form method="POST" enctype="multipart/form-data" name="csv" style="display: flex; justify-content: end">{% csrf_token %}
+                <input type="submit" class="btn btn-info" value="出品待ち＆履歴削除" name="clean">
+            </form>
+        </div>
+
     </div>
 </div>
 </div>
