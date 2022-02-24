@@ -567,8 +567,9 @@ def sell_and_not_stock(request):
     all_objects = AsinModel.objects.values('price', 'asin', 'product_name', 'description', 'product_group', 'brand')
     try:
         for elm in chunked(all_objects):
+            print('here')
             if elm['asin'] in asin_list:
-                if elm['price'] == 0 or is_in_black(elm):
+                if elm['price'] == 0 or is_in_black(elm)[0]:
                     no_stock_num += 1
                 else:
                     selling_num += 1
