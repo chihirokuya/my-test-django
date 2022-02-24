@@ -11,11 +11,12 @@ import pytz
 import csv
 import threading
 from dateutil import tz
-from mysite.tasks import records_saved, link_q10_account
+from mysite.tasks import records_saved, link_q10_account, re_price_users
 from mysite import tasks
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializer import AsinSerializer
+from django.views.decorators.csrf import csrf_exempt
 
 
 base_path = 'list_price_revision/'
@@ -350,7 +351,17 @@ def get_log(request, range=1):
         for obj in chunked(log_obj_list):
             obj: LogModel
             total_asin_list = list(filter(None, obj.input_asin_list.split(',')))
-            success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
+            if delimiter not in obj.success_asin_list:
+                success_asin_list = list(filter(None, obj.success_asin_list.split(',')))
+            else:
+                success_asin_list = []
+                for val in obj.success_asin_list.split(delimiter):
+                    temp = val.split(':')
+                    try:
+                        success_asin_list.append([temp[0], temp[1]])
+                    except:
+                        pass
+
             failed_list = []
             for val in obj.cause_list.split(delimiter):
                 temp = val.split(':')
@@ -565,6 +576,17 @@ def sell_and_not_stock(request):
         pass
 
     return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})
+
+
+@csrf_exempt
+def update_user_price(request):
+    try:
+        re_price_users.delay()
+    except:
+        return JsonResponse({'ok': False})
+
+    return JsonResponse({'ok': True})
+
 
 
 @api_view(['GET'])

@@ -16,5 +16,6 @@ urlpatterns = [
     path('log/get/<int:range>', views.get_log, name='get_log'),
     path('listing/get/', views.get_table, name='get_listing'),
 
-    path('api/asins', views.get_asin_data, name='api_asins')
+    path('api/asins', views.get_asin_data, name='api_asins'),
+    path('api/update', views.update_user_price, name='update'),
 ]
