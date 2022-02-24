@@ -518,16 +518,6 @@ def sell_and_not_stock(request):
         except:
             pass
 
-        if elm['brand']:
-            try:
-                brand_name = Q10BrandCode.objects.get(code=elm['brand']).brand_name
-            except Exception as e:
-                print(e)
-                brand_name = ''
-                pass
-        else:
-            brand_name = ''
-
         black = False
         for black_word in black_maker_item_name:
             for desc in elm['description'].split('\n'):
@@ -536,7 +526,7 @@ def sell_and_not_stock(request):
             if black:
                 break
 
-            if black_word in elm['product_name'] or black_word in brand_name:
+            if black_word in elm['product_name']:
                 black = True
                 break
         if black:
