@@ -876,7 +876,7 @@ def upload_new_item(asin, username, certification_key):
         'ItemPrice': float(to_user_price(user_obj, int(float(obj.price)))),
         'ItemQty': int(stock_num),
         'ShippingNo': int(shipping_code),
-        'AvailableDateType': '3',
+        'AvailableDateType': '0',
         'AvailableDateValue': '20:00',
         'Keyword': obj.product_name[:30]
     }

@@ -3,100 +3,121 @@
 
 {% block content %}
 
-<script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 
-<div class="row row-eq-height" style="display:flex;align-items: stretch;">
-    <div class="col-md-6" style="flex:1">
-        <!--   アカウント情報    -->
-        <div class="box box-solid box-success">
-            <div class="box-header">
-                <h3 class="box-title">Amazonアカウント情報</h3>
-            </div>
-            <div class="box-body">
-                <div class="form-group">
-                    <label >メールアドレス</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.mail_address }}" id="mail_address">
+    <div class="row row-eq-height" style="display:flex;align-items: stretch;">
+        <div class="col-md-6" style="flex:1">
+            <!--   アカウント情報    -->
+            <div class="box box-solid box-success">
+                <div class="box-header">
+                    <h3 class="box-title">Amazonアカウント情報</h3>
                 </div>
-
-                <div class="form-group">
-                    <label >パスワード</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.mail_pass }}" id="mail_pass">
-                </div>
-
-                <div class="form-group">
-                    <label >クレジットカード</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.credit_card }}" id="credit_card">
-                </div>
-            </div>
-        </div>
-
-        <!-- 請求先住所 -->
-        <div class="box box-solid box-info">
-            <div class="box-header">
-                <h3 class="box-title">請求先住所設定</h3>
-            </div>
-            <div class="box-body">
-                <div class="form-group">
-                    <label >氏名</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.name }}" id="name">
-                </div>
-
-                <div class="form-group al">
-                    <div>
-                        <label >郵便番号</label>
-                        <div class="post_div il">
-                            <input type="number" id="post_1" value="{{ post_1 }}">ー<input type="number" id="post_2" value="{{ post_2 }}">
-                        </div>
+                <div class="box-body">
+                    <div class="form-group">
+                        <label>メールアドレス</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.mail_address }}" id="mail_address">
                     </div>
 
-                    <div>
-                        <label >都道府県</label>
-                        <div class="pref il">
-                            <select id="prefecture"></select>
-                        </div>
+                    <div class="form-group">
+                        <label>パスワード</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.mail_pass }}" id="mail_pass">
                     </div>
 
-                </div>
-
-                <div class="form-group">
-                    <label >住所</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.address }}" id="address">
-                </div>
-
-                <div class="form-group">
-                    <label >電話番号</label>
-                    <input type="text" class="form-control" placeholder=""
-                           value="{{ buy_obj.phone_num }}" id="phone_num">
+                    <div class="form-group">
+                        <label>クレジットカード</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.credit_card }}" id="credit_card">
+                    </div>
                 </div>
             </div>
 
+            <!-- 請求先住所 -->
+            <div class="box box-solid box-info">
+                <div class="box-header">
+                    <h3 class="box-title">請求先住所設定</h3>
+                </div>
+                <div class="box-body">
+                    <div class="form-group">
+                        <label>氏名</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.name }}" id="name">
+                    </div>
+
+                    <div class="form-group al">
+                        <div>
+                            <label>郵便番号</label>
+                            <div class="post_div il">
+                                <input type="number" id="post_1" value="{{ post_1 }}">ー<input type="number" id="post_2"
+                                                                                              value="{{ post_2 }}">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>都道府県</label>
+                            <div class="pref il">
+                                <select id="prefecture"></select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        <label>住所</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.address }}" id="address">
+                    </div>
+
+                    <div class="form-group">
+                        <label>電話番号</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.phone_num }}" id="phone_num">
+                    </div>
+
+                    <div class="form-group">
+                        <label>建物名/会社名</label>
+                        <input type="text" class="form-control" placeholder=""
+                               value="{{ buy_obj.company_name }}" id="company_name">
+                    </div>
+                </div>
+
+            </div>
+            <!-- /.box -->
         </div>
-        <!-- /.box -->
-    </div>
 
-    <div class="col-md-6" style="flex:1;display: flex;">
-        <div class="box box-solid box-warning">
-            <div class="box-header">
-                <h3 class="box-title">その他</h3>
-            </div>
-            <div class="box-body">
-                <div style="height:20%;">
-                    <div class="form-group" style="display: flex; justify-content: space-evenly">
-                    <label>
-                        <input type="radio" name="mega_wari" {% if buy_obj.mega_wari %}checked{% endif %}/>メガ割
-                    </label>
-                    <label>
-                        <input type="radio" name="mega_wari" {% if buy_obj.mega_wari == False %}checked{% endif %}/>通常
-                    </label>
+        <div class="col-md-6" style="flex:1;display: flex;">
+            <div class="box box-solid box-warning">
+                <div class="box-header">
+                    <h3 class="box-title">その他</h3>
                 </div>
 
-                    <div style="display: flex;justify-content: space-evenly">
-                <span class="el">
+                <div class="box-body">
+                    <div style="height:20%;">
+                        <div style="display: flex; margin-bottom: 10px;">
+                            <div style="flex-basis: 50%; display: flex; border-right: 1px solid black;justify-content: space-evenly; align-items: center;">
+                                <label>
+                                    <input type="radio" name="mega_wari" {% if buy_obj.mega_wari %}checked{% endif %}/>メガ割
+                                </label>
+                                <label>
+                                    <input type="radio" name="mega_wari"
+                                           {% if buy_obj.mega_wari == False %}checked{% endif %}/>通常
+                                </label>
+
+                            </div>
+                            <div style="flex-basis: 50%; display: flex; border-right: 1px solid black;justify-content: space-evenly; align-items: center;">
+                                <label>
+                                    <input type="radio" name="gift" {% if buy_obj.gift %}checked{% endif %}/>ギフト券
+                                </label>
+                                <label>
+                                    <input type="radio" name="gift" {% if buy_obj.gift == False %}checked{% endif %}/>クレジットカード
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <div style="display: flex;justify-content: space-evenly">
+                            <span class="el">
                     <label>赤字</label>
                     <div>
                         <label>
@@ -104,7 +125,7 @@
                         </label>
                     </div>
                 </span>
-                <span class="el">
+                            <span class="el">
                     <label>カード残高</label>
                     <div>
                         <label>
@@ -112,7 +133,7 @@
                         </label>
                     </div>
                 </span>
-                <span class="el">
+                            <span class="el">
                     <label>手数料</label>
                     <div>
                         <label>
@@ -120,46 +141,49 @@
                         </label>
                     </div>
                 </span>
-            </div>
-                </div>
-
-                <div style="height:70%;position: absolute;margin-top: 20px;width:97%;">
-                    <div style="height:80%;">
-                        <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>IPアドレス</th>
-                                <th>ポート</th>
-                                <th>ID</th>
-                                <th>パスワード</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                            {% for proxy in proxy_list %}
-                                <tr role="row">
-                                    <td>{{ proxy.0 }}</td>
-                                    <td>{{ proxy.1 }}</td>
-                                    <td>{{ proxy.2 }}</td>
-                                    <td>{{ proxy.3 }}</td>
-                                    <td><button style="background-color: #ef7985; height: 25px; margin-top: 0"
-                                                onclick="remove_proxy(this)">削除</button></td>
-                                </tr>
-                            {% endfor %}
-                        <tbody>
-
-                        </tbody>
-                    </table>
-                    </div>
-                    <div style="height:20%;">
-                        <div style="margin-top: 10px;text-align: center;">
-                            <input placeholder="IPアドレス" id="ip"/>
-                            <input placeholder="ポート番号" id="port"/>
-                            <br>
-                            <input placeholder="ID" id="id"/>
-                            <input placeholder="パスワード" id="passwd"/>
                         </div>
-                        <div style="display: flex;justify-content:center;margin-top: 10px;">
-                            <button onclick="(function(){
+                    </div>
+
+                    <div style="height:70%;position: absolute;margin-top: 20px;width:97%;">
+                        <div style="height:80%;">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>IPアドレス</th>
+                                    <th>ポート</th>
+                                    <th>ID</th>
+                                    <th>パスワード</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                {% for proxy in proxy_list %}
+                                    <tr role="row">
+                                        <td>{{ proxy.0 }}</td>
+                                        <td>{{ proxy.1 }}</td>
+                                        <td>{{ proxy.2 }}</td>
+                                        <td>{{ proxy.3 }}</td>
+                                        <td>
+                                            <button style="background-color: #ef7985; height: 25px; margin-top: 0"
+                                                    onclick="remove_proxy(this)">削除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                <tbody>
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="height:20%;">
+                            <div style="margin-top: 10px;text-align: center;">
+                                <input placeholder="IPアドレス" id="ip"/>
+                                <input placeholder="ポート番号" id="port"/>
+                                <br>
+                                <input placeholder="ID" id="id"/>
+                                <input placeholder="パスワード" id="passwd"/>
+                            </div>
+                            <div style="display: flex;justify-content:center;margin-top: 10px;">
+                                <button onclick="(function(){
                                 const tr = document.createElement('tr');
                                 tr.setAttribute('role', 'row');
 
@@ -194,177 +218,185 @@
                                 document.querySelector('#port').value = '';
                                 document.querySelector('#id').value = '';
                                 document.querySelector('#passwd').value = '';
-                            })()">追加</button>
+                            })()">追加
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
-</div>
-
-<div class="row" style="flex">
-    <div class="col-md-6">
-        <div class="box box-solid box-warning">
-            <div class="box-header">
-                <h3 class="box-title">キャンセルメッセージ</h3>
+    <div class="row" style="display:flex">
+        <div class="col-md-6">
+            <div class="box box-solid box-warning">
+                <div class="box-header">
+                    <h3 class="box-title">キャンセルメッセージ</h3>
+                </div>
+                <div class="box-body">
+                    <textarea id="cancel_message" rows="10" style="width: 100%;">{{ buy_obj.cancel_message }}</textarea>
+                </div>
             </div>
-            <div class="box-body">
-                <textarea id="cancel_message" rows="10" style="width: 100%;">{{ buy_obj.cancel_message }}</textarea>
+        </div>
+
+        <div class="col-md-6">
+            <div style="display: flex;justify-content: center;align-items: center; height: 100%;">
+                <button class="btn btn-info" style="width:100px;" onclick="save_func()">保存</button>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div style="display: flex;justify-content: center;align-items: center; height: 100%;">
-            <button class="btn btn-info" style="width:100px;" onclick="save_func()">保存</button>
-        </div>
-    </div>
-</div>
-
-<style>
-    table {
-        border:10px solid black;
-        max-height:100%;
-        height:100%;
-        overflow:scroll;
-    }
-    tbody td, thead th {
-        text-align: center;
-    }
-
-    .el {
-        width:100%;
-        text-align: center;
-    }
-    .el:nth-child(1), .el:nth-child(2) {
-        border-right:1px solid black;
-    }
-    .el input {
-        width:80px;
-        margin-right: 5px;
-        margin-left: 20px;
-    }
-
-    .al {
-        display: flex;
-    }
-
-    .il {
-        margin-right: 10px;
-    }
-
-    .pref select {
-        /*margin-left: 10px;*/
-        height:25px;
-        width:200px;
-    }
-
-</style>
-
-<script>
-    let prefectures = ['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野', '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県', '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県']
-
-    $(document).ready(function() {
-        set_prefecture();
-    })
-
-    function set_prefecture() {
-        let innerHTML = '';
-        let select = $("#prefecture");
-
-        for (let elm of prefectures) {
-            innerHTML += "<option value='" + elm + "'>" + elm + "</option>"
+    <style>
+        table {
+            border: 10px solid black;
+            max-height: 100%;
+            height: 100%;
+            overflow: scroll;
         }
 
-        select.html(innerHTML);
+        tbody td, thead th {
+            text-align: center;
+        }
 
-        let prefecture = '{{ buy_obj.prefecture }}';
-        select.val(prefecture);
-    }
+        .el {
+            width: 100%;
+            text-align: center;
+        }
 
-    function remove_proxy(elm) {
-        {#const table = document.querySelector('table');#}
-        elm.closest('tr').remove();
-    }
+        .el:nth-child(1), .el:nth-child(2) {
+            border-right: 1px solid black;
+        }
 
-    async function save_func() {
-        let link = '{% url 'buy:setting' %}'
-        let trs = document.querySelector('tbody').querySelectorAll('tr');
-        let proxy_list = []
-        for (let tr of trs) {
-            let temp = []
-            for (let td of tr.querySelectorAll('td')) {
-                temp.push(td.innerText);
+        .el input {
+            width: 80px;
+            margin-right: 5px;
+            margin-left: 20px;
+        }
+
+        .al {
+            display: flex;
+        }
+
+        .il {
+            margin-right: 10px;
+        }
+
+        .pref select {
+            /*margin-left: 10px;*/
+            height: 25px;
+            width: 200px;
+        }
+
+    </style>
+
+    <script>
+        let prefectures = ['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野', '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県', '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県']
+
+        $(document).ready(function () {
+            set_prefecture();
+        })
+
+        function set_prefecture() {
+            let innerHTML = '';
+            let select = $("#prefecture");
+
+            for (let elm of prefectures) {
+                innerHTML += "<option value='" + elm + "'>" + elm + "</option>"
             }
 
-            proxy_list.push(temp);
+            select.html(innerHTML);
+
+            let prefecture = '{{ buy_obj.prefecture }}';
+            select.val(prefecture);
         }
 
-        let body = {
-            data: {
-                mail_address: document.querySelector('#mail_address').value,
-                mail_pass: document.querySelector('#mail_pass').value,
-                credit_card: document.querySelector('#credit_card').value,
-                name: document.querySelector('#name').value,
-                post_num: document.querySelector("#post_1").value + '-' + document.querySelector("#post_2").value,
-                prefecture: document.querySelector('#prefecture').value,
-                address: document.querySelector('#address').value,
-                phone_num: document.querySelector('#phone_num').value,
-                mega_wari: document.querySelector('[name=mega_wari]').checked,
-                akaji: document.querySelector('#akaji').value,
-                card_res: document.querySelector('#card_res').value,
-                commission_fee: document.querySelector('#commission_fee').value,
-                proxy_list: proxy_list,
-                cancel_message: document.querySelector('#cancel_message').innerHTML
+        function remove_proxy(elm) {
+            {#const table = document.querySelector('table');#}
+            elm.closest('tr').remove();
+        }
+
+        async function save_func() {
+            let link = '{% url 'buy:setting' %}'
+            let trs = document.querySelector('tbody').querySelectorAll('tr');
+            let proxy_list = []
+            for (let tr of trs) {
+                let temp = []
+                for (let td of tr.querySelectorAll('td')) {
+                    temp.push(td.innerText);
+                }
+
+                proxy_list.push(temp);
             }
-        }
 
-        const getCookie = (name) => {
-            if (document.cookie && document.cookie !== '') {
-                for (const cookie of document.cookie.split(';')) {
-                    const [key, value] = cookie.trim().split('=')
-                    if (key === name) {
-                        return decodeURIComponent(value)
+            let body = {
+                data: {
+                    mail_address: document.querySelector('#mail_address').value,
+                    mail_pass: document.querySelector('#mail_pass').value,
+                    credit_card: document.querySelector('#credit_card').value,
+                    name: document.querySelector('#name').value,
+                    post_num: document.querySelector("#post_1").value + '-' + document.querySelector("#post_2").value,
+                    prefecture: document.querySelector('#prefecture').value,
+                    address: document.querySelector('#address').value,
+                    phone_num: document.querySelector('#phone_num').value,
+                    mega_wari: document.querySelector('[name=mega_wari]').checked,
+                    akaji: document.querySelector('#akaji').value,
+                    card_res: document.querySelector('#card_res').value,
+                    commission_fee: document.querySelector('#commission_fee').value,
+                    proxy_list: proxy_list,
+                    gift: document.querySelector('[name=gift]').checked,
+                    cancel_message: document.querySelector('#cancel_message').innerHTML,
+                    company_name: document.querySelector('#company_name').value,
+                }
+            }
+
+            const getCookie = (name) => {
+                if (document.cookie && document.cookie !== '') {
+                    for (const cookie of document.cookie.split(';')) {
+                        const [key, value] = cookie.trim().split('=')
+                        if (key === name) {
+                            return decodeURIComponent(value)
+                        }
                     }
                 }
             }
+            const csrftoken = getCookie('csrftoken')
+
+            await fetch(link, {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                    'X-CSRFToken': csrftoken,
+                }
+            })
+                .then(res => {
+                    return res.json()
+                })
+                .then(data => {
+                    let div = document.createElement('div');
+                    let innerHTML = '';
+                    if (data.ok)
+                        innerHTML += '<div class="alert alert-success alert-dismissible" onclick="delete_fun()">'
+                    else
+                        innerHTML += '<div class="alert alert-error alert-dismissible" onclick="delete_fun()">'
+
+                    innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>'
+
+                    if (data.ok)
+                        innerHTML += '<h4><i class="icon fa fa-check"></i> 保存完了!</h4>'
+                    else {
+                        innerHTML += '<h4><i class="icon fa fa-check"></i> 保存失敗。</h4>'
+                        innerHTML += data.reason;
+                    }
+
+                    div.innerHTML = innerHTML;
+                    document.querySelector('.content').prepend(div);
+                })
+                .catch(console.error);
         }
-        const csrftoken = getCookie('csrftoken')
 
-        await fetch(link, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-                'X-CSRFToken': csrftoken,
-            }
-        })
-        .then(res => {return res.json()})
-        .then(data => {
-            let div = document.createElement('div');
-            let innerHTML = '';
-            if (data.ok)
-                innerHTML += '<div class="alert alert-success alert-dismissible" onclick="delete_fun()">'
-            else
-                innerHTML += '<div class="alert alert-error alert-dismissible" onclick="delete_fun()">'
-
-            innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-hidden="true" onClick="delete_fun()">×</button>'
-
-            if (data.ok)
-                innerHTML += '<h4><i class="icon fa fa-check"></i> 保存完了!</h4>'
-            else {
-                innerHTML += '<h4><i class="icon fa fa-check"></i> 保存失敗。</h4>'
-                innerHTML += data.reason;
-            }
-
-            div.innerHTML = innerHTML;
-            document.querySelector('.content').prepend(div);
-        })
-        .catch(console.error);
-    }
-
-</script>
+    </script>
 
 {% endblock %}

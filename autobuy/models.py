@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 cancel_message = "ご注文ありがとうございます。\n"\
@@ -48,10 +49,24 @@ class BuyUserModel(models.Model):
     address = models.TextField(default='', blank=True)
     phone_num = models.TextField(default='', blank=True)
     cancel_message = models.TextField(default=cancel_message, blank=True)
+    company_name = models.TextField(default='', blank=True)
 
     # その他
     mega_wari = models.BooleanField(default=False, blank=True)
+    gift = models.BooleanField(default=False, blank=True)
     akaji = models.IntegerField(default=0, blank=True)
     card_res = models.IntegerField(default=0, blank=True)
     commission_fee = models.IntegerField(default=0, blank=True)
     proxy = models.JSONField(default=[], blank=True)
+
+
+class DeliveredOrderModel(models.Model):
+    user = models.ForeignKey(User, default=None, on_delete=models.CASCADE)
+    order_info = models.JSONField(default=[])
+    delivered_date = models.DateTimeField(auto_now=True)
+
+
+class SalesModel(models.Model):
+    user = models.ForeignKey(User, default=None, on_delete=models.CASCADE)
+    sale_list = models.JSONField(default={})
+    total_profit = models.IntegerField(default=0)
