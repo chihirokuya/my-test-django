@@ -730,6 +730,62 @@ def set_header_footer(certification_key, item_code, header, footer):
             return False, str(e)
 
 
+def update_available_data_type(cert_key, item_code):
+    header = {
+        "Content-Type": 'application/x-www-form-urlencoded',
+        "QAPIVersion": '1.1',
+        'GiosisCertificationKey': cert_key
+    }
+
+    data = {
+        "SellerCode": item_code
+    }
+    get_info_path = '/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsLookup.GetItemDetailInfo'
+
+    try:
+        res = requests.post('https://api.qoo10.jp' + get_info_path,
+                            headers=header, data=data).json()['ResultObject'][0]
+
+        res['AvailableDateType'] = "3"
+
+        data = {
+            'SecondSubCat': res['SecondSubCatCd'],
+            'OuterSecondSubCat': '',
+            'Drugtype': '',
+            'BrandNo': res['BrandNo'],
+            'ItemTitle': res['ItemTitle'],
+            'PromotionName': '',
+            'SellerCode': item_code,
+            'IndustrialCodeType': 'J' if res['IndustrialCode'] else '',
+            'IndustrialCode': res['IndustrialCode'],
+            'ModelNM': '',
+            'ManufactureDate': '',
+            'ProductionPlaceType': '3',
+            'ProductionPlace': '',
+            'Weight': '',
+            'Material': '',
+            'AdultYN': 'N',
+            'ContactInfo': '',
+            'StandardImage': res['ImageUrl'],
+            'VideoURL': '',
+            'ItemDescription': res['ItemDetail'],
+            'AdditionalOption': '',
+            'ItemType': '',
+            'RetailPrice': 0,
+            'ItemPrice': res['ItemPrice'],
+            'ItemQty': res['ItemQty'],
+            'ShippingNo': res['ShippingNo'],
+            'AvailableDateType': '0',
+            'AvailableDateValue': '3',
+            'Keyword': res['Keyword']
+        }
+
+        res = requests.post('https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsBasic.UpdateGoods',
+                            headers=header, data=data).json()
+    except:
+        return
+
+
 def upload_new_item(asin, username, certification_key):
     user_obj = UserModel.objects.get(username=username)
     if not UserModel.objects.filter(username='admin').exists():
@@ -1147,6 +1203,8 @@ def update_price(username):
             except:
                 add_log(False, asin, '存在しないASIN')
                 continue
+
+            update_available_data_type(certification_key, initial_letter + asin[1:])
 
             user_price = to_user_price(user_obj, asin_obj.price)
             if asin_obj.price == 0 or user_price == 0:
