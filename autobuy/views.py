@@ -142,6 +142,9 @@ def assert_user_pass(request):
 
 
 def update_orders(order_obj, username, order_number_list):
+    if not models.SalesModel.objects.filter(user=User.objects.get(username=username)).exists():
+        models.SalesModel(user=User.objects.get(username=username)).save()
+
     sales_obj = models.SalesModel.objects.get(user=User.objects.get(username=username))
 
     failed_order_nums = [val['orderNo'] for val in order_obj.failed_order_list]
