@@ -746,8 +746,6 @@ def update_available_data_type(cert_key, item_code):
         res = requests.post('https://api.qoo10.jp' + get_info_path,
                             headers=header, data=data).json()['ResultObject'][0]
 
-        res['AvailableDateType'] = "3"
-
         data = {
             'SecondSubCat': res['SecondSubCatCd'],
             'OuterSecondSubCat': '',
@@ -1333,3 +1331,31 @@ def cancel_order(username, contract_number, message):
             return False, res['ResultMsg']
 
         return False, ''
+
+
+# 発送確認処理
+def send_order(username, order_no):
+    cert_key = get_certification_key(username)
+
+    if cert_key != '':
+        header = {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "QAPIVersion": '1.0',
+            'GiosisCertificationKey': cert_key
+        }
+
+        data = {
+            "OrderNo": order_no,
+            "ShippingCorp": 'その他',
+            "TrackingNo": " "
+        }
+
+        try:
+            return requests.post(
+                'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ShippingBasic.SetSendingInfo',
+                headers=header, data=data
+            ).json()
+        except:
+            pass
+
+    return {}

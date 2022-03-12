@@ -1,10 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
-cancel_message = "ご注文ありがとうございます。\n"\
-                "\n" \
-                "ご注文された商品ですが、新型コロナウイルスの影響でメーカーから出荷ができないとの急遽連絡がありました。\n" \
+cancel_message = "ご注文ありがとうございます。\n" \
+                 "\n" \
+                 "ご注文された商品ですが、新型コロナウイルスの影響でメーカーから出荷ができないとの急遽連絡がありました。\n" \
                  "\n" \
                  "大変申し訳ございませんが、キャンセル処理をさせていただきます。\n" \
                  "\n" \
@@ -55,8 +54,8 @@ class BuyUserModel(models.Model):
     mega_wari = models.BooleanField(default=False, blank=True)
     gift = models.BooleanField(default=False, blank=True)
     akaji = models.IntegerField(default=0, blank=True)
-    card_res = models.IntegerField(default=0, blank=True)
     commission_fee = models.IntegerField(default=0, blank=True)
+    out_sourcing = models.IntegerField(default=0, blank=True)
     proxy = models.JSONField(default=[], blank=True)
 
 
@@ -68,5 +67,54 @@ class DeliveredOrderModel(models.Model):
 
 class SalesModel(models.Model):
     user = models.ForeignKey(User, default=None, on_delete=models.CASCADE)
-    sale_list = models.JSONField(default={})
     total_profit = models.IntegerField(default=0)
+
+
+class SingleSaleModel(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    sales = models.ForeignKey(SalesModel, default=None, on_delete=models.CASCADE)
+
+    order_num = models.TextField()
+    order_date = models.TextField()
+    product_name = models.TextField()
+    qty = models.TextField()
+    name = models.TextField()
+    phone_num = models.TextField()
+    mobile_num = models.TextField()
+    address = models.TextField()
+    post_code = models.TextField()
+    q10_price = models.IntegerField()
+    user_code = models.TextField()  # 販売者コード
+    price = models.IntegerField()
+    point = models.IntegerField()
+    purchase_fee = models.IntegerField()
+    amazon_order_num = models.TextField()
+    profit = models.IntegerField()
+    out_sourcing = models.IntegerField()  # 外注
+    commission_fee = models.IntegerField()  # 販売手数料
+
+
+class AsinSalesModel(models.Model):
+    user = models.ForeignKey(User, default=None, on_delete=models.CASCADE)
+    sales_list = models.JSONField(default={})
+
+    def add_asin(self, asin):
+        temp: dict = self.sales_list
+
+        if asin in temp.keys():
+            temp[asin] += 1
+        else:
+            temp[asin] = 1
+
+        self.save()
+
+        if self.user.username != 'admin':
+            admin = User.objects.filter(username='admin')
+            if not admin.exists():
+                User(username='admin').save()
+            admin = User.objects.get(username='admin')
+            admin_obj = AsinSalesModel.objects.filter(user=admin)
+            if not admin_obj.exists():
+                AsinSalesModel(user=admin).save()
+
+            admin_obj[0].add_asin(asin)
