@@ -49,7 +49,7 @@
         <div class="box-body">
             <div class="button_div">
                 <button class="btn btn-danger al" onclick="reload_button_clicked()"><label class="fa fa-repeat"></label>更新する</button>
-                <button class="btn btn-danger il" onclick="delete_order()"><label class="fa fa-trash-o il"></label>削除</button>
+                <button class="btn btn-success il" onclick="move_order()"><i class="fa fa-arrow-up il"></i>移動</button>
             </div>
             <table class="table table-bordered two">
                 <thead>
@@ -272,7 +272,6 @@
         await fetch(link)
         .then(response => {return response.json();})
         .then(data => {
-            console.log(data);
             order_failed_list = data;
         })
         .catch(error => {})
@@ -322,7 +321,7 @@
                 if (key === 'reason')
                     continue
 
-                innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+                innerHTML += "<td><div contenteditable id=" + key + ">" + temp[key] + "</div></td>"
             }
             innerHTML += "</tr>"
         }
@@ -339,6 +338,41 @@
         .catch(error => {console.log(error)});
 
         await get_order_failed();
+    }
+
+    async function move_order() {
+        start_load();
+
+        const table = document.querySelector('#error_body');
+        const trs = table.querySelectorAll('tr');
+        const link = '{% url 'buy:failed_new' %}';
+
+        console.log(link);
+
+        const data = {}
+
+        for (let tr of trs) {
+            if (tr.querySelector('input').checked)
+            {
+                data[tr.querySelector('input').value] = {
+                    "name": tr.querySelector('#name').innerText,
+                    "phone_num": tr.querySelector("#phone_num").innerText,
+                    "mobile_num": tr.querySelector("#mobile_num").innerText,
+                    "address": tr.querySelector('#address').innerText,
+                    "zip_code": tr.querySelector('#zip_code').innerText,
+                }
+            }
+        }
+
+        await fetch(link, {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+            }
+        }).then(response => {})
+
+        await get_order_failed()
     }
 
     function start_load() {
@@ -358,6 +392,7 @@
         // loader.classList.add('fadeout-loader');
         bg.setAttribute('class', 'is-hide');
     }
+
 </script>
 
 {% endblock %}

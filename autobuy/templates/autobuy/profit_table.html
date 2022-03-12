@@ -1,0 +1,305 @@
+{% extends 'list_price_revision/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div id="loader-bg" class="is-hide">
+        <div id="loader" class="is-hide">
+            <p>
+                <img src="{% static 'loading.gif' %}"><br>
+            </p>
+        </div>
+    </div>
+
+    <div style="width:100%; height: 30px; display: flex; margin-top: 10px;justify-content: space-between">
+        <div style="height:100%; width: 30%; justify-content: space-between;display: flex; align-items: center; padding: 0 20px;">
+            <p style="font-size: 20px">合計利益</p>
+            <p style="font-size: 20px" id="total_profit">円</p>
+        </div>
+        <div style="height:100%; width: 30%; justify-content: space-between;display: flex; align-items: center; padding: 0 20px;">
+            <p style="font-size: 20px">月別利益</p>
+            <p style="font-size: 20px" id="month_profit">円</p>
+        </div>
+    </div>
+
+    <hr>
+
+    {#  月リスト  #}
+    <div style="width: 100%; display: flex; height: 80px;">
+        <div style="width: 80%; display: flex; overflow-x: scroll;margin-top: 0; align-items: center;" id="month_list">
+        </div>
+        <div style="width: 20%; height: 100%; align-items: center; display: flex;justify-content: center;">
+            <button style="background-color: rgba(255,0,0,0.56);" onclick="reset()">
+                初期化
+            </button>
+        </div>
+    </div>
+
+    {#  表  #}
+    <div style="width: 100%;padding-top: 20px;">
+        <div class="box box-solid box-success">
+            <div class="box-body">
+                <table id="foo-table" class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th>注文番号</th>
+                        <th>注文日</th>
+                        <th>商品名</th>
+                        <th>数量</th>
+                        <th>受取人名</th>
+                        <th>受取人電話番号</th>
+                        <th>受取人携帯電話番号</th>
+                        <th>住所</th>
+                        <th>郵便番号</th>
+                        <th>供給原価の合計</th>
+                        <th>販売者商品コード</th>
+                        <th>仕入れ代</th>
+                        <th>ポイント</th>
+                        <th>合計仕入れ代</th>
+                        <th>Amazon注文番号</th>
+                        <th>利益</th>
+                        <th>外注</th>
+                        <th>販売手数料</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <style about="loading">
+        /* 非表示 */
+        .is-hide {
+            display: none;
+        }
+
+        /* ローディング画面をフェードアウト */
+        .fadeout-bg {
+            transition-property: opacity;
+            transition-delay: .9s;
+            transition-duration: .8s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ローダーをフェードアウト */
+        .fadeout-loader {
+            transition-property: opacity;
+            transition-delay: .9s;
+            transition-duration: .3s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ローディング画面 */
+        #loader-bg {
+            background: #ffffff;
+            height: 100%;
+            left: 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            opacity: 0.5;
+        }
+
+        #loader {
+            height: 120px;
+            left: 50%;
+            margin-left: -60px;
+            margin-top: -60px;
+            position: fixed;
+            top: 50%;
+            width: 120px;
+        }
+
+        #loader p {
+            color: #454545;
+            font-size: 10px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        #loader p img {
+            display: inline-block;
+        }
+    </style>
+    <style>
+        .box-header {
+            height: 10%;
+            max-height: 40px;
+        }
+
+        .box-body {
+            display: block;
+            height: 90%;
+            overflow: scroll;
+            /*background-color: #50D4FD;*/
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #eae7f5;
+        }
+
+        thead {
+            background-color: rgb(3, 230, 75);
+        }
+
+        tbody tr {
+            display: table-row;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody tr td {
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        thead th:first-child {
+            width: 10px;
+        }
+
+        th {
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        tbody {
+            overflow: scroll;
+        }
+
+        table {
+        {#background-color: rgba(136, 136, 136, 0.13);#} height: 90%;
+            display: block;
+            overflow-x: scroll;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            min-height: 60vh;
+        }
+
+    </style>
+
+    <script>
+        (async function() {
+            start_load();
+
+            let li = await set_date_range();
+
+            if (li.length)
+                await set_list(li[0], li[1]);
+
+            stop_load();
+
+        })();
+
+        async function set_date_range() {
+            let link = '{% url 'buy:getDateRange' %}';
+
+            let li = await fetch(link)
+            .then(res => {return res.json();})
+            .then(data => {
+                if (!Object.keys(data).length)
+                    return []
+
+                let month_parent = document.querySelector('#month_list');
+                let inner_html = ''
+                let start_year = data['start']['year']
+                let start_month = data['start']['month']
+                let end_year = data['end']['year']
+                let end_month = data['end']['month']
+
+                let current_month = end_month;
+                let current_year = end_year;
+
+                while (start_year <= current_year) {
+                    inner_html += `<button style="margin: 0 15px;min-width: 100px; min-height: 50px; max-height: 50px;border-radius: 10px;" onclick="set_list(${current_year}, ${current_month})">${current_year}<br>${current_month}月</button>`
+
+                    current_month -= 1;
+                    if (current_month === 0){
+                        current_year -= 1;
+                        current_month = 12;
+                    }
+
+                    if (current_year === start_year && current_month < start_month)
+                        break
+                }
+
+                month_parent.innerHTML = inner_html;
+
+                return [end_year, end_month]
+            });
+
+            return li
+        }
+
+        async function set_list(year, month) {
+            let link = '{% url 'buy:getSales' %}';
+
+            await fetch(link, {
+                method: 'POST',
+                body: JSON.stringify({
+                    'data': {
+                        "year": year,
+                        "month": month
+                    }
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {return response.json();})
+            .then(data => {
+                let innerHTML = '';
+                let order_numbers = Object.keys(data);
+                let monthly_profit = 0;
+
+                for (let o_n of order_numbers) {
+                    if (o_n === 'total_profit')
+                        continue
+
+                    innerHTML +=
+                        "<tr>" +
+                        "<td <div contenteditable>" + o_n + "</div></td>"
+                    let temp = data[o_n];
+                    for (key of Object.keys(temp)) {
+                        innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+                    }
+                    innerHTML += "</tr>"
+
+                    monthly_profit += temp['profit'];
+                }
+
+                document.getElementById('foo-table').querySelector('tbody').innerHTML = innerHTML;
+                document.querySelector('#total_profit').innerHTML = data['total_profit'] + '円';
+                document.querySelector('#month_profit').innerHTML = monthly_profit + '円';
+            })
+            .catch(error => {})
+        }
+
+        function start_load() {
+            let bg = document.getElementById('loader-bg'),
+                loader = document.getElementById('loader');
+            /* ロード画面の非表示を解除 */
+            bg.classList.remove('is-hide');
+            loader.classList.remove('is-hide');
+        }
+
+        function stop_load() {
+            // ロード停止
+            let bg = document.getElementById('loader-bg');
+            let loader = document.getElementById('loader');
+
+            // bg.classList.add('fadeout-bg');
+            // loader.classList.add('fadeout-loader');
+            bg.setAttribute('class', 'is-hide');
+        }
+
+        function reset() {
+            let link = '{% url 'buy:deleteSales' %}';
+
+            fetch(link);
+        }
+    </script>
+{% endblock %}
