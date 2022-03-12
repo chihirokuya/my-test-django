@@ -126,18 +126,19 @@
                     </div>
                 </span>
                             <span class="el">
-                    <label>カード残高</label>
-                    <div>
-                        <label>
-                            <input type="number" id="card_res" value="{{ buy_obj.card_res }}"/>円
-                        </label>
-                    </div>
-                </span>
-                            <span class="el">
                     <label>手数料</label>
                     <div>
                         <label>
                             <input id="commission_fee" type="number" value="{{ buy_obj.commission_fee }}"/>円
+                        </label>
+                    </div>
+                </span>
+
+                            <span class="el">
+                    <label>外注</label>
+                    <div>
+                        <label>
+                            <input id="out_sourcing" type="number" value="{{ buy_obj.out_sourcing }}"/>円
                         </label>
                     </div>
                 </span>
@@ -265,7 +266,7 @@
             text-align: center;
         }
 
-        .el:nth-child(1), .el:nth-child(2) {
+        .el:nth-child(1), .el:nth-child(2), .el:nth-child(3) {
             border-right: 1px solid black;
         }
 
@@ -342,12 +343,12 @@
                     phone_num: document.querySelector('#phone_num').value,
                     mega_wari: document.querySelector('[name=mega_wari]').checked,
                     akaji: document.querySelector('#akaji').value,
-                    card_res: document.querySelector('#card_res').value,
                     commission_fee: document.querySelector('#commission_fee').value,
                     proxy_list: proxy_list,
                     gift: document.querySelector('[name=gift]').checked,
                     cancel_message: document.querySelector('#cancel_message').innerHTML,
                     company_name: document.querySelector('#company_name').value,
+                    out_sourcing: document.querySelector('#out_sourcing').value,
                 }
             }
 

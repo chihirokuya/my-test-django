@@ -93,9 +93,17 @@
                 </div>
                 <div class="box26">
                     <span class="box-title">注文状況</span>
-                    <div class="constructing">
-                        <p>作成中・・・</p>
+                    <div class="info_text_div">
+                        <p>新規注文：</p>
+                        <p id="new_order">件</p>
                     </div>
+                    <div class="info_text_div">
+                        <p>エラー数：</p>
+                        <p id="error_order">件</p>
+                    </div>
+                    <span style="width: 100%; justify-content: right; display: flex">
+                        <a href="/media/categories.csv">ツール最新版</a>
+                    </span>
                 </div>
             </div>
         </div>
@@ -207,6 +215,8 @@
         .then(data => {
             document.getElementById('selling').innerText = data.selling_num + '件';
             document.getElementById('no_stock').innerText = data.no_stock_num + '件';
+            document.getElementById('new_order').innerText = data.new + '件';
+            document.getElementById('error_order').innerText = data.failed + '件';
         })
     })();
 </script>

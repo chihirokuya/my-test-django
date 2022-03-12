@@ -1,6 +1,10 @@
+import datetime
 import json
 from django.shortcuts import render, HttpResponse
+from django.contrib.auth.models import User
 from django.http import JsonResponse
+from rest_framework.decorators import api_view
+
 from . import models
 from list_price_revision.models import UserModel
 from list_price_revision.views import chunked
@@ -8,7 +12,10 @@ from list_price_revision import api
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
+from .serializer import BuyUserSerializer, SingleSaleSerializer
+from rest_framework.response import Response
 import requests
+from django.shortcuts import get_object_or_404
 
 
 base_path = 'autobuy/'
@@ -57,9 +64,11 @@ def setting_view(request):
             buy_obj.phone_num = res['phone_num']
             buy_obj.mega_wari = res['mega_wari']
             buy_obj.akaji = int(res['akaji'])
-            buy_obj.card_res = int(res['card_res'])
             buy_obj.commission_fee = int(res['commission_fee'])
             buy_obj.cancel_message = res['cancel_message']
+            buy_obj.company_name = res['company_name']
+            buy_obj.out_sourcing = res['out_sourcing']
+            buy_obj.gift = res['gift']
             proxy_list = []
             for proxy in res['proxy_list']:
                 proxy_list.append({
@@ -69,11 +78,12 @@ def setting_view(request):
                     "password": proxy[3],
                 })
 
-            buy_obj.proxy_list = proxy_list
+            buy_obj.proxy = proxy_list
             buy_obj.save()
 
             return JsonResponse({'ok': True})
         except Exception as e:
+            print('here')
             return JsonResponse({"ok": False, "reason": str(e)})
 
     post_nums = buy_obj.post_num.split('-')
@@ -96,13 +106,31 @@ def setting_view(request):
     return render(request, base_path + 'setting.html', context)
 
 
+def delivered_view(request):
+    li = models.DeliveredOrderModel.objects.filter(user=request.user)
+
+    print(li)
+
+    return HttpResponse(f'{li[0].delivered_date}')
+
+
+def profit_table_view(request):
+    user_model = User.objects.get(username=request.user)
+
+    context = {
+        "obj": UserModel.objects.get(username=request.user),
+        "month_list": list(range(1, 100))
+    }
+    return render(request, base_path + 'profit_table.html', context)
+
+
 
 # 軽API
 def assert_user_pass(request):
     if request.method == 'GET':
         temp = request.GET
     else:
-        temp = request.POST
+        temp = request.POST if 'username' in request.POST else json.loads(request.body)
 
     if 'username' in temp and 'password' in temp:
         user_name = temp['username']
@@ -114,12 +142,16 @@ def assert_user_pass(request):
 
 
 def update_orders(order_obj, username, order_number_list):
+    sales_obj = models.SalesModel.objects.get(user=User.objects.get(username=username))
+
+    failed_order_nums = [val['orderNo'] for val in order_obj.failed_order_list]
     try:
         res = api.get_new_orders(username)
         key_list = []
         for val in res:
-            key_list.append(val['orderNo'])
-            if val['orderNo'] not in order_number_list:
+            if not sales_obj.singlesalemodel_set.filter(order_num=val['orderNo']).exists():
+                key_list.append(val['orderNo'])
+            if val['orderNo'] not in order_number_list and val['orderNo'] not in failed_order_nums:
                 order_obj.order_list.append(val)
 
         order_obj.order_list = [val for val in order_obj.order_list if val['orderNo'] in key_list]
@@ -266,3 +298,232 @@ def get_my_delivery_info(request):
     }
 
     return JsonResponse(data)
+
+
+@csrf_exempt
+def update_from_errors_to_new(request):
+    username = str(request.user)
+
+    order_obj = models.OrderModel.objects.get(username=username)
+    order_list = order_obj.order_list
+    failed_order_list = order_obj.failed_order_list
+    try:
+        if type(request.body) == bytes:
+            res = json.loads(request.body)
+        else:
+            return JsonResponse({})
+    except Exception as e:
+        print(str(e))
+        return JsonResponse({})
+
+    for order_num in res.keys():
+        val = res[order_num]
+        for order in failed_order_list:
+            if order['orderNo'] == int(order_num):
+                failed_order_list.remove(order)
+
+                order["receiver"] = val['name']
+                order["receiverTel"] = val['phone_num']
+                order["receiverMobile"] = val['mobile_num']
+                order["shippingAddr"] = val['address']
+                order["zipCode"] = val['zip_code']
+                order.pop('reason')
+
+                order_list.append(order)
+
+                break
+
+    order_obj.save()
+
+    return JsonResponse({})
+
+
+# INPUT: remove_from_new: [order_no, order_no, ...], add_to_failed_list: [[order_no, reason], [order_no, reason], ...]
+@csrf_exempt
+def edit_orders(request):
+    temp = json.loads(request.body)
+
+    if not assert_user_pass(request):
+        return JsonResponse({'status': 0})
+
+    username = temp['username']
+    remove_from_new_orders = temp['remove_from_new'] if 'remove_from_new' in temp.keys() else []
+    add_to_failed_list = temp['add_to_failed_list'] if 'add_to_failed_list' in temp.keys() else []
+
+    order_obj = models.OrderModel.objects.get(username=username)
+    order_list = order_obj.order_list
+    failed_order_list = order_obj.failed_order_list
+
+    failed_to_add = []
+    for temp in add_to_failed_list:
+        order_no = int(temp[0])
+        reason = temp[1]
+        elm = None
+        for obj in order_list:
+            if obj['orderNo'] == order_no:
+                elm = obj
+
+        if elm:
+            elm['reason'] = reason
+            failed_order_list.append(elm)
+            remove_from_new_orders.append(order_no)
+        else:
+            failed_to_add.append(order_no)
+
+    failed_to_remove = []
+    print(remove_from_new_orders)
+    for order_no in remove_from_new_orders:
+        removed = False
+        for order in order_list:
+            if order['orderNo'] == int(order_no):
+                order_list.remove(order)
+                removed = True
+                break
+
+        if not removed:
+            failed_to_remove.append(order_no)
+
+    order_obj.save()
+
+    return JsonResponse({'status': 1, "failed_to_add": failed_to_add, "failed_to_remove": failed_to_remove})
+
+
+# 赤字、カード残額、手数料
+@csrf_exempt
+def get_user_base_info(request):
+    if not assert_user_pass(request):
+        return JsonResponse({'status': 0})
+
+    username = request.POST['username']
+    user_obj = models.BuyUserModel.objects.get(username=username)
+
+    user_dict = BuyUserSerializer(user_obj).data
+
+    user_dict['status'] = 1
+
+    return JsonResponse(user_dict)
+
+
+@csrf_exempt
+def set_sales(request):
+    temp = json.loads(request.body)
+
+    if not assert_user_pass(request):
+        return JsonResponse({'status': 0})
+
+    user_obj = User.objects.get(username=temp['username'])
+    if not models.SalesModel.objects.filter(user=user_obj).exists():
+        models.SalesModel(user=user_obj).save()
+
+    if not models.AsinSalesModel.objects.filter(user=user_obj).exists():
+        models.AsinSalesModel(user=user_obj).save()
+
+    asin_sales_obj = models.AsinSalesModel.objects.get(user=user_obj)
+
+    sales_obj = models.SalesModel.objects.get(user=user_obj)
+
+    sales_obj.singlesalemodel_set.create(
+        order_num=temp['order_num'],
+        order_date=temp['order_date'],
+        product_name=temp['product_name'],
+        qty=temp['qty'],
+        name=temp['name'],
+        phone_num=temp['phone_num'],
+        mobile_num=temp['mobile_num'],
+        address=temp['address'],
+        post_code=temp['post_code'],
+        q10_price=temp['q10_price'],
+        user_code=temp['user_code'],
+        price=temp['price'],
+        point=temp['point'],
+        purchase_fee=temp['purchase_fee'],
+        amazon_order_num=temp['amazon_order_num'],
+        profit=temp['profit'],
+        out_sourcing=temp['out_sourcing'],
+        commission_fee=temp['commission_fee'],
+        date=datetime.datetime(year=2022, month=1, day=12)
+    )
+
+    asin_sales_obj.add_asin(f'B{temp["user_code"][1:]}')
+
+    sales_obj.total_profit += temp['profit']
+
+    sales_obj.save()
+
+    return JsonResponse({'status': 1})
+
+
+@csrf_exempt
+def get_sales(request):
+    user_obj = User.objects.get(username=request.user)
+    sales_obj = models.SalesModel.objects.get(user=user_obj)
+
+    if type(request.body) == bytes:
+        temp = json.loads(request.body)['data']
+    else:
+        temp = request.body['data']
+
+    objects = sales_obj.singlesalemodel_set.filter(date__year=temp['year'], date__month=temp['month'])
+
+    return_json = {
+        "total_profit": sales_obj.total_profit
+    }
+    serializer = SingleSaleSerializer(objects, many=True)
+    if serializer.data:
+        for val in serializer.data:
+            order_num = val.pop('order_num')
+            return_json[order_num] = val
+
+    return JsonResponse(return_json)
+
+
+@csrf_exempt
+def get_date_range(request):
+    sales_obj = models.SalesModel.objects.get(user=User.objects.get(username=request.user))
+
+    objects = sales_obj.singlesalemodel_set.all().order_by('date')
+
+    if not objects:
+        return JsonResponse({})
+
+    return JsonResponse({
+        "start": {
+            'year': objects[0].date.year,
+            'month': objects[0].date.month
+        },
+        "end": {
+            'year': objects.reverse()[0].date.year,
+            'month': objects.reverse()[0].date.month
+        }
+    })
+
+
+@csrf_exempt
+def delete_all_sales(request):
+    user_obj = User.objects.get(username=request.user)
+    sales_obj = models.SalesModel.objects.get(user=user_obj)
+
+    sales_obj.singlesalemodel_set.all().delete()
+    sales_obj.total_profit = 0
+
+    sales_obj.save()
+
+    asin_obj = models.AsinSalesModel.objects.get(user=user_obj)
+    asin_obj.sales_list = {}
+    asin_obj.save()
+
+    return JsonResponse({})
+
+
+@csrf_exempt
+def send_order(request):
+    temp = json.loads(request.body)
+
+    if not assert_user_pass(request):
+        return JsonResponse({'status': 0})
+
+    res = api.send_order(temp['username'], temp['order_num'])
+
+    print(res)
+
+    return JsonResponse({})

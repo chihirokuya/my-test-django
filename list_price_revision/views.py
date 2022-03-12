@@ -3,7 +3,7 @@ from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit, is_in_black
+from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit, is_in_black, get_new_orders
 from django.contrib import messages
 import datetime
 import os
@@ -17,6 +17,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializer import AsinSerializer
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+from autobuy.models import AsinSalesModel
+from autobuy.models import OrderModel
 
 
 base_path = 'list_price_revision/'
@@ -406,6 +409,11 @@ def get_log(request, range=1):
 def get_table(request):
     username = request.user
 
+    try:
+        sales_list = AsinSalesModel.objects.get(user=User.objects.get(username=username)).sales_list
+    except:
+        sales_list = {}
+
     if not ListingModel.objects.filter(username=username).exists():
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=username)
@@ -437,6 +445,10 @@ def get_table(request):
             else:
                 category_list[category] += 1
 
+            sell_num = 0
+            if temp_obj.asin in sales_list.keys():
+                sell_num = sales_list[temp_obj.asin]
+
             info_json_list.append({
                 'asin': temp_obj.asin,
                 'img_link': img,
@@ -446,7 +458,8 @@ def get_table(request):
                 "amazon_price": temp_obj.price,
                 "point": point,
                 "category": category,
-                "profit": profit
+                "profit": profit,
+                "sell_num": sell_num
             })
     except RuntimeError:
         pass
@@ -526,7 +539,6 @@ def sell_and_not_stock(request):
     all_objects = AsinModel.objects.values('price', 'asin', 'in_black_list')
     try:
         for i, elm in enumerate(chunked(all_objects)):
-            print(f'here{i}/{len(all_objects)}')
             if elm['asin'] in asin_list:
                 if elm['price'] == 0:
                     no_stock_num += 1
@@ -537,7 +549,16 @@ def sell_and_not_stock(request):
     except RuntimeError:
         pass
 
-    return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num})
+    get_new_orders(username)
+
+    if not OrderModel.objects.filter(username=username).exists():
+        OrderModel(username=username).save()
+    order_obj = OrderModel.objects.get(username=username)
+    new = len(order_obj.order_list)
+    failed = len(order_obj.failed_order_list)
+
+    return JsonResponse({"selling_num": selling_num, "no_stock_num": no_stock_num,
+                         "new": new, "failed": failed})
 
 
 @csrf_exempt

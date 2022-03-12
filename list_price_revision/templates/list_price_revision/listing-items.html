@@ -70,6 +70,7 @@
                         <th>ブランド</th>
                         <th>商品名</th>
                         <th>カテゴリ</th>
+                        <th>販売数</th>
                     </tr>
                     </thead>
                     <tbody id="list_table">
@@ -289,7 +290,8 @@
             '<td>' + temp_j['profit'] + '</td>',
             '<td>' + temp_j['brand'] + '</td>',
             '<td>' + temp_j['product_name'] + '</a></td>',
-            '<td>' + sub_names[temp_j['category']] + '</td>'
+            '<td>' + sub_names[temp_j['category']] + '</td>',
+            '<td>' + temp_j['sell_num'] + '</td>'
         ]
     }
 
@@ -368,6 +370,7 @@
                 {sWidth: '5%'},
                 {sWidth: '5%'},
                 {sWidth: '14%'},
+                {sWidth: '10%'},
                 {sWidth: '10%'},
             ],
             select: {
