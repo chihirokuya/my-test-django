@@ -141,9 +141,13 @@ def assert_user_pass(request):
     return False
 
 
-def update_orders(order_obj, username, order_number_list):
+def assert_sales_model(username):
     if not models.SalesModel.objects.filter(user=User.objects.get(username=username)).exists():
         models.SalesModel(user=User.objects.get(username=username)).save()
+
+
+def update_orders(order_obj, username, order_number_list):
+    assert_sales_model(username)
 
     sales_obj = models.SalesModel.objects.get(user=User.objects.get(username=username))
 
@@ -423,6 +427,7 @@ def set_sales(request):
 
     asin_sales_obj = models.AsinSalesModel.objects.get(user=user_obj)
 
+    assert_sales_model(username=user_obj.username)
     sales_obj = models.SalesModel.objects.get(user=user_obj)
 
     sales_obj.singlesalemodel_set.create(
@@ -459,6 +464,7 @@ def set_sales(request):
 @csrf_exempt
 def get_sales(request):
     user_obj = User.objects.get(username=request.user)
+    assert_sales_model(str(request.user))
     sales_obj = models.SalesModel.objects.get(user=user_obj)
 
     if type(request.body) == bytes:
@@ -482,6 +488,7 @@ def get_sales(request):
 
 @csrf_exempt
 def get_date_range(request):
+    assert_sales_model(str(request.user))
     sales_obj = models.SalesModel.objects.get(user=User.objects.get(username=request.user))
 
     objects = sales_obj.singlesalemodel_set.all().order_by('date')
@@ -504,6 +511,7 @@ def get_date_range(request):
 @csrf_exempt
 def delete_all_sales(request):
     user_obj = User.objects.get(username=request.user)
+    assert_sales_model(str(request.user))
     sales_obj = models.SalesModel.objects.get(user=user_obj)
 
     sales_obj.singlesalemodel_set.all().delete()
