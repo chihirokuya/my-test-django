@@ -111,16 +111,18 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
         black_amazon_group = []
 
     black = False
+    asin_black = ''
     for black_asin in black_asins:
         if asin == black_asin.strip():
+            asin_black = asin
             black = True
             break
     if black:
-        return False, 'ASINブラックリストに含まれています。'
+        return False, f'ASINブラックリストに含まれています。{asin}'
 
     try:
         if asin_obj.product_group and asin_obj.product_group in black_amazon_group:
-            return False, '商品グループがブラックリストに含まれています。'
+            return False, f'商品グループがブラックリストに含まれています。'
     except:
         pass
 
@@ -135,18 +137,21 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
         brand_name = ''
 
     black = False
+    black_keyword = ''
     for black_word in black_maker_item_name:
         for desc in asin_obj.description.split('\n'):
             if black_word in desc:
+                black_keyword = black_word
                 black = True
         if black:
             break
 
         if black_word in asin_obj.product_name or black_word in brand_name:
+            black_keyword = black_word
             black = True
             break
     if black:
-        return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+        return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_keyword}'
 
     return True, ''
 
@@ -856,14 +861,17 @@ def upload_new_item(asin, username, certification_key):
         brand_name = ''
 
     black = False
+    black_keyword = ''
     for black_word in black_maker_item_name:
         for desc in obj.description.split('\n'):
             if black_word in desc:
+                black_keyword = black_word
                 black = True
         if black:
             break
 
         if black_word in obj.product_name or black_word in brand_name:
+            black_keyword = black_word
             black = True
             break
     if black:
@@ -871,7 +879,7 @@ def upload_new_item(asin, username, certification_key):
             obj.in_black_list = True
             obj.save()
 
-        return False, '商品名またはメーカ名にブラックリストキーワードが入っています。'
+        return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_word}'
 
     user_price = to_user_price(user_obj, obj.price)
     if user_price == 0:
