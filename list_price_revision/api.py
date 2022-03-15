@@ -779,6 +779,7 @@ def update_available_data_type(cert_key, item_code):
             'ItemQty': res['ItemQty'],
             'ShippingNo': res['ShippingNo'],
             'AvailableDateType': '0',
+            'AvailableDateValue': 1,
             'Keyword': res['Keyword']
         }
 
