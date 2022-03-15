@@ -879,7 +879,7 @@ def upload_new_item(asin, username, certification_key):
             obj.in_black_list = True
             obj.save()
 
-        return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_word}'
+        return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_keyword}'
 
     user_price = to_user_price(user_obj, obj.price)
     if user_price == 0:
