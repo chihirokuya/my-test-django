@@ -779,7 +779,7 @@ def update_available_data_type(cert_key, item_code):
             'ItemQty': res['ItemQty'],
             'ShippingNo': res['ShippingNo'],
             'AvailableDateType': '0',
-            'AvailableDateValue': 1,
+            'AvailableDateValue': '3',
             'Keyword': res['Keyword']
         }
 
@@ -939,7 +939,7 @@ def upload_new_item(asin, username, certification_key):
         'ItemQty': int(stock_num),
         'ShippingNo': int(shipping_code),
         'AvailableDateType': '0',
-        'AvailableDateValue': '20:00',
+        'AvailableDateValue': '3',
         'Keyword': obj.product_name[:30]
     }
 
