@@ -533,22 +533,9 @@ def sell_and_not_stock(request):
     if not ListingModel.objects.filter(username=username).exists():
         ListingModel(username=request.user).save()
     list_obj = ListingModel.objects.get(username=username)
-    asin_list = list_obj.asin_list.split(',')
 
-    selling_num = 0
-    no_stock_num = 0
-    all_objects = AsinModel.objects.values('price', 'asin', 'in_black_list')
-    try:
-        for i, elm in enumerate(chunked(all_objects)):
-            if elm['asin'] in asin_list:
-                if elm['price'] == 0:
-                    no_stock_num += 1
-                elif 'in_black_list' in elm.keys() and elm['in_black_list']:
-                    no_stock_num += 1
-                else:
-                    selling_num += 1
-    except RuntimeError:
-        pass
+    selling_num = len(list_obj.selling_list.split(','))
+    no_stock_num = len(list_obj.no_stock_list.split(','))
 
     get_new_orders(username)
 
