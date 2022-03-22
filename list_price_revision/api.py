@@ -1425,7 +1425,7 @@ def update_black_status():
 
     try:
         for obj in chunked(AsinModel.objects.all()):
-            obj.in_black_list = check_black(asin_obj=obj)
+            obj.in_black_list = not check_black(asin_obj=obj)
             obj.save()
     except:
         pass
