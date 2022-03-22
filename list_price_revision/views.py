@@ -157,6 +157,7 @@ def asin_view(request):
             try:
                 list_obj.asin_waiting_list = ''
                 list_obj.asin_getting_list = ''
+                list_obj.save()
 
                 records = RecordsModel.objects.filter(username=request.user)
                 try:

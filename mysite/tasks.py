@@ -5,7 +5,7 @@ import glob
 import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
-from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price
+from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price, update_black_status
 from list_price_revision.views import delimiter
 from django.contrib.auth import get_user_model
 from mysite.settings import BASE_DIR
@@ -55,11 +55,14 @@ def records_saved(username, date):
     log_success_asin_list = []
     log_failed_asin_list = []
 
+    # 選択制が会った時の元ASINとあたらしいASIN
+    variation_asins = {}
+
     to_search_list = []  # ASIN情報取得の必要があるリスト
 
     for asin in asin_waiting_list:
         # ASINがDB上に存在しない and ASIN_GETTING_LIST内に含まれていない ならSP-API&Keepaから取得
-        if not AsinModel.objects.filter(asin=asin).exists() and asin not in asin_getting_list:
+        if not AsinModel.objects.filter(asin=asin).exists() and not AsinModel.objects.filter(base_asin=asin).exists() and asin not in asin_getting_list:
             asin_getting_list.append(asin)  # ASIN_GETTING_LISTに追加
             new_getting_list.append(asin)
             to_search_list.append(asin)
@@ -67,6 +70,9 @@ def records_saved(username, date):
             if asin in asin_list:
                 asin_waiting_list.remove(asin)
                 continue
+            if AsinModel.objects.filter(base_asin=asin).exists():
+                to_transfer_list.append(AsinModel.objects.filter(base_asin=asin)[0].asin)
+                asin_waiting_list.remove(asin)
             to_list_but_still_in_waiting.append(asin)
 
     obj.asin_getting_list = ','.join(asin_getting_list)
@@ -87,6 +93,12 @@ def records_saved(username, date):
                 self.to_delete_asin_list = []
                 self.log_error_reason = []
                 self.total_length = total_length
+
+                self._lock = threading.Lock()
+
+            def increment(self, l):
+                with self._lock:
+                    self.step_2_counter += l
 
         if len(to_search_list) > 10:
             thread_num = 5
@@ -137,6 +149,11 @@ def records_saved(username, date):
         for key in to_search_class.result_list.keys():
             if not AsinModel.objects.filter(asin=key).exists():
                 temp = to_search_class.result_list[key]
+                print('rel', temp['relationships'])
+                if temp['relationships']:
+                    variation_asins[key] = temp['original_asin']
+                    print(variation_asins)
+
                 try:
                     AsinModel(
                         asin=key,
@@ -149,7 +166,10 @@ def records_saved(username, date):
                         category_tree=temp['category_tree'],
                         price=int(temp['price']),
                         q10_category=temp['q10_category'],
-                        point=int(temp['point'])
+                        point=int(temp['point']),
+                        variation_options=temp['relationships'],
+                        base_name=temp['base_name'],
+                        base_asin=temp['original_asin']
                     ).save()
                     to_transfer_list.append(key)
                 except Exception as e:
@@ -172,13 +192,19 @@ def records_saved(username, date):
         ok, reason = upload_new_item(asin, username, certification_key)
         print(ok, reason)
         if ok:
+            print(variation_asins)
+            if asin in variation_asins.keys():
+                to_del_asin = variation_asins[asin]
+                print(to_del_asin)
+            else:
+                to_del_asin = asin
             try:
-                asin_waiting_list.remove(asin)
+                asin_waiting_list.remove(to_del_asin)
             except:
                 pass
 
             try:
-                asin_getting_list.remove(asin)
+                asin_getting_list.remove(to_del_asin)
             except:
                 pass
 
@@ -383,6 +409,11 @@ def backup_clean_up():
                 pass
     except RuntimeError:
         pass
+
+
+@shared_task
+def update_black_status_list():
+    update_black_status()
 
 
 def chunked(queryset, chunk_size=1000):

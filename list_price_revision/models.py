@@ -90,6 +90,12 @@ class AsinModel(models.Model):
 
     in_black_list = models.BooleanField(default=False, blank=True, null=True)
 
+    # 選択制ある場合 [{price, point, name}]
+    variation_options = models.JSONField(default=[])
+    # 選択制がある場合の最初の名称
+    base_name = models.TextField(default='')
+    base_asin = models.TextField(default='')
+
 
 class RecordsModel(models.Model):
     username = models.TextField(null=True, default='')

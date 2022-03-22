@@ -17,6 +17,7 @@ import datetime
 from .views import delimiter
 import unicodedata
 import emoji
+from .views import chunked
 
 refresh_token_list = [
     'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
@@ -214,7 +215,8 @@ class SpApiFunction:
 
         return cat
 
-    def get_lowest_price(self, offers):
+    @staticmethod
+    def get_lowest_price(offers):
         try:
             offers = offers['Offers']
         except:
@@ -259,7 +261,8 @@ class SpApiFunction:
             return f'{int(now_price)}', point
 
     # return product_name, brand, product_group, image_link
-    def get_from_catalog(self, catalog):
+    @staticmethod
+    def get_from_catalog(catalog):
         try:
             product_name = catalog['AttributeSets'][0]['Title']
         except Exception as e:
@@ -279,33 +282,101 @@ class SpApiFunction:
 
         return True, [product_name, brand, product_group]
 
+    @staticmethod
+    def check_availability(offers, catalog):
+        if offers is None or catalog is None:
+            return False
+
+        if offers.errors is not None or catalog.errors is not None:
+            return False
+
+        return True
+
 
 # return [商品名, 価格, ブランド, Amazonグループ]　または　空
 def get_from_sp_api(asin):
-    result = []
+    result = {
+        'ok': False,
+        'base_name': '',
+        'relations': []
+    }
 
     sp_api = SpApiFunction()
 
     offers = sp_api.get_offers(asin)
     catalog = sp_api.get_catalog(asin)
 
-    if offers is None or catalog is None:
-        return result, '存在しないASIN', ''
+    if not sp_api.check_availability(offers, catalog):
+        result['meesage'] = '存在しないASIN'
+        return result
 
-    if offers.errors is not None or catalog.errors is not None:
-        return result, '存在しないASIN', ''
+    # 選択制か確認
+    if 'Relationships' in catalog.payload.keys() and catalog.payload['Relationships']:
+        try:
+            asin = catalog.payload['Relationships'][0]['Identifiers']['MarketplaceASIN']['ASIN']
+            catalog.payload['Relationships'][0].pop('Identifiers')
+            base_name = catalog.payload['Relationships'][0][list(catalog.payload['Relationships'][0].keys())[0]]
+
+            offers_ = sp_api.get_offers(asin)
+            catalog_ = sp_api.get_catalog(asin)
+
+            if not sp_api.check_availability(offers_, catalog_):
+                result['meesage'] = '存在しないASIN'
+                return result
+
+            # それぞれの価格を取得
+            relations = []
+            for relation in catalog.payload['Relationships'][1:]:
+                try:
+                    asin_ = relation['Identifiers']['MarketplaceASIN']['ASIN']
+
+                    _offers_ = sp_api.get_offers(asin_)
+
+                    price, point = sp_api.get_lowest_price(_offers_.payload)
+
+                    relation.pop('Identifiers')
+                    key = list(relation.keys())[0]
+                    if price:
+                        relations.append({
+                            'asin': asin_,
+                            'price': price,
+                            'point': point,
+                            'name': relation[key]
+                        })
+                except:
+                    pass
+
+            offers = offers_
+            catalog = catalog_
+
+            result['relationships'] = relations
+            result['base_name'] = base_name
+        except:
+            result['message'] = '選択制取得失敗'
+            return result
+
+    result['asin'] = asin
 
     price, point = sp_api.get_lowest_price(offers.payload)
 
     if price == '':
-        return result, point, ''
+        result['message'] = point
+        return result
 
     ok, values = sp_api.get_from_catalog(catalog.payload)
 
     if not ok or values[0] == '':
-        return result, 'Keepaから情報取得失敗', ''
+        result['meesage'] = 'Keepaから情報取得失敗'
+        return result
 
-    return [values[0], int(float(price)), values[1], values[2]], '', point
+    result['name'] = values[0]
+    result['price'] = int(float(price))
+    result['brand'] = values[1]
+    result['group'] = values[2]
+    result['point'] = point
+    result['ok'] = True
+
+    return result
 
 
 # [links, description, jan, category_tree], '' または [], '理由'
@@ -486,33 +557,36 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
             skip = True
 
         if not skip:
-            result, message, point = get_from_sp_api(asin)
+            result = get_from_sp_api(asin)
 
             # 成功したら
-            if result:
+            if result['ok']:
                 # ブランドがあるなら変換する
-                if result[2]:
-                    if Q10BrandCode.objects.filter(brand_name=result[2]).exists():
-                        code = Q10BrandCode.objects.filter(brand_name=result[2])[0].code
+                if result['brand']:
+                    if Q10BrandCode.objects.filter(brand_name=result['brand']).exists():
+                        code = Q10BrandCode.objects.filter(brand_name=result['brand'])[0].code
                     else:
-                        code = search_brand(certification_key, result[2])
+                        code = search_brand(certification_key, result['brand'])
 
                         if code != '':
-                            Q10BrandCode(brand_name=result[2], code=code).save()
+                            Q10BrandCode(brand_name=result['brand'], code=code).save()
 
-                    result[2] = code
+                    result['brand'] = code
 
-                to_search_class.result_list[asin] = {
-                    "name": result[0],
-                    "price": result[1],
-                    "brand": result[2],
-                    "group": result[3],
-                    "point": point
+                to_search_class.result_list[result['asin']] = {
+                    "name": result['name'],
+                    "price": result['price'],
+                    "brand": result['brand'],
+                    "group": result['group'],
+                    "point": result['point'],
+                    "relationships": result['relationships'],
+                    "base_name": result['base_name'],
+                    'original_asin': asin
                 }
             # 何らかの理由でエラーが出た場合
             else:
                 to_search_class.to_delete_asin_list.append(asin)
-                to_search_class.log_error_reason.append([asin, message])
+                to_search_class.log_error_reason.append([asin, result['message']])
 
         to_search_class.counter += 1
         if not i % temp:
@@ -548,10 +622,16 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
 
         def __init__(self):
             self.counter = 0
+            self._lock = threading.Lock()
 
-        def update_records(self):
+        @staticmethod
+        def update_records():
             records_model.status_text = f'ステップ２ {to_search_class.step_2_counter}/{to_search_class.total_length}'
             records_model.save()
+
+        def increment(self, length):
+            with self._lock:
+                self.counter += length
 
     def search_func(to_do_list, keepa_key, counter_class: CounterClass, update):
         # ASINを10個ずつに分ける
@@ -597,7 +677,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                     to_search_class.log_error_reason.append([product['asin'], message_])
                     to_search_class.result_list.pop(product['asin'])
 
-            to_search_class.step_2_counter += len(asins)
+            to_search_class.increment(len(asins))
             if update:
                 counter_class.update_records()
 
@@ -843,9 +923,6 @@ def upload_new_item(asin, username, certification_key):
 
     try:
         if obj.product_group and obj.product_group in black_amazon_group:
-            if not obj.in_black_list:
-                obj.in_black_list = True
-                obj.save()
             return False, '商品グループがブラックリストに含まれています。'
     except:
         pass
@@ -875,10 +952,6 @@ def upload_new_item(asin, username, certification_key):
             black = True
             break
     if black:
-        if not obj.in_black_list:
-            obj.in_black_list = True
-            obj.save()
-
         return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_keyword}'
 
     user_price = to_user_price(user_obj, obj.price)
@@ -959,6 +1032,26 @@ def upload_new_item(asin, username, certification_key):
                 data[f'EnlargedImage{i + 1}'] = val
 
             res = requests.post(link, headers=header, data=data)
+
+        variations = obj.variation_options
+        base_name = obj.base_name
+        if variations:
+            for variation in variations:
+                link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ItemsOptions.InsertInventoryDataUnit'
+                main_price = to_user_price(user_obj, obj.price)
+                price = to_user_price(user_obj, int(variation['price']))
+                price = price - main_price
+
+                data = {
+                    'SellerCode': initial_letter + obj.asin[1:],
+                    'OptionName': variation['name'],
+                    'OptionValue': variation['name'],
+                    'Price': price,
+                    'OptionCode': variation['asin'],
+                    'Qty': user_obj.stock_num
+                }
+                res = requests.post(link, headers=header, data=data)
+                print(res.json())
 
         return True, ''
     else:
@@ -1235,9 +1328,6 @@ def update_price(username):
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
                        f'&Qty=0'
                 msg = 'ブラックリスト商品'
-                if not asin_obj.in_black_list:
-                    asin_obj.in_black_list = True
-                    asin_obj.save()
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
@@ -1286,6 +1376,60 @@ def update_price(username):
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
              success_asin_list=success_list , cause_list=cause_list,
              date=datetime.datetime.now()).save()
+
+
+def update_black_status():
+    def check_black(asin_obj: AsinModel):
+        ad_obj = UserModel.objects.get(username='admin')
+        asin = asin_obj.asin
+
+        try:
+            black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
+            black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
+        except:
+            black_maker_item_name = []
+            black_asins = []
+
+        black = False
+        for black_asin in black_asins:
+            if asin == black_asin.strip():
+                black = True
+                break
+        if black:
+            return False
+
+        if asin_obj.brand:
+            try:
+                brand_name = Q10BrandCode.objects.filter(code=asin_obj.brand)[0].brand_name
+            except Exception as e:
+                print(e)
+                brand_name = ''
+                pass
+        else:
+            brand_name = ''
+
+        black = False
+        for black_word in black_maker_item_name:
+            for desc in asin_obj.description.split('\n'):
+                if black_word in desc:
+                    black = True
+            if black:
+                break
+
+            if black_word in asin_obj.product_name or black_word in brand_name:
+                black = True
+                break
+        if black:
+            return False
+
+        return True
+
+    try:
+        for obj in chunked(AsinModel.objects.all()):
+            obj.in_black_list = check_black(asin_obj=obj)
+            obj.save()
+    except:
+        pass
 
 
 # 自動購入関連
