@@ -3,7 +3,7 @@ from celery import shared_task
 import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
-from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price, update_black_status
+from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price
 from list_price_revision.models import delimiter
 from django.contrib.auth import get_user_model
 import pytz
@@ -40,6 +40,7 @@ def records_saved(username, date):
 
     asin_waiting_list: list = list(obj.asin_waiting_list.split(','))    # ASIN取得or出品待ち
     asin_list = list(obj.asin_list.split(','))  # 出品中
+    selling_list = obj.selling_list.split(',')
     asin_getting_list = list(obj.asin_getting_list.split(','))  # すでにASINを取得中動作に入っているもの
 
     new_getting_list = []   # 新規取得ASINリスト
@@ -204,6 +205,7 @@ def records_saved(username, date):
                 pass
 
             asin_list.append(asin)
+            selling_list.append(asin)
             log_success_asin_list.append(asin)
         else:
             log_failed_asin_list.append([asin, reason])
@@ -215,6 +217,7 @@ def records_saved(username, date):
                     pass
 
     obj.asin_list = ','.join(list(filter(None, asin_list)))
+    obj.selling_list = ','.join(list(filter(None, selling_list)))
     obj.asin_waiting_list = ','.join(list(filter(None, asin_waiting_list)))
     obj.asin_getting_list = ','.join([val for val in obj.asin_getting_list.split(',') if val not in new_getting_list])
     obj.save()
@@ -335,6 +338,8 @@ def delete_items(username, to_delete_asin_list):
     obj: ListingModel = ListingModel.objects.get(username=username)
     obj.asin_list = ','.join(list(dict.fromkeys(obj.asin_list.split(','))))
     obj.save()
+    selling_list = obj.selling_list.split(',')
+    no_stock_list = obj.no_stock_list.split(',')
     certification_key = get_certification_key(username)
 
     user_obj = UserModel.objects.get(username=username)
@@ -350,6 +355,10 @@ def delete_items(username, to_delete_asin_list):
             asin_list = obj.asin_list.split(',')
             asin_list.remove(asin) if asin in asin_list else asin_list
             obj.asin_list = ','.join(asin_list)
+            selling_list.remove(asin) if asin in selling_list else selling_list
+            obj.selling_list = ','.join(selling_list)
+            no_stock_list.remove(asin) if asin in no_stock_list else no_stock_list
+            obj.no_stock_list = ','.join(no_stock_list)
             obj.save()
             log_success_list.append(asin)
         else:
@@ -404,11 +413,6 @@ def backup_clean_up():
                 pass
     except RuntimeError:
         pass
-
-
-@shared_task
-def update_black_status_list():
-    update_black_status()
 
 
 def chunked(queryset, chunk_size=1000):

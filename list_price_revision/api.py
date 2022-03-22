@@ -1126,6 +1126,8 @@ def link_q10_items(certification_key, username):
     # max length: 10
     temp_list = []
 
+    selling_list = []
+
     def update_to_finished(code):
         temp: list = item_link_obj.linked_asin_list.split(',')
         temp.append(code)
@@ -1229,6 +1231,8 @@ def link_q10_items(certification_key, username):
 
             obj.save()
             update_listing(asin)
+
+            selling_list.append(asin)
         except Exception as e:
             print('LINK失敗', str(e))
             continue
@@ -1238,6 +1242,8 @@ def link_q10_items(certification_key, username):
         except:
             print('brandしぱい')
 
+    listing_obj.selling_list = ','.join(selling_list)
+    listing_obj.save()
 
     item_link_obj.still_getting = False
     item_link_obj.save()
@@ -1258,10 +1264,6 @@ def delete_item(certification_key, item_code):
 
         if res['ResultCode'] == 0:
             return True
-        else:
-            if 'Fail to find Item' in res['ResultMsg']:
-                return True
-            return [False, res['ResultMsg']]
     except Exception as e:
         return [False, str(e)]
 
@@ -1293,6 +1295,9 @@ def update_price(username):
     listing_obj.save()
     asin_list = listing_obj.asin_list.split(',')
 
+    selling_list = listing_obj.selling_list.split(',')
+    no_stock_list = listing_obj.no_stock_list.split(',')
+
     for asin in asin_list:
         try:
             msg = ''
@@ -1313,6 +1318,11 @@ def update_price(username):
                         asin_list_.remove(asin) if asin in asin_list_ else asin_list_
                         listing_obj.asin_list = ','.join(asin_list_)
                         listing_obj.save()
+
+                        if asin in selling_list:
+                            selling_list.remove(asin)
+                        if asin in no_stock_list:
+                            no_stock_list.remove(asin)
                     else:
                         add_log(False, asin, 'Q10上から削除失敗')
                     continue
@@ -1336,6 +1346,14 @@ def update_price(username):
             res = requests.get(link).json()
 
             if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
+                if '価格改定' in msg and asin in no_stock_list:
+                    no_stock_list.remove(asin)
+                    selling_list.append(asin)
+                else:
+                    if asin in selling_list:
+                        selling_list.remove(asin)
+                        no_stock_list.append(asin)
+
                 add_log(True, asin, msg)
             else:
                 error_message = '不明'
@@ -1369,66 +1387,15 @@ def update_price(username):
     for val in log_success:
         success_list += f'{val[0]}:{val[1]}{delimiter}'
 
+    listing_obj.selling_list = ','.join(selling_list)
+    listing_obj.no_stock_list = ','.join(no_stock_list)
+
     print(log_total)
     print(cause_list)
     print(success_list)
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
              success_asin_list=success_list , cause_list=cause_list,
              date=datetime.datetime.now()).save()
-
-
-def update_black_status():
-    def check_black(asin_obj: AsinModel):
-        ad_obj = UserModel.objects.get(username='admin')
-        asin = asin_obj.asin
-
-        try:
-            black_maker_item_name = list(filter(None, ad_obj.maker_name_blacklist.split('\n')))
-            black_asins = list(filter(None, ad_obj.asin_blacklist.split('\n')))
-        except:
-            black_maker_item_name = []
-            black_asins = []
-
-        black = False
-        for black_asin in black_asins:
-            if asin == black_asin.strip():
-                black = True
-                break
-        if black:
-            return False
-
-        if asin_obj.brand:
-            try:
-                brand_name = Q10BrandCode.objects.filter(code=asin_obj.brand)[0].brand_name
-            except Exception as e:
-                print(e)
-                brand_name = ''
-                pass
-        else:
-            brand_name = ''
-
-        black = False
-        for black_word in black_maker_item_name:
-            for desc in asin_obj.description.split('\n'):
-                if black_word in desc:
-                    black = True
-            if black:
-                break
-
-            if black_word in asin_obj.product_name or black_word in brand_name:
-                black = True
-                break
-        if black:
-            return False
-
-        return True
-
-    try:
-        for obj in chunked(AsinModel.objects.all()):
-            obj.in_black_list = not check_black(asin_obj=obj)
-            obj.save()
-    except:
-        pass
 
 
 def update_selling_status(username):
@@ -1460,7 +1427,6 @@ def update_selling_status(username):
     list_obj.no_stock_list = ','.join(no_stock_list)
 
     list_obj.save()
-
 
 
 # 自動購入関連
