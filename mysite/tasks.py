@@ -4,7 +4,7 @@ import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
 from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price, update_black_status
-from list_price_revision.views import delimiter
+from list_price_revision.models import delimiter
 from django.contrib.auth import get_user_model
 import pytz
 
