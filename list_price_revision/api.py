@@ -14,7 +14,7 @@ from mysite.settings import MEDIA_ROOT
 import csv
 import re
 import datetime
-from .views import delimiter
+from .models import delimiter
 import unicodedata
 import emoji
 
