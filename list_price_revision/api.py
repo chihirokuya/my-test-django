@@ -1433,11 +1433,11 @@ def update_black_status():
 
 def update_selling_status(username):
     print('here')
-    try:
-        list_obj = ListingModel.objects.get(username=username)
-        user_obj = UserModel.objects.get(username=username)
-    except:
-        return
+    # try:
+    list_obj = ListingModel.objects.get(username=username)
+    user_obj = UserModel.objects.get(username=username)
+    # except:
+    #     return
 
     print(list_obj.asin_waiting_list)
 
