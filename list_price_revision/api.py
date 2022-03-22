@@ -297,7 +297,7 @@ def get_from_sp_api(asin):
     result = {
         'ok': False,
         'base_name': '',
-        'relations': []
+        'relationships': []
     }
 
     sp_api = SpApiFunction()
