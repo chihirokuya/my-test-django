@@ -350,8 +350,8 @@ def get_from_sp_api(asin):
 
             result['relationships'] = relations
             result['base_name'] = base_name
-        except:
-            result['message'] = '選択制取得失敗'
+        except Exception as e:
+            result['message'] = f'選択制取得失敗 {e}'
             return result
 
     result['asin'] = asin
