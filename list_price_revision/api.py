@@ -17,7 +17,6 @@ import datetime
 from .views import delimiter
 import unicodedata
 import emoji
-from .views import chunked
 
 refresh_token_list = [
     'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
@@ -1511,3 +1510,18 @@ def send_order(username, order_no):
             pass
 
     return {}
+
+
+
+
+
+
+def chunked(queryset, chunk_size=1000):
+    start = 0
+    while True:
+        chunk = queryset[start:start + chunk_size]
+        for obj in chunk:
+            yield obj
+        if len(chunk) < chunk_size:
+            raise StopIteration
+        start += chunk_size
