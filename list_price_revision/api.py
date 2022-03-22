@@ -310,11 +310,15 @@ def get_from_sp_api(asin):
         return result
 
     # 選択制か確認
+    me = ''
     if 'Relationships' in catalog.payload.keys() and len(catalog.payload['Relationships']):
+        me = 'here'
         try:
             asin = catalog.payload['Relationships'][0]['Identifiers']['MarketplaceASIN']['ASIN']
             catalog.payload['Relationships'][0].pop('Identifiers')
             base_name = catalog.payload['Relationships'][0][list(catalog.payload['Relationships'][0].keys())[0]]
+
+            me = 'ok'
 
             offers_ = sp_api.get_offers(asin)
             catalog_ = sp_api.get_catalog(asin)
@@ -324,6 +328,7 @@ def get_from_sp_api(asin):
                 return result
 
             # それぞれの価格を取得
+            me = f"{len(catalog.payload['Relationships'])}  {len(catalog.payload['Relationships']) > 1:}"
             relations = []
             if len(catalog.payload['Relationships']) > 1:
                 for relation in catalog.payload['Relationships'][1:]:
@@ -352,7 +357,7 @@ def get_from_sp_api(asin):
             result['relationships'] = relations
             result['base_name'] = base_name
         except Exception as e:
-            result['message'] = f'選択制取得失敗 {e}'
+            result['message'] = f'選択制取得失敗 {me}'
             return result
 
     result['asin'] = asin
