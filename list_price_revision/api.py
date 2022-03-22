@@ -325,25 +325,26 @@ def get_from_sp_api(asin):
 
             # それぞれの価格を取得
             relations = []
-            for relation in catalog.payload['Relationships'][1:]:
-                try:
-                    asin_ = relation['Identifiers']['MarketplaceASIN']['ASIN']
+            if len(catalog.payload['Relationships']) > 1:
+                for relation in catalog.payload['Relationships'][1:]:
+                    try:
+                        asin_ = relation['Identifiers']['MarketplaceASIN']['ASIN']
 
-                    _offers_ = sp_api.get_offers(asin_)
+                        _offers_ = sp_api.get_offers(asin_)
 
-                    price, point = sp_api.get_lowest_price(_offers_.payload)
+                        price, point = sp_api.get_lowest_price(_offers_.payload)
 
-                    relation.pop('Identifiers')
-                    key = list(relation.keys())[0]
-                    if price:
-                        relations.append({
-                            'asin': asin_,
-                            'price': price,
-                            'point': point,
-                            'name': relation[key]
-                        })
-                except:
-                    pass
+                        relation.pop('Identifiers')
+                        key = list(relation.keys())[0]
+                        if price:
+                            relations.append({
+                                'asin': asin_,
+                                'price': price,
+                                'point': point,
+                                'name': relation[key]
+                            })
+                    except:
+                        pass
 
             offers = offers_
             catalog = catalog_
