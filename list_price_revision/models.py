@@ -60,6 +60,12 @@ class ListingModel(models.Model):
     # 取得中: 同じASINが２回入ってきた時に、片方のみを処理する用。
     asin_getting_list = models.TextField(default='', blank=True, null=True)
 
+    # 販売中
+    selling_list = models.TextField(default='')
+
+    # 在庫切れ
+    no_stock_list = models.TextField(default='')
+
 
 class AsinModel(models.Model):
     asin = models.TextField()

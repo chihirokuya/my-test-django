@@ -1431,6 +1431,33 @@ def update_black_status():
         pass
 
 
+def update_selling_status(username):
+    try:
+        list_obj = ListingModel.objects.get(username=username)
+        user_obj = UserModel.objects.get(username=username)
+    except:
+        return
+
+    asin_list = list_obj.asin_list.split(',')
+    selling_list = []
+    no_stock_list = []
+
+    for asin in asin_list:
+        asin_obj = AsinModel.objects.get(asin=asin)
+        if not asin_obj.price:
+            no_stock_list.append(asin)
+        elif not is_in_black(user_obj, asin_obj)[0]:
+            no_stock_list.append(asin)
+        else:
+            selling_list.append(asin)
+
+    list_obj.selling_list = ','.join(selling_list)
+    list_obj.no_stock_list = ','.join(no_stock_list)
+
+    list_obj.save()
+
+
+
 # 自動購入関連
 def get_new_orders(username):
     cert_key = get_certification_key(username)
