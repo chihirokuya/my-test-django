@@ -1439,7 +1439,6 @@ def update_selling_status(username):
     #     return
 
     asin_list = list_obj.asin_list.split(',')
-    print(asin_list)
     selling_list = []
     no_stock_list = []
 
@@ -1448,7 +1447,8 @@ def update_selling_status(username):
             asin_obj = AsinModel.objects.get(asin=asin)
         except:
             print(f'{asin}HERE')
-            return
+            continue
+
         if not asin_obj.price:
             no_stock_list.append(asin)
         elif not is_in_black(user_obj, asin_obj)[0]:
