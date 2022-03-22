@@ -536,6 +536,7 @@ def sell_and_not_stock(request):
 
     selling_num = len(list_obj.selling_list.split(','))
     no_stock_num = len(list_obj.no_stock_list.split(','))
+    a = 1
 
     get_new_orders(username)
 
