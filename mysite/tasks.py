@@ -1,17 +1,12 @@
 from __future__ import absolute_import, unicode_literals
-import os
 from celery import shared_task
-import glob
 import datetime
 from list_price_revision.models import ListingModel, RecordsModel, AsinModel, UserModel, LogModel
 import threading
 from list_price_revision.api import get_info_from_amazon, upload_new_item, get_certification_key, link_q10_items, SpApiFunction, delete_item, update_price, update_black_status
 from list_price_revision.views import delimiter
 from django.contrib.auth import get_user_model
-from mysite.settings import BASE_DIR
-from shutil import copyfile
 import pytz
-from mysite.settings import MEDIA_ROOT
 
 
 # 出品
