@@ -310,7 +310,7 @@ def get_from_sp_api(asin):
         return result
 
     # 選択制か確認
-    if 'Relationships' in catalog.payload.keys() and catalog.payload['Relationships']:
+    if 'Relationships' in catalog.payload.keys() and len(catalog.payload['Relationships']):
         try:
             asin = catalog.payload['Relationships'][0]['Identifiers']['MarketplaceASIN']['ASIN']
             catalog.payload['Relationships'][0].pop('Identifiers')
