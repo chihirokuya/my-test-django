@@ -1180,6 +1180,7 @@ def link_q10_items(certification_key, username):
         temp = listing_obj.asin_list.split(',')
         temp.append(asin_)
         listing_obj.asin_list = ','.join(temp)
+        selling_list.append(asin_)
         listing_obj.save()
 
     fin = {}
@@ -1235,7 +1236,6 @@ def link_q10_items(certification_key, username):
             obj.save()
             update_listing(asin)
 
-            selling_list.append(asin)
         except Exception as e:
             print('LINK失敗', str(e))
             continue
