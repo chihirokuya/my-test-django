@@ -919,7 +919,7 @@ def upload_new_item(asin, username, certification_key):
         return False, 'ASINブラックリストに含まれています。'
 
     try:
-        obj = AsinModel.objects.get(asin=asin)
+        obj = AsinModel.objects.filter(asin=asin)[0]
     except:
         return False, '登録されていないASINです。'
 
@@ -1305,7 +1305,7 @@ def update_price(username):
         try:
             msg = ''
             try:
-                asin_obj: AsinModel = AsinModel.objects.get(asin=asin)
+                asin_obj: AsinModel = AsinModel.objects.filter(asin=asin)[0]
             except:
                 add_log(False, asin, '存在しないASIN')
                 continue
@@ -1414,7 +1414,7 @@ def update_selling_status(username):
 
     for asin in asin_list:
         try:
-            asin_obj = AsinModel.objects.get(asin=asin)
+            asin_obj = AsinModel.objects.filter(asin=asin)[0]
         except:
             print(f'{asin}HERE')
             continue
