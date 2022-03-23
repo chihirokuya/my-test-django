@@ -1392,6 +1392,7 @@ def update_price(username):
 
     listing_obj.selling_list = ','.join(selling_list)
     listing_obj.no_stock_list = ','.join(no_stock_list)
+    listing_obj.save()
 
     print(log_total)
     print(cause_list)
