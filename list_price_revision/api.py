@@ -1358,6 +1358,9 @@ def update_price(username):
                     no_stock_list.remove(asin)
                     selling_list.append(asin)
                 else:
+                    if 'ブラック' in msg:
+                        if asin in asin_list:
+                            asin_list.remove(asin)
                     if asin in selling_list:
                         selling_list.remove(asin)
                         no_stock_list.append(asin)
@@ -1400,6 +1403,7 @@ def update_price(username):
 
     listing_obj.selling_list = ','.join(selling_list)
     listing_obj.no_stock_list = ','.join(no_stock_list)
+    listing_obj.asin_list = ','.join(asin_list)
     listing_obj.save()
 
     print(log_total)
