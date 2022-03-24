@@ -1297,9 +1297,11 @@ def update_price(username):
     listing_obj.asin_list = ','.join(list(dict.fromkeys(listing_obj.asin_list.split(','))))
     listing_obj.save()
     asin_list = listing_obj.asin_list.split(',')
-
     selling_list = listing_obj.selling_list.split(',')
     no_stock_list = listing_obj.no_stock_list.split(',')
+
+    print(f'selling {len(selling_list)}')
+    print(f'no stock {len(no_stock_list)}')
 
     for asin in asin_list:
         try:
@@ -1349,6 +1351,10 @@ def update_price(username):
             res = requests.get(link).json()
 
             if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
+                print('\n')
+                print(msg)
+                print(asin, asin in selling_list, asin in no_stock_list)
+                print('\n')
                 if '価格改定' in msg and asin in no_stock_list:
                     no_stock_list.remove(asin)
                     selling_list.append(asin)
