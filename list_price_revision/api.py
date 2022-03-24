@@ -1354,7 +1354,6 @@ def update_price(username):
                 print('\n')
                 print(msg)
                 print(asin, asin in selling_list, asin in no_stock_list)
-                print('\n')
                 if '価格改定' in msg and asin in no_stock_list:
                     no_stock_list.remove(asin)
                     selling_list.append(asin)
@@ -1362,6 +1361,9 @@ def update_price(username):
                     if asin in selling_list:
                         selling_list.remove(asin)
                         no_stock_list.append(asin)
+
+                print(asin, asin in selling_list, asin in no_stock_list)
+                print('\n')
 
                 add_log(True, asin, msg)
             else:
