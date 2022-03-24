@@ -137,21 +137,21 @@ def is_in_black(user_obj: UserModel, asin_obj: AsinModel):
         brand_name = ''
 
     black = False
-    black_keyword = ''
+    name_or_brand = ''
     for black_word in black_maker_item_name:
         for desc in asin_obj.description.split('\n'):
             if black_word in desc:
-                black_keyword = black_word
+                name_or_brand = f'ブラック：商品詳細に『{black_word}』が含まれています。'
                 black = True
         if black:
             break
 
         if black_word in asin_obj.product_name or black_word in brand_name:
-            black_keyword = black_word
+            name_or_brand = f'ブラック：{"商品名" if black_word in asin_obj.product_name else "ブランド名"}に『{black_word}』が含まれています。'
             black = True
             break
     if black:
-        return False, f'商品名またはメーカ名にブラックリストキーワードが入っています。{black_keyword}'
+        return False, name_or_brand
 
     return True, ''
 
@@ -1315,6 +1315,7 @@ def update_price(username):
             update_available_data_type(certification_key, initial_letter + asin[1:])
 
             user_price = to_user_price(user_obj, asin_obj.price)
+            black_temp = is_in_black(user_obj, asin_obj)
             if asin_obj.price == 0 or user_price == 0:
                 if delete_or_not:
                     temp_res = delete_item(certification_key, initial_letter + asin[1:])
@@ -1337,11 +1338,10 @@ def update_price(username):
                            f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
                            f'&Qty=0'
                     msg = '在庫切れ'
-            elif not is_in_black(user_obj, asin_obj)[0]:
-                link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
-                       f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \
-                       f'&Qty=0'
-                msg = 'ブラックリスト商品'
+            elif not black_temp[0]:
+                link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&returnType=&method=ItemsBasic.EditGoodsStatus'\
+                        f'&key={certification_key}&SellerCode={initial_letter + asin[1:]}&Status=3'
+                msg = black_temp[1]
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
                        f'&method=ItemsOrder.SetGoodsPriceQty&key={certification_key}&SellerCode={initial_letter + asin[1:]}' \

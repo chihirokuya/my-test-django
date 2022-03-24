@@ -64,10 +64,8 @@ def setting_view(request):
             buy_obj.phone_num = res['phone_num']
             buy_obj.mega_wari = res['mega_wari']
             buy_obj.akaji = int(res['akaji'])
-            buy_obj.commission_fee = int(res['commission_fee'])
             buy_obj.cancel_message = res['cancel_message']
             buy_obj.company_name = res['company_name']
-            buy_obj.out_sourcing = res['out_sourcing']
             buy_obj.gift = res['gift']
             proxy_list = []
             for proxy in res['proxy_list']:
@@ -408,6 +406,20 @@ def get_user_base_info(request):
 
     user_dict['status'] = 1
 
+    user_obj = UserModel.objects.get(username=username)
+
+    user_dict['kotei'] = {
+        'min_1': user_obj.min_1,
+        'max_1': user_obj.max_1,
+        'max_2': user_obj.max_2,
+        'max_3': user_obj.max_3,
+        'max_4': user_obj.max_4,
+        'kotei_1': user_obj.kotei_1,
+        'kotei_2': user_obj.kotei_2,
+        'kotei_3': user_obj.kotei_3,
+        'kotei_4': user_obj.kotei_4,
+    }
+
     return JsonResponse(user_dict)
 
 
@@ -447,8 +459,6 @@ def set_sales(request):
         purchase_fee=temp['purchase_fee'],
         amazon_order_num=temp['amazon_order_num'],
         profit=temp['profit'],
-        out_sourcing=temp['out_sourcing'],
-        commission_fee=temp['commission_fee'],
         date=datetime.datetime(year=2022, month=1, day=12)
     )
 

@@ -54,8 +54,6 @@ class BuyUserModel(models.Model):
     mega_wari = models.BooleanField(default=False, blank=True)
     gift = models.BooleanField(default=False, blank=True)
     akaji = models.IntegerField(default=0, blank=True)
-    commission_fee = models.IntegerField(default=0, blank=True)
-    out_sourcing = models.IntegerField(default=0, blank=True)
     proxy = models.JSONField(default=[], blank=True)
 
 
