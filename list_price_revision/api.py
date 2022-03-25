@@ -713,7 +713,7 @@ def get_info_and_add_to_database(counter_class, asin_list, certification_key, re
     result_list = {}
 
     # from mysite.tasks import CounterClass
-    counter_class: CounterClass
+    # counter_class: CounterClass
 
     temp = len(asin_list) // 10
     if temp == 0:
@@ -1494,6 +1494,7 @@ def update_price(username):
     print(f'selling {len(selling_list)}')
     print(f'no stock {len(no_stock_list)}')
 
+    to_remove_asins = []
     for asin in asin_list:
         try:
             msg = ''
@@ -1503,7 +1504,7 @@ def update_price(username):
                 add_log(False, asin, '存在しないASIN')
                 continue
 
-            update_available_data_type(certification_key, initial_letter + asin[1:])
+            # update_available_data_type(certification_key, initial_letter + asin[1:])
 
             user_price = to_user_price(user_obj, asin_obj.price)
             black_temp = is_in_black(user_obj, asin_obj)
@@ -1551,7 +1552,7 @@ def update_price(username):
                 else:
                     if 'ブラック' in msg:
                         if asin in asin_list:
-                            asin_list.remove(asin)
+                            to_remove_asins.append(asin)
                     if asin in selling_list:
                         selling_list.remove(asin)
                         no_stock_list.append(asin)
@@ -1564,6 +1565,9 @@ def update_price(username):
                 error_message = '不明'
                 if 'ResultMsg' in res.keys():
                     error_message = res['ResultMsg']
+                    if 'Fail to find Item information with' in error_message:
+                        error_message = f'{initial_letter + asin[1:]}にマッチする商品がQSM上に見つかりませんでした。'
+                        to_remove_asins.append(asin)
                 elif 'ResultCode' in res.keys():
                     code = res['ResultCode']
                     error_message = ''
@@ -1594,7 +1598,7 @@ def update_price(username):
 
     listing_obj.selling_list = ','.join(selling_list)
     listing_obj.no_stock_list = ','.join(no_stock_list)
-    listing_obj.asin_list = ','.join(asin_list)
+    listing_obj.asin_list = ','.join([asin for asin in asin_list if asin not in to_remove_asins])
     listing_obj.save()
 
     print(log_total)
