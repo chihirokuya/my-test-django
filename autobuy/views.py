@@ -458,7 +458,10 @@ def set_sales(request):
         point=temp['point'],
         purchase_fee=temp['purchase_fee'],
         amazon_order_num=temp['amazon_order_num'],
+        kotei=temp['kotei'],
+        commission_fee=int(temp['q10_price'] * 0.1),
         profit=temp['profit'],
+        discount=temp['discount'],
         date=datetime.datetime(year=2022, month=1, day=12)
     )
 

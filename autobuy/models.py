@@ -88,8 +88,9 @@ class SingleSaleModel(models.Model):
     purchase_fee = models.IntegerField()
     amazon_order_num = models.TextField()
     profit = models.IntegerField()
-    out_sourcing = models.IntegerField()  # 外注
+    kotei = models.IntegerField()  # 固定費
     commission_fee = models.IntegerField()  # 販売手数料
+    discount = models.IntegerField()  #メガ割
 
 
 class AsinSalesModel(models.Model):

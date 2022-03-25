@@ -11,7 +11,7 @@ import pytz
 import csv
 import threading
 from dateutil import tz
-from mysite.tasks import records_saved, link_q10_account, re_price_users
+from mysite.tasks import new_shuppin, link_q10_account, re_price_users
 from mysite import tasks
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -124,7 +124,7 @@ def asin_view(request):
                     list_obj.save()
                     new_records.save()
 
-                    records_saved.delay(str(request.user), date)
+                    new_shuppin.delay(str(request.user), date)
 
                     messages.success(request, '正常に更新されました。')
                     records = []

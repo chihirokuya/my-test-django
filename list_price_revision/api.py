@@ -17,6 +17,7 @@ import datetime
 from .models import delimiter
 import unicodedata
 import emoji
+import json
 
 refresh_token_list = [
     'Atzr|IwEBIAhK-f7HQLwhjTMUw5dzX2m7d_V-LA7UspYYxk07cQYs_PAN0kr6lalMJryfpbDm7QmcoiJqgn-IyqwkssxyxkRYKPjKriRALuxVm_Ieu-rxhx8-s2MqqEOfXfO51fk9f5eqOQM2frF4FuLfpc5Qjsdrjb9XX1kkcpZSDwYqfp9DFmWCRTzxQs-1UCryRgluJRl1N5yLPyTtl0nVGLk-5rOYiayH0RvMSs5ihy5YeBDVsHOwGmwkTl0h4IYCOI_jRQjI4K4qwhv860HpMLQ96PaNLXoAXysfKLhX0boBhvQ--4Vxy-WYv2VsJFo2itxfPgU',
@@ -297,7 +298,7 @@ def get_from_sp_api(asin):
     result = {
         'ok': False,
         'base_name': '',
-        'relationships': []
+        'relationships': [],
     }
 
     sp_api = SpApiFunction()
@@ -306,7 +307,7 @@ def get_from_sp_api(asin):
     catalog = sp_api.get_catalog(asin)
 
     if not sp_api.check_availability(offers, catalog):
-        result['meesage'] = '存在しないASIN'
+        result['message'] = '存在しない・または在庫切れのASIN'
         return result
 
     price, point = sp_api.get_lowest_price(offers.payload)
@@ -322,7 +323,7 @@ def get_from_sp_api(asin):
             catalog_ = sp_api.get_catalog(asin)
 
             if not sp_api.check_availability(offers_, catalog_):
-                result['meesage'] = '存在しないASIN'
+                result['message'] = '存在しない・または在庫切れのASIN'
                 return result
 
             # それぞれの価格を取得
@@ -368,7 +369,7 @@ def get_from_sp_api(asin):
     ok, values = sp_api.get_from_catalog(catalog.payload)
 
     if not ok or values[0] == '':
-        result['meesage'] = 'Keepaから情報取得失敗'
+        result['message'] = '情報取得失敗、存在しない・または在庫切れのASINの可能性あり'
         return result
 
     result['name'] = values[0]
@@ -587,6 +588,7 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 }
             # 何らかの理由でエラーが出た場合
             else:
+                print(result)
                 to_search_class.to_delete_asin_list.append(asin)
                 to_search_class.log_error_reason.append([asin, result['message']])
 
@@ -707,6 +709,189 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
     print('ASIN取得完了')
 
 
+def get_info_and_add_to_database(counter_class, asin_list, certification_key, records_model: RecordsModel):
+    result_list = {}
+
+    # from mysite.tasks import CounterClass
+    counter_class: CounterClass
+
+    temp = len(asin_list) // 10
+    if temp == 0:
+        temp = 1
+    # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
+    for i, asin in enumerate(asin_list):
+        skip = False
+        if AsinModel.objects.filter(asin=asin).exists():
+            skip = True
+
+        if not skip:
+            result = get_from_sp_api(asin)
+
+            # 成功したら
+            if result['ok']:
+                # ブランドがあるなら変換する
+                if result['brand']:
+                    if Q10BrandCode.objects.filter(brand_name=result['brand']).exists():
+                        code = Q10BrandCode.objects.filter(brand_name=result['brand'])[0].code
+                    else:
+                        code = search_brand(certification_key, result['brand'])
+
+                        if code != '':
+                            Q10BrandCode(brand_name=result['brand'], code=code).save()
+
+                    result['brand'] = code
+
+                result_list[result['asin']] = {
+                    "name": result['name'],
+                    "price": result['price'],
+                    "brand": result['brand'],
+                    "group": result['group'],
+                    "point": result['point'],
+                    "relationships": result['relationships'],
+                    "base_name": result['base_name'],
+                    'original_asin': asin
+                }
+            # 何らかの理由でエラーが出た場合
+            else:
+                print(asin)
+                counter_class.log_error_reason.append([asin, result['message']])
+
+        counter_class.increment_1(1)
+        if not i % temp:
+            records_model.status_text = f'ステップ１　{counter_class.counter}/{counter_class.total_length}'
+            records_model.save()
+
+    succeed_asin_list = [key for key in result_list.keys() if
+                         not AsinModel.objects.filter(asin=key).exists()]
+
+    weight_list = []
+    for key in keepa_key_list:
+        try:
+            temp_ = keepa.Keepa(accesskey=key)
+            weight_list.append(temp_.tokens_left)
+        except:
+            pass
+
+    total = sum(weight_list)
+    length_list = [int(val / total * len(succeed_asin_list)) for val in weight_list]
+
+    divided_asin_list = []  # 分けた後のasinリスト
+    current_pos = 0
+    for i, val in enumerate(length_list):
+        if i == len(weight_list) - 1:
+            divided_asin_list.append(succeed_asin_list[current_pos:])
+        else:
+            divided_asin_list.append(succeed_asin_list[current_pos: current_pos + val])
+            current_pos += val
+
+    class KeepaThread:
+        counter = 0
+
+        def __init__(self):
+            self.counter = 0
+            self._lock = threading.Lock()
+
+        @staticmethod
+        def update_records():
+            records_model.status_text = f'ステップ２ {counter_class.step_2_counter}/{counter_class.total_length}'
+            records_model.save()
+
+        def increment(self, length):
+            with self._lock:
+                self.counter += length
+
+        @staticmethod
+        def search_func(to_do_list, keepa_key, update):
+            # ASINを10個ずつに分ける
+            te = []
+            for k in range(0, len(to_do_list), 10):
+                te.append(to_do_list[k:k + 10])
+
+            api = keepa.Keepa(keepa_key)
+
+            for asins in te:
+                try:
+                    products = api.query(asins, wait=True, domain='JP')
+                except Exception as e:
+                    products = []
+                    for asin_ in asins:
+                        try:
+                            products.append(api.query(asin_, wait=True, domain='JP')[0])
+                        except:
+                            counter_class.log_error_reason.append([asin_, str(e)])
+
+                for product in products:
+                    resul_, message_ = keepa_info(product)
+
+                    if resul_:
+                        category = get_category_qoo10(result_list[product['asin']]['name'])
+
+                        if category == '':
+                            category = get_cat_from_csv(resul_[3])
+
+                        if category == '':
+                            counter_class.log_error_reason.append([product['asin'], 'カテゴリ取得に失敗しました。'])
+                            counter_class.result_list.pop(product['asin'])
+                        else:
+                            result_list[product['asin']]['links'] = resul_[0]
+                            result_list[product['asin']]['description'] = resul_[1]
+                            result_list[product['asin']]['jan'] = resul_[2]
+                            result_list[product['asin']]['category_tree'] = resul_[3]
+                            result_list[product['asin']]['q10_category'] = category
+                    else:
+                        counter_class.log_error_reason.append([product['asin'], message_])
+                        counter_class.result_list.pop(product['asin'])
+
+                counter_class.increment(len(asins))
+                if update:
+                    counter_class.update_records()
+
+    thread_list = []
+    max_index = weight_list.index(max(weight_list))
+    k_c = KeepaThread()
+    for i, val in enumerate(divided_asin_list):
+        if val:
+            thread_list.append(
+                threading.Thread(
+                    target=k_c.search_func,
+                    kwargs={
+                        "to_do_list": val,
+                        "keepa_key": keepa_key_list[i],
+                        'update': i == max_index
+                    }
+                )
+            )
+    for thread in thread_list:
+        thread.start()
+    for thread in thread_list:
+        thread.join()
+
+    # 最終的にAsin
+    for asin in result_list.keys():
+        if 'links' in result_list[asin]:
+            if not AsinModel.objects.filter(asin=asin).exists() or\
+                not AsinModel.objects.filter(base_asin=asin).exists():
+                temp = result_list[asin]
+                try:
+                    AsinModel(
+                        asin=asin,
+                        product_name=temp['name'],
+                        brand=temp['brand'],
+                        product_group=temp['group'],
+                        photo_list='\n'.join(temp['links']),
+                        description='\n'.join(temp['description']),
+                        jan=temp['jan'],
+                        category_tree=temp['category_tree'],
+                        price=int(temp['price']),
+                        q10_category=temp['q10_category'],
+                        point=int(temp['point']),
+                        variation_options=temp['relationships'],
+                        base_name=temp['base_name'],
+                        base_asin=temp['original_asin']
+                    ).save()
+                except Exception as e:
+                    counter_class.log_error_reason.append([asin, json.dumps(temp)])
+
 # qoo10系
 def get_api_key(username):
     return UserModel.objects.get(username=username).q10_api
@@ -793,7 +978,7 @@ def set_header_footer(certification_key, item_code, header, footer):
     headers = {
         "Content-Type": 'application/x-www-form-urlencoded',
         "QAPIVersion": '1.0',
-        'GiosisCertificationKey':certification_key
+        'GiosisCertificationKey': certification_key
     }
 
     data = {
@@ -1006,7 +1191,7 @@ def upload_new_item(asin, username, certification_key):
         'ContactInfo': '',
         'StandardImage': images[0],
         'VideoURL': '',
-        'ItemDescription': desc_header + '<br>'+ html + '<br>' + desc_footer,
+        'ItemDescription': desc_header + '<br>' + html + '<br>' + desc_footer,
         'AdditionalOption': '',
         'ItemType': '',
         'RetailPrice': 0,
@@ -1267,8 +1452,14 @@ def delete_item(certification_key, item_code):
 
         if res['ResultCode'] == 0:
             return True
+        else:
+            if 'ResultMsg' in res.keys():
+                return [False, res['ResultMsg']]
     except Exception as e:
         return [False, str(e)]
+
+
+    return [False, '不明']
 
 
 def update_price(username):
@@ -1339,8 +1530,8 @@ def update_price(username):
                            f'&Qty=0'
                     msg = '在庫切れ'
             elif not black_temp[0]:
-                link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&returnType=&method=ItemsBasic.EditGoodsStatus'\
-                        f'&key={certification_key}&SellerCode={initial_letter + asin[1:]}&Status=3'
+                link = 'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0&returnType=&method=ItemsBasic.EditGoodsStatus' \
+                       f'&key={certification_key}&SellerCode={initial_letter + asin[1:]}&Status=3'
                 msg = black_temp[1]
             else:
                 link = 'https://api.qoo10.jp//GMKT.INC.Front.QAPIService/ebayjapan.qapi?v=1.0' \
@@ -1410,7 +1601,7 @@ def update_price(username):
     print(cause_list)
     print(success_list)
     LogModel(username=username, type='価格改定', input_asin_list=','.join(log_total_list),
-             success_asin_list=success_list , cause_list=cause_list,
+             success_asin_list=success_list, cause_list=cause_list,
              date=datetime.datetime.now()).save()
 
 
@@ -1465,9 +1656,9 @@ def get_new_orders(username):
 
         try:
             return requests.post(
-                    'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ShippingBasic.GetShippingInfo_v2',
-                    headers=header, data=data
-                ).json()['ResultObject']
+                'https://api.qoo10.jp/GMKT.INC.Front.QAPIService/ebayjapan.qapi/ShippingBasic.GetShippingInfo_v2',
+                headers=header, data=data
+            ).json()['ResultObject']
         except:
             pass
 
@@ -1524,10 +1715,6 @@ def send_order(username, order_no):
             pass
 
     return {}
-
-
-
-
 
 
 def chunked(queryset, chunk_size=1000):
