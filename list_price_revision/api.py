@@ -1488,8 +1488,8 @@ def update_price(username):
     listing_obj.asin_list = ','.join(list(dict.fromkeys(listing_obj.asin_list.split(','))))
     listing_obj.save()
     asin_list = listing_obj.asin_list.split(',')
-    selling_list = listing_obj.selling_list.split(',')
-    no_stock_list = listing_obj.no_stock_list.split(',')
+    selling_list = []
+    no_stock_list = []
 
     print(f'selling {len(selling_list)}')
     print(f'no stock {len(no_stock_list)}')
