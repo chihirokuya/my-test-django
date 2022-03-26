@@ -1491,9 +1491,6 @@ def update_price(username):
     selling_list = []
     no_stock_list = []
 
-    print(f'selling {len(selling_list)}')
-    print(f'no stock {len(no_stock_list)}')
-
     to_remove_asins = []
     for asin in asin_list:
         try:
@@ -1518,9 +1515,9 @@ def update_price(username):
                         listing_obj.save()
 
                         if asin in selling_list:
-                            selling_list.remove(asin)
+                            no_stock_list.append(asin)
                         if asin in no_stock_list:
-                            no_stock_list.remove(asin)
+                            selling_list.append(asin)
                     else:
                         add_log(False, asin, 'Q10上から削除失敗')
                     continue
@@ -1543,18 +1540,13 @@ def update_price(username):
             res = requests.get(link).json()
 
             if 'ResultCode' in res.keys() and res['ResultCode'] == 0:
-                print('\n')
-                print(msg)
-                print(asin, asin in selling_list, asin in no_stock_list)
-                if '価格改定' in msg and asin in no_stock_list:
-                    no_stock_list.remove(asin)
+                if '価格改定' in msg:
                     selling_list.append(asin)
                 else:
                     if 'ブラック' in msg:
                         if asin in asin_list:
                             to_remove_asins.append(asin)
-                    if asin in selling_list:
-                        selling_list.remove(asin)
+                    else:
                         no_stock_list.append(asin)
 
                 print(asin, asin in selling_list, asin in no_stock_list)
