@@ -487,12 +487,6 @@ def get_sales(request):
 
     objects = sales_obj.singlesalemodel_set.filter(date__year=temp['year'], date__month=temp['month'])
 
-    total = 0
-    for obj in sales_obj.singlesalemodel_set.all():
-        total += obj.profit
-    sales_obj.total_profit = total
-    sales_obj.save()
-
     return_json = {
         "total_profit": sales_obj.total_profit
     }
