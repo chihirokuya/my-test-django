@@ -52,6 +52,7 @@ class BuyUserModel(models.Model):
 
     # その他
     mega_wari = models.BooleanField(default=False, blank=True)
+    point = models.BooleanField(default=True, blank=True)
     gift = models.BooleanField(default=False, blank=True)
     akaji = models.IntegerField(default=0, blank=True)
     proxy = models.JSONField(default=[], blank=True)

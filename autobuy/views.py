@@ -63,6 +63,7 @@ def setting_view(request):
             buy_obj.address = res['address']
             buy_obj.phone_num = res['phone_num']
             buy_obj.mega_wari = res['mega_wari']
+            buy_obj.point = res['point']
             buy_obj.akaji = int(res['akaji'])
             buy_obj.cancel_message = res['cancel_message']
             buy_obj.company_name = res['company_name']
@@ -296,6 +297,7 @@ def get_my_delivery_info(request):
         'phone_num': obj.phone_num,
         'cancel_message': obj.cancel_message,
         'mega_wari': obj.mega_wari,
+        'point': obj.point,
         'akaji': obj.akaji,
         'card_res': obj.card_res,
         'commission_fee': obj.commission_fee,
