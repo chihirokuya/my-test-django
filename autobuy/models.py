@@ -90,7 +90,6 @@ class SingleSaleModel(models.Model):
     amazon_order_num = models.TextField()
     profit = models.IntegerField()
     kotei = models.IntegerField()  # 固定費
-    commission_fee = models.IntegerField()  # 販売手数料
     discount = models.IntegerField()  #メガ割
 
 
