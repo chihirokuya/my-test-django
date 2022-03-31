@@ -16,6 +16,7 @@ urlpatterns = [
     path('order/api/deleteOrders', views.cancel_order),
     path('order/api/myDeliveryInfo', views.get_my_delivery_info),
     path('order/api/editOrders', views.edit_orders),
+    path('order/api/failedToProfit', views.from_error_to_profit, name='failed_profit'),
     path('order/api/updateFailedNew', views.update_from_errors_to_new, name="failed_new"),
     path('order/api/getUserInfo', views.get_user_base_info),
     path('order/api/setSales', views.set_sales),
