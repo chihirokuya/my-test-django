@@ -295,6 +295,7 @@ class SpApiFunction:
 
 # return [商品名, 価格, ブランド, Amazonグループ]　または　空
 def get_from_sp_api(asin):
+    print('called sp api')
     result = {
         'ok': False,
         'base_name': '',
@@ -312,12 +313,19 @@ def get_from_sp_api(asin):
 
     price, point = sp_api.get_lowest_price(offers.payload)
 
+    print(f'price: {price}, point: {point}')
+
     # 選択制か確認
     if point in ['', '価格取得失敗'] and 'Relationships' in catalog.payload.keys() and len(catalog.payload['Relationships']):
         try:
-            asin = catalog.payload['Relationships'][0]['Identifiers']['MarketplaceASIN']['ASIN']
-            catalog.payload['Relationships'][0].pop('Identifiers')
-            base_name = catalog.payload['Relationships'][0][list(catalog.payload['Relationships'][0].keys())[0]]
+            relation_ships = catalog.payload['Relationships']
+            print(relation_ships)
+            asin = relation_ships[0]['Identifiers']['MarketplaceASIN']['ASIN']
+            relation_ships[0].pop('Identifiers')
+            try:
+                base_name = relation_ships[0][list(catalog.payload['Relationships'][0].keys())[0]]
+            except:
+                base_name = catalog.payload['AttributeSets'][0]['Title']
 
             offers_ = sp_api.get_offers(asin)
             catalog_ = sp_api.get_catalog(asin)
@@ -326,10 +334,13 @@ def get_from_sp_api(asin):
                 result['message'] = '存在しない・または在庫切れのASIN'
                 return result
 
+            print('fino qua ok')
+
             # それぞれの価格を取得
             relations = []
-            if len(catalog.payload['Relationships']) > 1:
-                for relation in catalog.payload['Relationships'][1:]:
+            if len(relation_ships) > 1:
+                print('entrato')
+                for relation in relation_ships[1:]:
                     try:
                         asin_ = relation['Identifiers']['MarketplaceASIN']['ASIN']
 
@@ -349,12 +360,15 @@ def get_from_sp_api(asin):
                     except:
                         pass
 
+            print('boh')
+
             offers = offers_
             catalog = catalog_
 
             result['relationships'] = relations
             result['base_name'] = base_name
         except Exception as e:
+            print('error here')
             result['message'] = f'選択制取得失敗 {e}'
             return result
 
@@ -661,7 +675,13 @@ def get_info_from_amazon(username, to_search_class, asin_list, certification_key
                 resul_, message_ = keepa_info(product)
 
                 if resul_:
-                    category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+                    try:
+                        category = get_category_qoo10(to_search_class.result_list[product['asin']]['name'])
+                    except:
+                        to_search_class.to_delete_asin_list.append(product['asin'])
+                        to_search_class.log_error_reason.append([product['asin'], 'カテゴリ取得失敗'])
+                        to_search_class.result_list.pop(product['asin'])
+                        break
 
                     if category == '':
                         category = get_cat_from_csv(resul_[3])
