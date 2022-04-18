@@ -113,6 +113,9 @@ def new_shuppin(username, date):
             if asin in getting_list and (AsinModel.objects.filter(asin=asin).exists() or AsinModel.objects.filter(base_asin=asin).exists()):
                 getting_list.remove(asin)
                 done_asin_list.append(asin)
+            elif AsinModel.objects.filter(asin=asin).exists() or AsinModel.objects.filter(base_asin=asin).exists():
+                done_asin_list.append(asin)
+
         obj.asin_getting_list = ','.join(getting_list)
         obj.save()
     else:
