@@ -638,3 +638,56 @@ def from_error_to_profit(request):
 
     return JsonResponse({})
 
+@csrf_exempt
+def edit_sales(request):
+    temp = json.loads(request.body)
+
+    sales_model = models.SalesModel.objects.get(user=User.objects.get(username=temp['username']))
+
+    for elm in temp['data']:
+        queryset = sales_model.singlesalemodel_set.filter(order_num=elm['order_num'])
+
+        if queryset.exists():
+            obj = queryset[0]
+
+            difference = 0
+
+            obj.order_date = elm['order_date']
+            obj.product_name = elm['product_name']
+            obj.qty = elm['qty']
+            obj.name = elm['name']
+            obj.phone_num = elm['phone_num']
+            obj.mobile_num = elm['mobile_num']
+            obj.address = elm['address']
+            obj.post_code = elm['post_code']
+
+            print(obj.price, elm['price'])
+
+            if obj.q10_price != int(elm['q10_price']):
+                difference += int(elm['q10_price']) - obj.q10_price
+            if obj.point != int(elm['point']):
+                difference += int(elm['point']) - obj.point
+            if obj.price != int(elm['price']):
+                difference -= int(elm['price']) - obj.price
+            if obj.kotei != int(elm['kotei']):
+                difference -= int(elm['kotei']) - obj.kotei
+            if obj.discount != int(elm['discount']):
+                difference -= int(elm['discount']) - obj.discount
+
+            obj.q10_price = int(elm['q10_price'])
+            obj.user_code = elm['user_code']
+            obj.price = int(elm['price'])
+            obj.point = int(elm['point'])
+            obj.purchase_fee = int(elm['price']) - int(elm['point'])
+            obj.profit = int(elm['q10_price']) - int(elm['price']) + int(elm['point']) - int(elm['kotei']) - int(elm['discount'])
+            obj.amazon_order_num = elm['amazon_order_num']
+            obj.kotei = int(elm['kotei'])
+            obj.discount = int(elm['discount'])
+
+            sales_model.total_profit += difference
+
+            obj.save()
+
+    sales_model.save()
+
+    return JsonResponse({})

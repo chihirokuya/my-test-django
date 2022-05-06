@@ -28,6 +28,10 @@
         <div style="width: 80%; display: flex; overflow-x: scroll;margin-top: 0; align-items: center;" id="month_list">
         </div>
         <div style="width: 20%; height: 100%; align-items: center; display: flex;justify-content: center;">
+            <button style="background-color: rgba(0,255,4,0.56);margin-right: 4px" onclick="edit_values()">
+                編集反映
+            </button>
+
             <button style="background-color: rgba(255,0,0,0.56);" onclick="reset()">
                 初期化
             </button>
@@ -261,10 +265,10 @@
 
                     innerHTML +=
                         "<tr>" +
-                        "<td <div contenteditable>" + o_n + "</div></td>"
+                        `<td class='order_num'> <div contenteditable> ${o_n} </div></td>`
                     let temp = data[o_n];
                     for (key of Object.keys(temp)) {
-                        innerHTML += "<td><div contenteditable>" + temp[key] + "</div></td>"
+                        innerHTML += `<td class='${key}'><div contenteditable>${temp[key]}</div></td>`
                     }
                     innerHTML += "</tr>"
 
@@ -300,6 +304,33 @@
             let link = '{% url 'buy:deleteSales' %}';
 
             fetch(link);
+        }
+
+        async function edit_values() {
+            let link = '{% url 'buy:editSales' %}';
+            const trs = document.querySelector('#foo-table').querySelector('tbody').querySelectorAll('tr');
+            const data = [];
+
+            for (let tr of trs) {
+                let temp = {}
+                for (let td of tr.querySelectorAll('td')) {
+                    temp[td.className] = td.innerText;
+                }
+                data.push(temp)
+            }
+
+            console.log(data[0]);
+
+            await fetch(link, {
+                method: 'POST',
+                body: JSON.stringify({
+                    'data': data,
+                    'username': '{{ request.user.username }}'
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => {document.location.reload()})
         }
     </script>
 {% endblock %}
