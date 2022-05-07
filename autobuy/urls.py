@@ -18,6 +18,7 @@ urlpatterns = [
     path('order/api/editOrders', views.edit_orders),
     path('order/api/editSales', views.edit_sales, name='editSales'),
     path('order/api/failedToProfit', views.from_error_to_profit, name='failed_profit'),
+    path('order/api/orderToProfit', views.from_order_to_profit, name='order_profit'),
     path('order/api/updateFailedNew', views.update_from_errors_to_new, name="failed_new"),
     path('order/api/getUserInfo', views.get_user_base_info),
     path('order/api/setSales', views.set_sales),

@@ -639,6 +639,90 @@ def from_error_to_profit(request):
     return JsonResponse({})
 
 @csrf_exempt
+def from_order_to_profit(request):
+    temp = json.loads(request.body)
+
+    user_obj = User.objects.get(username=temp['username'])
+    if not models.SalesModel.objects.filter(user=user_obj).exists():
+        models.SalesModel(user=user_obj).save()
+
+    if not models.AsinSalesModel.objects.filter(user=user_obj).exists():
+        models.AsinSalesModel(user=user_obj).save()
+
+    order_obj = models.OrderModel.objects.get(username=temp['username'])
+    asin_sales_obj = models.AsinSalesModel.objects.get(user=user_obj)
+    mega_wari = models.BuyUserModel.objects.get(username=temp['username']).mega_wari
+    assert_sales_model(username=user_obj.username)
+    sales_obj = models.SalesModel.objects.get(user=user_obj)
+    obj = list_price_revision.models.UserModel.objects.get(username=temp['username'])
+
+    ok_list = []
+    for order_num in temp['li'].keys():
+        try:
+            order_num = int(order_num)
+        except:
+            continue
+
+        for order in order_obj.order_list:
+            if order_num == order['orderNo'] and temp['li'][str(order_num)]['bought_price']:
+                ok_list.append([temp['li'][str(order_num)], order])
+                break
+
+    to_remove_list = []
+    for val in ok_list:
+        asin = 'B' + val[1]['sellerItemCode'][1:]
+        price = val[0]['bought_price']
+
+        if obj.min_1 <= price <= obj.max_1:
+            kotei = obj.kotei_1
+        elif price <= obj.max_2:
+            kotei = obj.kotei_2
+        elif price <= obj.max_3:
+            kotei = obj.kotei_3
+        else:
+            kotei = obj.kotei_4
+
+        if mega_wari:
+            discount = val[1]['discount'] / 2
+        else:
+            discount = 0
+
+        sales_obj.singlesalemodel_set.create(
+            order_num=val[1]['orderNo'],
+            order_date=val[1]['orderDate'],
+            product_name=val[1]['itemTitle'],
+            qty=val[1]['orderQty'],
+            name=val[1]['receiver'],
+            phone_num=val[1]['receiverTel'],
+            mobile_num=val[1]['receiverMobile'],
+            address=val[1]['shippingAddr'],
+            post_code=val[1]['zipCode'],
+            q10_price=val[1]['total'],
+            user_code=val[1]['sellerItemCode'],
+            price=price,
+            point=0,
+            purchase_fee=price,
+            amazon_order_num=val[0]['amazon_order_num'],
+            kotei=kotei,
+            profit=val[1]['total'] - price - kotei - discount,
+            discount=discount,
+            date=datetime.datetime.now()
+        )
+
+        asin_sales_obj.add_asin(asin)
+
+        sales_obj.total_profit += val[1]['total'] - price - kotei - discount
+
+        sales_obj.save()
+
+        to_remove_list.append(val[1])
+
+    order_obj.order_list = [val for val in order_obj.order_list if val not in to_remove_list]
+    order_obj.save()
+
+    return JsonResponse({})
+
+@csrf_exempt
 def edit_sales(request):
     temp = json.loads(request.body)
 

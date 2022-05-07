@@ -18,7 +18,10 @@
             <div class="box-body">
                 <div class="button_div">
                     <button class="btn btn-info al" onclick="reload_button_clicked()"><label class="fa fa-repeat"></label>更新する</button>
-                    <button class="btn btn-danger il" onclick="delete_order()" style="height: fit-content"><label class="fa fa-trash-o il"></label>削除</button>
+                    <span>
+                        <button class="btn btn-info il" onclick="popup_clicked_2()">管理表へ</button>
+                        <button class="btn btn-danger il" onclick="delete_order()" style="height: fit-content"><label class="fa fa-trash-o il"></label>削除</button>
+                    </span>
                 </div>
                 <table id="foo-table" class="table table-bordered">
                     <thead>
@@ -110,6 +113,36 @@
             </table>
         </div>
     </div>
+</div>
+<div id="popup2" style="position: absolute; top: 0; left: 0;height: 100vh; width: 100vw;display: none;
+                        justify-content: center;align-items: center">
+        <div style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;background: black; opacity: 0.5;"></div>
+        <div id="pop_main" style="background: white;height: 40vh;width: 60vh;z-index: 1000;border-radius: 10px;
+                    padding: 20px;">
+            <div style="width: 100%;padding: 0 30px;display: flex;justify-content: space-between">
+                <button class="btn btn-danger" style="border-radius: 10px;" onclick="popup_clicked_2()">
+                    キャンセル<i style="margin-left: 10px" class="fa-solid fa-xmark"></i>
+                </button>
+                <button class="btn btn-info" style="border-radius: 10px;" onclick="to_profit_2()">
+                    管理表へ
+                </button>
+            </div>
+            <div style="width: 100%; padding: 30px; height: 100%;">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th>購入金額</th>
+                        <th>Amazon注文番号</th>
+                        <th>注文番号</th>
+                        <th>販売者商品コード</th>
+                        <th>商品名</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pop_body2">
+                    </tbody>
+                </table>
+            </div>
+        </div>
 </div>
 
 <style about="loading">
@@ -455,6 +488,50 @@
         }
     }
 
+    function popup_clicked_2() {
+        let current_display = document.querySelector('#popup2').style.display;
+
+        if (current_display === 'none') {
+            document.querySelector('#popup2').style.display = 'flex';
+            document.querySelector('#under_pop').setAttribute('disabled', 'disabled');
+
+            const table = document.querySelector('#order-body');
+            const pop_table = document.querySelector('#pop_body2');
+            const trs = table.querySelectorAll('tr');
+            const li = []
+
+            for (let tr of trs) {
+                if (tr.querySelector('input').checked)
+                {
+                    li.push([
+                        tr.querySelectorAll('td')[1].innerText,
+                        tr.querySelectorAll('td')[10].innerText,
+                        tr.querySelectorAll('td')[11].innerText
+                    ]);
+                }
+            }
+
+            let innerHTML = '';
+
+            for (let val of li){
+                innerHTML +=
+                    "<tr>" +
+                    "<td><input/></td>" +
+                    "<td><input/></td>" +
+                    "<td>"+ val[0] + "</td>" +
+                    "<td>" + val[1] + "</td>" +
+                    "<td>" + val[2] + "</td>" +
+                    "</tr>"
+            }
+
+            pop_table.innerHTML = innerHTML;
+        }
+        else {
+            document.querySelector('#popup2').style.display = 'none';
+            document.querySelector('#under_pop').removeAttribute('disabled');
+        }
+    }
+
     async function to_profit() {
         start_load()
 
@@ -482,6 +559,38 @@
         }).then(response => {})
 
         popup_clicked();
+        await get_order_failed();
+    }
+
+    async function to_profit_2() {
+        start_load()
+
+        console.log('kokooooo')
+
+        const pop_table = document.querySelector('#pop_body2');
+        const link = '{% url 'buy:order_profit' %}';
+
+        let body = {
+            "username": '{{ user }}',
+            "li": {}
+        }
+
+        for (let tr of pop_table.querySelectorAll('tr')) {
+            body['li'][parseInt(tr.querySelectorAll('td')[2].innerText)] = {
+                'bought_price':  parseInt(tr.querySelectorAll('td')[0].querySelector('input').value),
+                'amazon_order_num': tr.querySelectorAll('td')[1].querySelector('input').value
+            }
+        }
+
+        await fetch(link, {
+            method: 'POST',
+            body: JSON.stringify(body),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+            }
+        }).then(response => {})
+
+        popup_clicked_2();
         await get_order_failed();
     }
 
