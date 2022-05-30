@@ -65,14 +65,14 @@
                         <th>注文番号</th>
                         <th>注文日</th>
                         <th>数量</th>
+                        <th>販売者商品コード</th>
+                        <th>商品名</th>
+                        <th>供給原価の合計</th>
                         <th>受取人名</th>
                         <th>受取人電話番号</th>
                         <th>受取人携帯電話番号</th>
-                        <th>住所</th>
                         <th>郵便番号</th>
-                        <th>供給原価の合計</th>
-                        <th>販売者商品コード</th>
-                        <th>商品名</th>
+                        <th>住所</th>
                         <th>エラー原因</th>
                     </tr>
                     </thead>
@@ -385,7 +385,19 @@
                 "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
                 "<td><div contenteditable>" + o_n + "</div></td>"
 
-            for (key of Object.keys(temp)) {
+            const keys = [
+                "date",
+                "qty",
+                "item_code",
+                "prod_name",
+                "total",
+                "name",
+                "phone_num",
+                "mobile_num",
+                "zip_code",
+                "address",
+            ]
+            for (key of keys) {
                 if (key === 'reason')
                     continue
 
