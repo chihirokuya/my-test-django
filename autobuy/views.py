@@ -192,8 +192,8 @@ def order_page_api(request, mode):
                 "prod_name": val['itemTitle'],
                 "qty": val['orderQty'],
                 "name": val['receiver'],
-                "phone_num": val['receiverTel'],
-                "mobile_num": val['receiverMobile'],
+                "phone_num": val['receiverTel'].replace('+81-', ''),
+                "mobile_num": val['receiverMobile'].replace('+81-', ''),
                 "address": val['shippingAddr'],
                 "zip_code": val['zipCode'],
                 "total": val['total'],
@@ -206,8 +206,8 @@ def order_page_api(request, mode):
                 "date": val['orderDate'],
                 "qty": val['orderQty'],
                 "name": val['receiver'],
-                "phone_num": val['receiverTel'],
-                "mobile_num": val['receiverMobile'],
+                "phone_num": val['receiverTel'].replace('+81-', ''),
+                "mobile_num": val['receiverMobile'].replace('+81-', ''),
                 "address": val['shippingAddr'],
                 "zip_code": val['zipCode'],
                 "total": val['total'],
@@ -330,8 +330,8 @@ def update_from_errors_to_new(request):
                 failed_order_list.remove(order)
 
                 order["receiver"] = val['name']
-                order["receiverTel"] = val['phone_num']
-                order["receiverMobile"] = val['mobile_num']
+                order["receiverTel"] = val['phone_num'].replace('+81-', '')
+                order["receiverMobile"] = val['mobile_num'].replace('+81-', '')
                 order["shippingAddr"] = val['address']
                 order["zipCode"] = val['zip_code']
                 order.pop('reason')
@@ -609,8 +609,8 @@ def from_error_to_profit(request):
             product_name=val[1]['itemTitle'],
             qty=val[1]['orderQty'],
             name=val[1]['receiver'],
-            phone_num=val[1]['receiverTel'],
-            mobile_num=val[1]['receiverMobile'],
+            phone_num=val[1]['receiverTel'].replace('+81-', ''),
+            mobile_num=val[1]['receiverMobile'].replace('+81-', ''),
             address=val[1]['shippingAddr'],
             post_code=val[1]['zipCode'],
             q10_price=val[1]['total'],
@@ -693,8 +693,8 @@ def from_order_to_profit(request):
             product_name=val[1]['itemTitle'],
             qty=val[1]['orderQty'],
             name=val[1]['receiver'],
-            phone_num=val[1]['receiverTel'],
-            mobile_num=val[1]['receiverMobile'],
+            phone_num=val[1]['receiverTel'].replace('+81-', ''),
+            mobile_num=val[1]['receiverMobile'].replace('+81-', ''),
             address=val[1]['shippingAddr'],
             post_code=val[1]['zipCode'],
             q10_price=val[1]['total'],
