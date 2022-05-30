@@ -62,7 +62,6 @@
                     <thead>
                     <tr>
                         <th></th>
-                        <th>エラー原因</th>
                         <th>注文番号</th>
                         <th>注文日</th>
                         <th>数量</th>
@@ -74,6 +73,7 @@
                         <th>供給原価の合計</th>
                         <th>販売者商品コード</th>
                         <th>商品名</th>
+                        <th>エラー原因</th>
                     </tr>
                     </thead>
                     <tbody id="error_body">
@@ -383,8 +383,7 @@
             innerHTML +=
                 "<tr>" +
                 "<td><input type='checkbox' class='checks' value='"+ o_n + "' </td>" +
-                "<td <div contenteditable>" + temp['reason'] + "</div></td>" +
-                "<td <div contenteditable>" + o_n + "</div></td>"
+                "<td><div contenteditable>" + o_n + "</div></td>"
 
             for (key of Object.keys(temp)) {
                 if (key === 'reason')
@@ -392,6 +391,8 @@
 
                 innerHTML += "<td><div contenteditable id=" + key + ">" + temp[key] + "</div></td>"
             }
+
+            innerHTML += "<td><div contenteditable>" + temp['reason'] + "</div></td>"
             innerHTML += "</tr>"
         }
 
