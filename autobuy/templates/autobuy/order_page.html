@@ -563,13 +563,17 @@
             }
         }
 
+        console.log(body);
+
         await fetch(link, {
             method: 'POST',
             body: JSON.stringify(body),
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
             }
-        }).then(response => {})
+        }).then(response => {
+            console.log(response.json());
+        })
 
         popup_clicked();
         await get_order_failed();
