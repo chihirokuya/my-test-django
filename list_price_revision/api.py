@@ -1483,9 +1483,12 @@ def delete_item(certification_key, item_code):
 
 
 def update_price(username):
-    certification_key = get_certification_key(username)
-    user_obj: UserModel = UserModel.objects.get(username=username)
-    delete_or_not = user_obj.delete_or_not
+    try:
+        certification_key = get_certification_key(username)
+        user_obj: UserModel = UserModel.objects.get(username=username)
+        delete_or_not = user_obj.delete_or_not
+    except:
+        return
 
     log_success = []
     log_failed = []
