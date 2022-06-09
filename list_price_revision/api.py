@@ -1820,6 +1820,8 @@ def new_shuppin_2(username, date):
     obj.asin_getting_list = ','.join(list(dict.fromkeys(current)))
     obj.save()
 
+    print(f'データベースに追加するASIN: {len(add_to_database_asin_list)}')
+
     if add_to_database_asin_list:
         thread_num = 5 if len(add_to_database_asin_list) > 10 else 1
         length = len(add_to_database_asin_list) // thread_num
