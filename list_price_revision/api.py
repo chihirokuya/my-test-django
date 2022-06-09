@@ -1745,3 +1745,198 @@ def chunked(queryset, chunk_size=1000):
         if len(chunk) < chunk_size:
             raise StopIteration
         start += chunk_size
+
+
+
+
+
+
+
+
+class CounterClass:
+    log_error_reason = []
+    was_variation = [] # [base_asin, new_asin]
+    total_length = 0
+    counter = 0
+    step_2_counter = 0
+
+    def __init__(self, total_length):
+        self.log_error_reason = []
+        self.total_length = total_length
+        self.was_variation = [] # [base_asin, new_asin]
+
+        self._lock = threading.Lock()
+
+    def increment(self, l):
+        with self._lock:
+            self.step_2_counter += l
+
+    def increment_1(self, l):
+        with self._lock:
+            self.counter += l
+
+def new_shuppin_2(username, date):
+    """
+    obj: ListingModel
+    obj.asin_list: 出品中リスト
+    obj.asin_waiting_list: ASINを取得中または出品中
+    obj.getting_list: ASIN取得中
+
+    obj.selling_list:　販売中
+    obj.no_stock_list: 在庫なし
+    """
+    obj = ListingModel.objects.get(username=username)
+    corresponding_record_object = RecordsModel.objects.get(username=username, date=date)
+    certification_key = get_certification_key(username)
+
+    ################### clean up data ######################
+    temp = obj.asin_list.split(',')
+    waiting_list = [asin for asin in obj.asin_waiting_list.split(',') if asin and asin not in temp]
+    obj.asin_waiting_list = ','.join(waiting_list)
+    obj.save()
+
+    log_failed_list = []
+    log_success_list = []
+    done_asin_list = [] #エラーが出た、またはデータベースに登録されたもの
+    ########################################################
+
+    print('ASINから情報取得')
+
+    #################### ASINから情報取得 #####################
+    add_to_database_asin_list = []
+    for asin in obj.asin_waiting_list.split(','):
+        if not AsinModel.objects.filter(asin=asin).exists() and \
+                not AsinModel.objects.filter(base_asin=asin).exists() and \
+                asin not in obj.asin_getting_list:
+            add_to_database_asin_list.append(asin)
+
+    current = obj.asin_getting_list.split(',')
+    current.extend(add_to_database_asin_list)
+    obj.asin_getting_list = ','.join(list(dict.fromkeys(current)))
+    obj.save()
+
+    if add_to_database_asin_list:
+        thread_num = 5 if len(add_to_database_asin_list) > 10 else 1
+        length = len(add_to_database_asin_list) // thread_num
+        divided_list = [add_to_database_asin_list[i * length: (i + 1) * length] for i in range(thread_num - 1)]
+        divided_list.append(add_to_database_asin_list[(thread_num - 1) * length:])
+
+        threads = []
+        counter_class = CounterClass(len(add_to_database_asin_list))
+        for i in range(thread_num):
+            threads.append(threading.Thread(
+                target=get_info_and_add_to_database,
+                kwargs={
+                    "counter_class": counter_class,
+                    'asin_list': divided_list[i],
+                    "certification_key": certification_key,
+                    "records_model": corresponding_record_object
+                }
+            ))
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        # ログに削除理由追加
+        for val in counter_class.log_error_reason:
+            try:
+                done_asin_list.append(val[0])
+                log_failed_list.append(val)
+            except:
+                pass
+        waiting_list = obj.asin_waiting_list.split(',')
+        for asin in done_asin_list:
+            waiting_list.remove(asin) if asin in waiting_list else ''
+        obj.asin_waiting_list = ','.join(waiting_list)
+
+        getting_list = obj.asin_getting_list.split(',')
+        for asin in add_to_database_asin_list:
+            if asin in getting_list and (AsinModel.objects.filter(asin=asin).exists() or AsinModel.objects.filter(base_asin=asin).exists()):
+                getting_list.remove(asin)
+                done_asin_list.append(asin)
+            elif AsinModel.objects.filter(asin=asin).exists() or AsinModel.objects.filter(base_asin=asin).exists():
+                done_asin_list.append(asin)
+
+        obj.asin_getting_list = ','.join(getting_list)
+        obj.save()
+    else:
+        print('データベースに追加する新たなASINはありませんでした。')
+    #########################################################
+
+    print(waiting_list, len(waiting_list))
+
+    # エラー内容にもデータベース登録も行われなかったASINはエラーとして追加する
+    waiting_list = obj.asin_waiting_list.split(',')
+    getting_list = obj.asin_getting_list.split(',')
+    asin_list = obj.asin_list.split(',')
+    selling_list = obj.selling_list.split(',')
+
+    for asin in waiting_list:
+        if AsinModel.objects.filter(asin=asin).exists() or AsinModel.objects.filter(base_asin=asin).exists():
+            done_asin_list.append(asin)
+
+    print(len(done_asin_list))
+
+    to_remove_from_waiting_list = []
+    for asin in waiting_list:
+        if asin not in done_asin_list:
+            print('koko')
+            log_failed_list.append([asin, 'エラー原因不明'])
+            to_remove_from_waiting_list.append(asin)
+    waiting_list = [asin for asin in waiting_list if asin not in to_remove_from_waiting_list]
+
+    print(waiting_list, len(waiting_list))
+
+    ######################## 出品 ###########################
+    to_remove_from_waiting_list = []
+    for asin in waiting_list:
+        if AsinModel.objects.filter(asin=asin).exists():
+            actual_asin = asin
+        elif AsinModel.objects.filter(base_asin=asin).exists():
+            actual_asin = AsinModel.objects.filter(base_asin=asin)[0].asin
+        else:
+            print(f'koko {asin}')
+            log_failed_list.append([asin, 'エラー原因不明'])
+            to_remove_from_waiting_list.append(asin)
+            continue
+
+        ok, reason = upload_new_item(actual_asin, username, certification_key)
+
+        if ok:
+            to_remove_from_waiting_list.append(asin)
+
+            asin_list.append(actual_asin)
+            selling_list.append(actual_asin)
+            log_success_list.append(asin)
+        else:
+            print(f'failed {asin}')
+            log_failed_list.append([asin, reason])
+
+            if reason != '出品失敗':
+                to_remove_from_waiting_list.append(asin)
+    waiting_list = [asin for asin in waiting_list if asin not in to_remove_from_waiting_list]
+    print(len(waiting_list))
+    ########################################################
+
+    obj.asin_list = ','.join(list(filter(None, asin_list)))
+    obj.selling_list = ','.join(list(filter(None, selling_list)))
+    obj.asin_waiting_list = ','.join(list(filter(None, waiting_list)))
+    obj.asin_getting_list = ''
+    obj.save()
+
+    corresponding_record_object.already_listed = True
+    corresponding_record_object.status_text = ''
+    corresponding_record_object.save()
+
+    # 失敗理由リスト　区切り単語："delimiter"
+    temp = [val[0] for val in log_failed_list]
+    log_total_list = temp
+    log_total_list.extend(log_success_list)
+    cause_list = ''
+    for val in log_failed_list:
+        cause_list += f'{val[0]}:{val[1]}{delimiter}'
+    LogModel(username=username, type='出品', input_asin_list=','.join(log_total_list),
+             success_asin_list=','.join(log_success_list), cause_list=cause_list,
+             date=datetime.datetime.now()).save()

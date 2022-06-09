@@ -3,7 +3,7 @@ from mysite.settings import MEDIA_ROOT
 from django.shortcuts import render, redirect, reverse, HttpResponse
 from django.http import JsonResponse
 from .models import UserModel, AsinModel, RecordsModel, ListingModel, Q10ItemsLink, Q10BrandCode, LogModel, delimiter
-from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit, is_in_black, get_new_orders
+from .api import get_info_from_amazon, to_user_price, get_certification_key, get_cat_from_csv, user_price_and_profit, is_in_black, get_new_orders, new_shuppin_2
 from django.contrib import messages
 import datetime
 import os
@@ -124,7 +124,15 @@ def asin_view(request):
                     list_obj.save()
                     new_records.save()
 
-                    new_shuppin.delay(str(request.user), date)
+                    threading.Thread(
+                        target=new_shuppin_2,
+                        kwargs={
+                            "username": str(request.user),
+                            "date": date
+                        }
+                    ).start()
+
+                    # new_shuppin.delay(str(request.user), date)
 
                     messages.success(request, '正常に更新されました。')
                     records = []
