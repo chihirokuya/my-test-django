@@ -738,6 +738,8 @@ def get_info_and_add_to_database(counter_class, asin_list, certification_key, re
     temp = len(asin_list) // 10
     if temp == 0:
         temp = 1
+
+    print(f'ASIN LIST LENGTH: {len(temp)}')
     # SP-APIから成功したリスト、[ [asin, [商品名, 価格, ブランド, Amazonグループ]] ]
     for i, asin in enumerate(asin_list):
         skip = False
@@ -779,7 +781,10 @@ def get_info_and_add_to_database(counter_class, asin_list, certification_key, re
         counter_class.increment_1(1)
         if not i % temp:
             records_model.status_text = f'ステップ１　{counter_class.counter}/{counter_class.total_length}'
+            print(f'ステップ１　{counter_class.counter}/{counter_class.total_length}')
             records_model.save()
+
+    print('NEXT STEP')
 
     succeed_asin_list = [key for key in result_list.keys() if
                          not AsinModel.objects.filter(asin=key).exists()]
