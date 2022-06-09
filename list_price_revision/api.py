@@ -1810,6 +1810,10 @@ def new_shuppin_2(username, date):
     #################### ASINから情報取得 #####################
     add_to_database_asin_list = []
     for asin in obj.asin_waiting_list.split(','):
+
+        corresponding_record_object.status_text = f'データベースをチェック中 {obj.asin_waiting_list.split(",").index(asin)}/{len(obj.asin_waiting_list.split(","))}'
+        corresponding_record_object.save()
+
         if not AsinModel.objects.filter(asin=asin).exists() and \
                 not AsinModel.objects.filter(base_asin=asin).exists() and \
                 asin not in obj.asin_getting_list:
